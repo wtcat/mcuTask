@@ -1,6 +1,10 @@
 #=========================
 # CMake Helper Function
 #=========================
+
+# Common interface library
+add_library(common_interface INTERFACE )
+
 function(include_dirs)
 	foreach(arg ${ARGV})
 		if(IS_ABSOLUTE ${arg})
@@ -19,29 +23,26 @@ endfunction()
 # Static library
 macro(static_library name)
 	add_library(${name} STATIC "")
-	set_property(GLOBAL APPEND PROPERTY common_libs ${name})
+	set_property(GLOBAL APPEND PROPERTY common_interface ${name})
 	target_link_libraries(${name} PUBLIC common_interface)
 endmacro()
 
 # Shared library
 macro(shared_library name)
 	add_library(${name} SHARED "")
-	set_property(GLOBAL APPEND PROPERTY common_libs ${name})
+	set_property(GLOBAL APPEND PROPERTY common_interface ${name})
 	target_link_libraries(${name} PUBLIC common_interface)
 endmacro()
 
 # Link target
 macro(collect_link_libraries name target_name )
-	get_property(_libs GLOBAL PROPERTY common_libs)
+	get_property(_libs GLOBAL PROPERTY common_interface)
 	foreach(item ${_libs})
 	  add_dependencies(${target_name} ${item})
 	  message(STATUS "-> ${item}")
 	endforeach()
 	set(${name} ${_libs})
 endmacro()
-
-# Common interface library
-add_library(common_interface INTERFACE )
 
 function(lib_include_directories)
 	target_include_directories(common_interface INTERFACE ${ARGV})

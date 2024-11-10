@@ -95,16 +95,19 @@
 
 MEMORY
 {
-  itcm  (rwx) : ORIGIN = 0x00000000, LENGTH =   64K
+  null  (rwx) : ORIGIN = 0x00000000, LENGTH =   0x00000100
+  itcm  (rwx) : ORIGIN = 0x00000100, LENGTH =   0x0000ff00
   flash (rx)  : ORIGIN = 0x08000000, LENGTH =  128K
-  dtcm1 (rwx) : ORIGIN = 0x20000000, LENGTH =   64K
-  dtcm2 (rwx) : ORIGIN = 0x20010000, LENGTH =   64K
+  dtcm  (rwx) : ORIGIN = 0x20000000, LENGTH =  128K
+  /*dtcm2 (rwx) : ORIGIN = 0x20010000, LENGTH =   64K*/
   sram  (rwx) : ORIGIN = 0x24000000, LENGTH =  512K
-  sram1 (rwx) : ORIGIN = 0x30000000, LENGTH =  128K
-  sram2 (rwx) : ORIGIN = 0x30020000, LENGTH =  128K
+  sram1 (rwx) : ORIGIN = 0x30000000, LENGTH =  256K
+  /*sram2 (rwx) : ORIGIN = 0x30020000, LENGTH =  128K*/
   sram3 (rwx) : ORIGIN = 0x30040000, LENGTH =   32K
   sram4 (rwx) : ORIGIN = 0x38000000, LENGTH =   64K
   bbram (rwx) : ORIGIN = 0x38800000, LENGTH =    4K
+  /*rom   (rwx) : ORIGIN = 0xc0000000, LENGTH = 4096K*/
+  sdram (rwx) : ORIGIN = 0xc0000000, LENGTH = 32768K
 }
 
 OUTPUT_ARCH(arm)
@@ -127,29 +130,32 @@ SECTIONS
         *(.gcc_except_table)
         *(.gnu.linkonce.r.*)
         _etext = ABSOLUTE(.);
-    } > flash
+    } > sdram
 
     .init_section :
     {
         _sinit = ABSOLUTE(.);
-        KEEP(*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
-        KEEP(*(.init_array EXCLUDE_FILE(*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o) .ctors))
+        *(.init_array .init_array.*)
         _einit = ABSOLUTE(.);
-    } > flash
+    } > sdram
+
+    .ram_vectors (NOLOAD): 
+    {
+        *(.ram_vectors)
+        _dtcm_data_start = ABSOLUTE(.);
+    } > dtcm
 
     .ARM.extab :
     {
         *(.ARM.extab*)
-    } > flash
+    } > sdram
 
     __exidx_start = ABSOLUTE(.);
     .ARM.exidx :
     {
         *(.ARM.exidx*)
-    } > flash
+    } > sdram
     __exidx_end = ABSOLUTE(.);
-
-    _eronly = ABSOLUTE(.);
 
     .data :
     {
@@ -159,7 +165,9 @@ SECTIONS
         CONSTRUCTORS
         . = ALIGN(4);
         _edata = ABSOLUTE(.);
-    } > sram AT > flash
+    } > sram AT > sdram
+
+    _eronly = LOADADDR(.data);
 
     .bss :
     {
@@ -170,6 +178,25 @@ SECTIONS
         . = ALIGN(4);
         _ebss = ABSOLUTE(.);
     } > sram
+
+    .itcm :
+    {
+        _sramfuncs = .;
+        *(.itcm*)
+        . = ALIGN(4);
+        _eramfuncs = .;
+    } > itcm AT > sdram
+    _framfuncs = LOADADDR (.itcm);
+
+    .dtcm (NOLOAD) :
+    {
+        *(.dtcm*)
+    } > dtcm
+
+    .noinit (NOLOAD):
+    {
+        *(.noinit*)
+    } > sram1
 
     /* Emit the the D3 power domain section for locating BDMA data
      *
@@ -184,6 +211,19 @@ SECTIONS
         _sram4_heap_start = ABSOLUTE(.);
     } > sram4
 
+    .dmabuf (NOLOAD) :
+    {
+        . = ALIGN(32);
+        *(.dmabuf*)
+        . = ALIGN(32);
+    } > sdram
+
+    .heap (NOLOAD) :
+    {
+        _heap_start = ABSOLUTE(.);
+        *(.heap)
+        _heap_end = ORIGIN(sdram) + LENGTH(sdram);
+    } > sdram
     /* Stabs debugging sections. */
 
     .stab 0 : { *(.stab) }
