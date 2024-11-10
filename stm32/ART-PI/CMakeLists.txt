@@ -14,6 +14,10 @@ project(app
     LANGUAGES C CXX ASM
 )
 
+if (POLICY CMP0076)
+    cmake_policy(SET CMP0076 NEW)
+endif(POLICY CMP0076)
+
 # Configure options 
 # set(CONFIG_NETX   1)
 # set(CONFIG_FILEX  1)

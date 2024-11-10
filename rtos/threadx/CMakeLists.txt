@@ -9,6 +9,7 @@ static_library(${PROJECT_NAME})
 lib_include_directories(
     ${CMAKE_CURRENT_LIST_DIR}/common/inc
     ${CMAKE_CURRENT_LIST_DIR}/ports/${THREADX_ARCH}/${THREADX_TOOLCHAIN}/inc
+    ${CMAKE_CURRENT_BINARY_DIR}/custom_inc
 )
 
 if(NOT DEFINED THREADX_ARCH)
