@@ -240,14 +240,36 @@
 */
 
 #define TX_MSEC(n) (n * 1000 / TX_TIMER_TICKS_PER_SECOND)
+#define TX_DISABLE_ERROR_CHECKING
+
 
 #ifdef __cplusplus
 extern "C"{
 #endif
 
 #ifdef TX_PORT_H
+#include "basework/generic.h"
+
+#if defined(__GNUC__) || defined(__clang__)
+#include "basework/cleanup.h"
+
+typedef struct TX_MUTEX_STRUCT TX_MUTEX;
+DEFINE_GUARD(tx_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(_T))
+#endif /* __GNUC__ ||  __clang__ */
+
 int request_irq(int irq, void (*handler)(void *), void *arg);
 int remove_irq(int irq, void (*handler)(void *), void *arg);
+
+/*
+ * uart driver
+ */
+int stm32_uart_open(const char *name, void **pdev);
+int stm32_uart_close(void *dev);
+int stm32_uart_setup(void *dev, int baudrate, int ndata, int nstop, 
+    bool parity, bool odd);
+int stm32_uart_write(void *dev, const char *buf, size_t len);
+int stm32_uart_read(void *dev, char *buf, size_t len);
+
 #endif /* TX_PORT_H */
 
 #ifdef __cplusplus

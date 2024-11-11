@@ -21,7 +21,7 @@ struct irq_desc {
 extern int main(void);
 extern void _tx_timer_interrupt(void);
 extern void __tx_PendSVHandler(void);
-static void stm32_reset(void);
+void _stm32_reset(void);
 static void stm32_exception_handler(void);
 static void stm32_systick_handler(void);
 static void stm32_irq_dispatch(void);
@@ -43,7 +43,7 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	_main_stack + sizeof(_main_stack),
 
 	/* Reset exception handler */
-	(void *)stm32_reset,
+	(void *)_stm32_reset,
 
 	(void *)stm32_exception_handler,  /* NMI */
 	(void *)stm32_exception_handler,  /* Hard Fault */
@@ -72,7 +72,7 @@ static void default_irq_handler(void *arg) {
 	while (1);
 }
 
-static void stm32_reset(void) {
+void _stm32_reset(void) {
 	const uint32_t *src;
 	uint32_t *dest;
 

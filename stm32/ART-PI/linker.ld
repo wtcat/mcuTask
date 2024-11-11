@@ -112,12 +112,24 @@ MEMORY
 
 OUTPUT_ARCH(arm)
 EXTERN(_vectors)
-ENTRY(_stext)
+EXTERN(_stm32_reset)
+ENTRY(_stm32_reset)
 SECTIONS
 {
+    .itcm :
+    {
+        _sramfuncs = .;
+        rtos/threadx/libthreadx.a:(.text*)
+        *(.itcm*)
+        . = ALIGN(4);
+        _eramfuncs = .;
+    } > itcm AT > sdram
+    _framfuncs = LOADADDR (.itcm);
+
     .text :
     {
-        _stext = ABSOLUTE(.);
+        . = ALIGN(1024);
+        _stext = .;
         *(.vectors)
         *(.text .text.*)
         *(.fixup)
@@ -178,15 +190,6 @@ SECTIONS
         . = ALIGN(4);
         _ebss = ABSOLUTE(.);
     } > sram
-
-    .itcm :
-    {
-        _sramfuncs = .;
-        *(.itcm*)
-        . = ALIGN(4);
-        _eramfuncs = .;
-    } > itcm AT > sdram
-    _framfuncs = LOADADDR (.itcm);
 
     .dtcm (NOLOAD) :
     {

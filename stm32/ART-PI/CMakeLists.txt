@@ -31,6 +31,7 @@ set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
 include_dirs(
     ${WKSAPCE_PATH}
     ${WKSAPCE_PATH}/basework/arch/arm
+    ${CMAKE_CURRENT_BINARY_DIR}
 )
 add_compile_options(
     -DSTM32H750xx=1
@@ -41,8 +42,10 @@ add_compile_options(
 )
 
 add_executable(${PROJECT_NAME}
+    system_stm32h7xx.c
     main.c
-    startup.c
+    stm32_startup.c
+    stm32_uart.c
 )
 
 # Add subdirectory
