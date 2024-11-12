@@ -75,7 +75,7 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	[16 ... WAKEUP_PIN_IRQn+16] = (void *)stm32_irq_dispatch
 };
 
-static void stm32_exception_handler(void) {
+static void __rte_naked stm32_exception_handler(void) {
 	while (1);
 }
 
@@ -88,8 +88,6 @@ void _stm32_reset(void) {
 	const uint32_t *src;
 	uint32_t *dest;
 
-	printk("stm32 starting ...\n");
-	
 	/* Clear bss section */
 	for (dest = (uint32_t *)_sbss; dest < (uint32_t *)_ebss;)
 		*dest++ = 0;
@@ -111,7 +109,7 @@ void _stm32_reset(void) {
 		 dest < (uint32_t *)_fedata;)
 		*dest++ = *src++;
 
-	_tx_thread_system_stack_ptr = (void *)irq_vectors[0];
+	printk("stm32 starting ...\n");
 
 	/* Redirect vector table to ram region*/
 	memcpy(_ram_vectors, irq_vectors, VECTOR_SIZE);
@@ -169,6 +167,10 @@ static void __fastcode stm32_irq_dispatch(void) {
 #endif
 }
 
+void _tx_initialize_low_level(void) {
+	_tx_thread_system_stack_ptr = (void *)irq_vectors[0];
+}
+
 int request_irq(int irq, void (*handler)(void *), void *arg) {
 	TX_INTERRUPT_SAVE_AREA
 
@@ -205,8 +207,10 @@ int remove_irq(int irq, void (*handler)(void *), void *arg) {
 	return 0;
 }
 
-static void put_char(int c, void *arg) {
+static void __fastcode put_char(int c, void *arg) {
 	stm32_uart_putc((char)c);
+	if (c == '\n')
+		stm32_uart_putc('\r');
 }
 
 int printk(const char *fmt, ...) {

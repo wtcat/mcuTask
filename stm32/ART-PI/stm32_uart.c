@@ -152,8 +152,8 @@ void __fastcode stm32_uart_putc(char c) {
     reg->TDR = (uint8_t)c;
 }
 
-static void stm32_uart_init(void) {
-
+static int stm32_uart_init(void) {
+    return 0;
 }
 
-rte_sysinit(stm32_uart_init, 200);
+SYSINIT(stm32_uart_init, 200);

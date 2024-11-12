@@ -249,6 +249,8 @@ extern "C"{
 
 #ifdef TX_PORT_H
 #include "basework/generic.h"
+#include "basework/linker.h"
+
 #if defined(__GNUC__) || defined(__clang__)
 #include "basework/cleanup.h"
 
@@ -263,6 +265,26 @@ DEFINE_GUARD(tx_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(
 #define __fastbss   __rte_section(".fastbss")
 #define __fastdata  __rte_section(".fastdata")
 
+/*
+ * System intitialize 
+ */
+struct sysinit_item {
+   int (*handler)(void);
+};
+
+/* system initialize order */
+#define SI_DRIVER_ORDER        50
+#define SI_APPLICATION_ORDER   150
+
+#define SYSINIT(_handler, _order) \
+    enum { __enum_##_handler = _order}; \
+    __SYSINIT(_handler, _order)
+
+#define __SYSINIT(_handler, _order) \
+   LINKER_ROSET_ITEM_ORDERED(sysinit, struct sysinit_item, entry, _order) = { \
+      .handler = _handler\
+   }
+    
 /*
  * Platform interface
  */
