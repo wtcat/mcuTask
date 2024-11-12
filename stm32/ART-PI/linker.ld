@@ -137,7 +137,7 @@ SECTIONS
         _dtcm_data_start = ABSOLUTE(.);
     } > dtcm
     
-    .fastbss :
+    .fastbss (NOLOAD) :
     {
         _fsbss = ABSOLUTE(.);
         *(.fastbss*)
@@ -161,6 +161,7 @@ SECTIONS
         *(.fixup)
         *(.gnu.warning)
         *(.rodata .rodata.*)
+        KEEP(*(SORT(.basework.roset*)))
         *(.gnu.linkonce.t.*)
         *(.glue_7)
         *(.glue_7t)
@@ -193,6 +194,7 @@ SECTIONS
     {
         _sdata = ABSOLUTE(.);
         *(.data .data.*)
+        KEEP(*(SORT(.basework.rwset*)))
         *(.gnu.linkonce.d.*)
         CONSTRUCTORS
         . = ALIGN(4);
