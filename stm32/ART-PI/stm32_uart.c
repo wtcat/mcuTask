@@ -145,6 +145,13 @@ int stm32_uart_read(void *dev, char *buf, size_t len) {
     return 0;
 }
 
+void __fastcode stm32_uart_putc(char c) {
+    USART_TypeDef *reg = UART4;
+
+    while (!(reg->ISR & LL_USART_ISR_TXE_TXFNF));
+    reg->TDR = (uint8_t)c;
+}
+
 static void stm32_uart_init(void) {
 
 }

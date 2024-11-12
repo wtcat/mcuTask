@@ -13,32 +13,41 @@ struct irq_desc {
 	void *arg;
 };
 
-#define __fastcode __rte_section(".itcm")
-#define __fastdata __rte_section(".dtcm")
+#define LINKER_SYM(_sym) extern char _sym[];
 #define VECTOR_SIZE (WAKEUP_PIN_IRQn + 17)
 #define SYSTEM_CLK 1000000
+
+LINKER_SYM(_sbss)
+LINKER_SYM(_ebss)
+
+LINKER_SYM(_sdata)
+LINKER_SYM(_eronly)
+LINKER_SYM(_edata)
+
+LINKER_SYM(_sramfuncs)
+LINKER_SYM(_eramfuncs)
+LINKER_SYM(_framfuncs)
+
+LINKER_SYM(_fsbss)
+LINKER_SYM(_febss)
+
+LINKER_SYM(_fsdata)
+LINKER_SYM(_fedata)
+LINKER_SYM(_fdataload)
 
 extern int main(void);
 extern void _tx_timer_interrupt(void);
 extern void __tx_PendSVHandler(void);
-void _stm32_reset(void);
 static void stm32_exception_handler(void);
 static void stm32_systick_handler(void);
 static void stm32_irq_dispatch(void);
+void _stm32_reset(void);
 
-extern char _sbss[];
-extern char _ebss[];
-extern char _sdata[];
-extern char _eronly[];
-extern char _edata[];
-extern char _sramfuncs[];
-extern char _eramfuncs[];
-extern char _framfuncs[];
-
-static struct irq_desc _irqdesc_table[WAKEUP_PIN_IRQn + 1] __fastdata;
-static char _main_stack[4096] __fastdata __rte_aligned(8);
+static struct irq_desc _irqdesc_table[WAKEUP_PIN_IRQn + 1] __fastbss;
+static char _main_stack[4096] __fastbss __rte_aligned(8);
 static void *_ram_vectors[VECTOR_SIZE] __rte_section(".ram_vectors");
 static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rte_used = {
+
 	/* Initial stack */
 	_main_stack + sizeof(_main_stack),
 
@@ -88,6 +97,13 @@ void _stm32_reset(void) {
 	/* Initialize ramfunc */
 	for (src = (const uint32_t *)_framfuncs, dest = (uint32_t *)_sramfuncs;
 		 dest < (uint32_t *)_eramfuncs;)
+		*dest++ = *src++;
+
+	/* Initialize dtcm */
+	for (dest = (uint32_t *)_fsbss; dest < (uint32_t *)_febss;)
+		*dest++ = 0;
+	for (src = (const uint32_t *)_fdataload, dest = (uint32_t *)_fsdata;
+		 dest < (uint32_t *)_fedata;)
 		*dest++ = *src++;
 
 	_tx_thread_system_stack_ptr = (void *)irq_vectors[0];

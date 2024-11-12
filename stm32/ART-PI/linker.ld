@@ -116,6 +116,11 @@ EXTERN(_stm32_reset)
 ENTRY(_stm32_reset)
 SECTIONS
 {
+    .vector :
+    {
+        *(.vectors)
+    } > sdram
+
     .itcm :
     {
         _sramfuncs = .;
@@ -126,11 +131,32 @@ SECTIONS
     } > itcm AT > sdram
     _framfuncs = LOADADDR (.itcm);
 
+    .ram_vectors (NOLOAD): 
+    {
+        *(.ram_vectors)
+        _dtcm_data_start = ABSOLUTE(.);
+    } > dtcm
+    
+    .fastbss :
+    {
+        _fsbss = ABSOLUTE(.);
+        *(.fastbss*)
+        rtos/threadx/libthreadx.a:(.bss*)
+        _febss = ABSOLUTE(.);
+    } > dtcm
+    
+    .fastdata :
+    {
+        _fsdata = ABSOLUTE(.);
+        *(.fastdata*)
+        _fedata = ABSOLUTE(.);
+    } > dtcm AT > sdram
+    _fdataload = LOADADDR(.fastdata);
+
     .text :
     {
-        . = ALIGN(1024);
+        . = ALIGN(32);
         _stext = .;
-        *(.vectors)
         *(.text .text.*)
         *(.fixup)
         *(.gnu.warning)
@@ -150,12 +176,6 @@ SECTIONS
         *(.init_array .init_array.*)
         _einit = ABSOLUTE(.);
     } > sdram
-
-    .ram_vectors (NOLOAD): 
-    {
-        *(.ram_vectors)
-        _dtcm_data_start = ABSOLUTE(.);
-    } > dtcm
 
     .ARM.extab :
     {

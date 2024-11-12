@@ -257,6 +257,10 @@ typedef struct TX_MUTEX_STRUCT TX_MUTEX;
 DEFINE_GUARD(tx_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(_T))
 #endif /* __GNUC__ ||  __clang__ */
 
+#define __fastcode  __rte_section(".itcm")
+#define __fastbss   __rte_section(".fastbss")
+#define __fastdata  __rte_section(".fastdata")
+
 int request_irq(int irq, void (*handler)(void *), void *arg);
 int remove_irq(int irq, void (*handler)(void *), void *arg);
 
@@ -269,6 +273,7 @@ int stm32_uart_setup(void *dev, int baudrate, int ndata, int nstop,
     bool parity, bool odd);
 int stm32_uart_write(void *dev, const char *buf, size_t len);
 int stm32_uart_read(void *dev, char *buf, size_t len);
+void stm32_uart_putc(char c);
 
 #endif /* TX_PORT_H */
 
