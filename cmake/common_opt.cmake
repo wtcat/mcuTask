@@ -14,5 +14,6 @@ macro(build_post name)
         POST_BUILD
         COMMAND ${OBJCOPY} -O binary ${name} ${name}.bin
         COMMAND ${OBJDUMP} -d ${name} > ${name}.lst
+        COMMAND ${SIZE} ${name}
     )
 endmacro()

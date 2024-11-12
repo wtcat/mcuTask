@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#include "stm32h750xx.h"
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "basework/lib/iovpr.h"
@@ -17,7 +18,8 @@ struct irq_desc {
 };
 
 #define LINKER_SYM(_sym) extern char _sym[];
-#define VECTOR_SIZE (WAKEUP_PIN_IRQn + 17)
+#define VECTOR_SIZE (VECTOR_MAX + 16)
+#define VECTOR_MAX  (WAKEUP_PIN_IRQn + 1)
 #define SYSTEM_CLK 1000000
 
 LINKER_SYM(_sbss)
@@ -40,13 +42,13 @@ LINKER_SYM(_fdataload)
 
 extern int main(void);
 extern void _tx_timer_interrupt(void);
-extern void __tx_PendSVHandler(void);
+extern void PendSV_Handler(void);
 static void stm32_exception_handler(void);
 static void stm32_systick_handler(void);
 static void stm32_irq_dispatch(void);
 void _stm32_reset(void);
 
-static struct irq_desc _irqdesc_table[WAKEUP_PIN_IRQn + 1] __fastbss;
+static struct irq_desc _irqdesc_table[VECTOR_MAX] __fastbss;
 static char _main_stack[4096] __fastbss __rte_aligned(8);
 static void *_ram_vectors[VECTOR_SIZE] __rte_section(".ram_vectors");
 static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rte_used = {
@@ -69,10 +71,10 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	(void *)stm32_exception_handler, /* SVC */
 	(void *)stm32_exception_handler, /* Debug Monitor */
 	(void *)stm32_exception_handler, /* Reserved */
-	(void *)__tx_PendSVHandler, /* PendSV */
+	(void *)PendSV_Handler, /* PendSV */
 	(void *)stm32_systick_handler, /* SysTick */
 
-	[16 ... WAKEUP_PIN_IRQn+16] = (void *)stm32_irq_dispatch
+	[16 ... VECTOR_SIZE-1] = (void *)stm32_irq_dispatch
 };
 
 static void __rte_naked stm32_exception_handler(void) {
@@ -109,38 +111,16 @@ void _stm32_reset(void) {
 		 dest < (uint32_t *)_fedata;)
 		*dest++ = *src++;
 
-	printk("stm32 starting ...\n");
-
-	/* Redirect vector table to ram region*/
-	memcpy(_ram_vectors, irq_vectors, VECTOR_SIZE);
-	SCB->VTOR = (uint32_t)_ram_vectors;
-	__DSB();
-
 	/* Initialize HAL layer */
 	HAL_Init();
 
 	/* Clock initialize */
 
-	/* Enable systick */
-	SysTick->CTRL = 0;
-    HAL_SYSTICK_Config((HAL_RCCEx_GetD1SysClockFreq()) / TX_TIMER_TICKS_PER_SECOND);
-    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-	/* Configure the UART so that we can get debug output as soon as possible */
-	// stm32_clockconfig();	
-	// arm_fpuconfig();
-	// stm32_lowsetup();
-
-	// /* Enable/disable tightly coupled memories */
-	// stm32_tcmenable();
-
-	// /* Initialize onboard resources */
-	// stm32_boardinitialize();
-
 	/* Enable I- and D-Caches */
 	SCB_EnableICache();
 	SCB_EnableDCache();
 
+	printk("stm32 starting ...\n");
 	main();
 }
 
@@ -169,12 +149,34 @@ static void __fastcode stm32_irq_dispatch(void) {
 
 void _tx_initialize_low_level(void) {
 	_tx_thread_system_stack_ptr = (void *)irq_vectors[0];
+
+	for (int i = 0; i < VECTOR_MAX; i++) {
+		NVIC_DisableIRQ(i);
+		NVIC_ClearPendingIRQ(i);
+		NVIC_SetPriority(i, 10);
+	}
+	NVIC_SetPriority(SVCall_IRQn, 15);
+	NVIC_SetPriority(PendSV_IRQn, 15);
+	NVIC_SetPriority(SysTick_IRQn, 13);
+
+	/* Redirect vector table to ram region*/
+	memcpy(_ram_vectors, irq_vectors, VECTOR_SIZE);
+	SCB->VTOR = (uint32_t)_ram_vectors;
+	__DSB();
+
+	/* Enable systick */
+	uint32_t ticks = HAL_RCCEx_GetD1SysClockFreq() / TX_TIMER_TICKS_PER_SECOND;
+	SysTick->CTRL = 0;
+	SysTick->LOAD = ticks - 1;
+	SysTick->VAL  = 0;
+	SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk
+				  | SysTick_CTRL_ENABLE_Msk;
 }
 
 int request_irq(int irq, void (*handler)(void *), void *arg) {
 	TX_INTERRUPT_SAVE_AREA
 
-	if (irq >= WAKEUP_PIN_IRQn)
+	if (irq >= VECTOR_MAX)
 		return -EINVAL;
 	if (!handler)
 		return -EINVAL;
@@ -192,7 +194,7 @@ int request_irq(int irq, void (*handler)(void *), void *arg) {
 int remove_irq(int irq, void (*handler)(void *), void *arg) {
 	TX_INTERRUPT_SAVE_AREA
 
-	if (irq >= WAKEUP_PIN_IRQn)
+	if (irq >= VECTOR_MAX)
 		return -EINVAL;
 
 	(void) handler;
