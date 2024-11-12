@@ -3,9 +3,12 @@
  */
 #include <errno.h>
 #include <stdint.h>
+#include <stdarg.h>
+
 #include "tx_api.h"
 #include "tx_thread.h"
-#include "basework/compiler.h"
+#include "basework/lib/iovpr.h"
+
 #include "stm32h7xx.h"
 
 struct irq_desc {
@@ -85,6 +88,8 @@ void _stm32_reset(void) {
 	const uint32_t *src;
 	uint32_t *dest;
 
+	printk("stm32 starting ...\n");
+	
 	/* Clear bss section */
 	for (dest = (uint32_t *)_sbss; dest < (uint32_t *)_ebss;)
 		*dest++ = 0;
@@ -198,4 +203,18 @@ int remove_irq(int irq, void (*handler)(void *), void *arg) {
 	TX_RESTORE
 
 	return 0;
+}
+
+static void put_char(int c, void *arg) {
+	stm32_uart_putc((char)c);
+}
+
+int printk(const char *fmt, ...) {
+	va_list ap;
+
+	va_start(ap, fmt);
+	int len = _IO_Vprintf(put_char, NULL, fmt, ap);
+	va_end(ap);
+
+	return len;
 }

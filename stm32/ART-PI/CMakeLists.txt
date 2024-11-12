@@ -10,7 +10,7 @@ include(${WKSAPCE_PATH}/cmake/zephyr.cmake)
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 # Declare project
-project(app
+project(mcutask
     LANGUAGES C CXX ASM
 )
 
@@ -42,9 +42,10 @@ add_compile_options(
 )
 
 add_executable(${PROJECT_NAME}
+    cstub.c
     system_stm32h7xx.c
     main.c
-    stm32_startup.c
+    stm32_platform.c
     stm32_uart.c
 )
 
@@ -60,3 +61,6 @@ target_link_libraries(${PROJECT_NAME}
     ${libs}
     -Wl,--end-group
 )
+
+# Generate binary
+build_post(${PROJECT_NAME})

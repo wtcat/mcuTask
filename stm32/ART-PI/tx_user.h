@@ -249,7 +249,6 @@ extern "C"{
 
 #ifdef TX_PORT_H
 #include "basework/generic.h"
-
 #if defined(__GNUC__) || defined(__clang__)
 #include "basework/cleanup.h"
 
@@ -257,10 +256,17 @@ typedef struct TX_MUTEX_STRUCT TX_MUTEX;
 DEFINE_GUARD(tx_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(_T))
 #endif /* __GNUC__ ||  __clang__ */
 
+/*
+ * Custom define section
+ */
 #define __fastcode  __rte_section(".itcm")
 #define __fastbss   __rte_section(".fastbss")
 #define __fastdata  __rte_section(".fastdata")
 
+/*
+ * Platform interface
+ */
+int printk(const char *fmt, ...) __rte_printf(1, 2);
 int request_irq(int irq, void (*handler)(void *), void *arg);
 int remove_irq(int irq, void (*handler)(void *), void *arg);
 
