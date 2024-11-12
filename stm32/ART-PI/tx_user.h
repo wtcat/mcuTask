@@ -270,6 +270,7 @@ DEFINE_GUARD(tx_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(
  */
 struct sysinit_item {
    int (*handler)(void);
+   const char *name;
 };
 
 /* system initialize order */
@@ -282,7 +283,8 @@ struct sysinit_item {
 
 #define __SYSINIT(_handler, _order) \
    LINKER_ROSET_ITEM_ORDERED(sysinit, struct sysinit_item, entry, _order) = { \
-      .handler = _handler\
+      .handler = _handler, \
+      .name = #_handler \
    }
     
 /*
