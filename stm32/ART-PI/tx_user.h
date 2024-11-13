@@ -247,7 +247,10 @@
 extern "C"{
 #endif
 
-#ifdef TX_PORT_H
+#ifdef TX_API_H
+#ifdef BASEWORK_OS_ZEPHYR_OS_BASE_H_
+#error "xxxx"
+#endif
 #include "basework/generic.h"
 #include "basework/linker.h"
 
@@ -305,7 +308,7 @@ int stm32_uart_write(void *dev, const char *buf, size_t len);
 int stm32_uart_read(void *dev, char *buf, size_t len);
 void stm32_uart_putc(char c);
 
-#endif /* TX_PORT_H */
+#endif /* TX_API_H */
 
 #ifdef __cplusplus
     extern "C"{

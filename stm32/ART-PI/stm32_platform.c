@@ -43,9 +43,10 @@ LINKER_SYM(_fdataload)
 extern int main(void);
 extern void _tx_timer_interrupt(void);
 extern void PendSV_Handler(void);
-static void stm32_exception_handler(void);
 static void stm32_systick_handler(void);
 static void stm32_irq_dispatch(void);
+
+void _stm32_exception_handler(void);
 void _stm32_reset(void);
 
 static struct irq_desc _irqdesc_table[VECTOR_MAX] __fastbss;
@@ -59,27 +60,24 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	/* Reset exception handler */
 	(void *)_stm32_reset,
 
-	(void *)stm32_exception_handler,  /* NMI */
-	(void *)stm32_exception_handler,  /* Hard Fault */
-	(void *)stm32_exception_handler,  /* MPU Fault */
-	(void *)stm32_exception_handler,  /* Bus Fault */
-	(void *)stm32_exception_handler,  /* Usage Fault */
-	(void *)stm32_exception_handler,  /* Reserved */
-	(void *)stm32_exception_handler,  /* Reserved */
-	(void *)stm32_exception_handler,  /* Reserved */
-	(void *)stm32_exception_handler, /* Reserved */
-	(void *)stm32_exception_handler, /* SVC */
-	(void *)stm32_exception_handler, /* Debug Monitor */
-	(void *)stm32_exception_handler, /* Reserved */
+	(void *)_stm32_exception_handler,  /* NMI */
+	(void *)_stm32_exception_handler,  /* Hard Fault */
+	(void *)_stm32_exception_handler,  /* MPU Fault */
+	(void *)_stm32_exception_handler,  /* Bus Fault */
+	(void *)_stm32_exception_handler,  /* Usage Fault */
+	(void *)_stm32_exception_handler,  /* Reserved */
+	(void *)_stm32_exception_handler,  /* Reserved */
+	(void *)_stm32_exception_handler,  /* Reserved */
+	(void *)_stm32_exception_handler, /* Reserved */
+	(void *)_stm32_exception_handler, /* SVC */
+	(void *)_stm32_exception_handler, /* Debug Monitor */
+	(void *)_stm32_exception_handler, /* Reserved */
 	(void *)PendSV_Handler, /* PendSV */
 	(void *)stm32_systick_handler, /* SysTick */
 
 	[16 ... VECTOR_SIZE-1] = (void *)stm32_irq_dispatch
 };
 
-static void __rte_naked stm32_exception_handler(void) {
-	while (1);
-}
 
 static void default_irq_handler(void *arg) {
 	(void) arg;

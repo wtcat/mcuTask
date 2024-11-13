@@ -2,6 +2,7 @@
  * Copyright 2024 wtcat
  */
 #include "tx_api.h"
+#include "basework/os/osapi.h"
 
 LINKER_ROSET(sysinit, struct sysinit_item);
 

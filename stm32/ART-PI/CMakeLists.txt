@@ -45,6 +45,7 @@ add_executable(${PROJECT_NAME}
     cstub.c
     system_stm32h7xx.c
     main.c
+    stm32_exception.c
     stm32_platform.c
     stm32_uart.c
 )
