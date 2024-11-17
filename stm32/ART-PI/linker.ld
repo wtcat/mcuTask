@@ -209,7 +209,7 @@ SECTIONS
         *(.bss .bss.*)
         *(.gnu.linkonce.b.*)
         *(COMMON)
-        . = ALIGN(4);
+        . = ALIGN(32);
         _ebss = ABSOLUTE(.);
     } > sram
 
@@ -249,6 +249,13 @@ SECTIONS
         *(.heap)
         _heap_end = ORIGIN(sdram) + LENGTH(sdram);
     } > sdram
+
+    __kernel_pool_start = _ebss;
+    __kernel_pool_size = ORIGIN(sram) + LENGTH(sram) - _ebss;
+
+    __app_pool_start = _heap_start;
+    __app_pool_size  = _heap_end - _heap_start;
+
     /* Stabs debugging sections. */
 
     .stab 0 : { *(.stab) }

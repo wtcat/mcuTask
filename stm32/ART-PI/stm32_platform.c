@@ -5,12 +5,12 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "stm32h750xx.h"
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "basework/lib/iovpr.h"
 
 #include "stm32h7xx.h"
+#include "stm32h7xx_ll_bus.h"
 
 struct irq_desc {
 	void (*handler)(void *arg);
@@ -113,6 +113,8 @@ void _stm32_reset(void) {
 	HAL_Init();
 
 	/* Clock initialize */
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
 
 	/* Enable I- and D-Caches */
 	SCB_EnableICache();
@@ -208,9 +210,9 @@ int remove_irq(int irq, void (*handler)(void *), void *arg) {
 }
 
 static void __fastcode put_char(int c, void *arg) {
-	stm32_uart_putc((char)c);
+	console_putc((char)c);
 	if (c == '\n')
-		stm32_uart_putc('\r');
+		console_putc('\r');
 }
 
 int printk(const char *fmt, ...) {

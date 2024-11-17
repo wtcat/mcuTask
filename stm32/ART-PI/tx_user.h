@@ -247,7 +247,7 @@
 extern "C"{
 #endif
 
-#ifdef TX_API_H
+#if defined(TX_API_H) && !defined(TX_SOURCE_CODE)
 #ifdef BASEWORK_OS_ZEPHYR_OS_BASE_H_
 #error "xxxx"
 #endif
@@ -258,7 +258,11 @@ extern "C"{
 #include "basework/cleanup.h"
 
 typedef struct TX_MUTEX_STRUCT TX_MUTEX;
-DEFINE_GUARD(tx_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(_T))
+DEFINE_GUARD(os_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(_T))
+
+static __rte_always_inline unsigned int __disable_interrupts(void);
+static __rte_always_inline void __restore_interrupt(unsigned int int_posture);
+DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), __restore_interrupt((_T)->key), unsigned int key)	
 #endif /* __GNUC__ ||  __clang__ */
 
 /*
@@ -289,7 +293,17 @@ struct sysinit_item {
       .handler = _handler, \
       .name = #_handler \
    }
-    
+
+/*
+ * Memory allocate interface
+ */
+#define GMF_KERNEL 0x0001
+#define GMF_WAIT   0x0002
+
+void *kmalloc(size_t size, unsigned int gmf);
+void *kzalloc(size_t size, unsigned int gmf);
+void  kfree(void *ptr);
+
 /*
  * Platform interface
  */
@@ -300,15 +314,42 @@ int remove_irq(int irq, void (*handler)(void *), void *arg);
 /*
  * uart driver
  */
-int stm32_uart_open(const char *name, void **pdev);
-int stm32_uart_close(void *dev);
-int stm32_uart_setup(void *dev, int baudrate, int ndata, int nstop, 
-    bool parity, bool odd);
-int stm32_uart_write(void *dev, const char *buf, size_t len);
-int stm32_uart_read(void *dev, char *buf, size_t len);
-void stm32_uart_putc(char c);
+enum uart_datawidth {
+    kUartDataWidth_7B,
+    kUartDataWidth_8B,
+    kUartDataWidth_9B,
+};
 
-#endif /* TX_API_H */
+enum uart_stopwidth {
+    kUartStopWidth_1B,
+    kUartStopWidth_2B,
+};
+
+enum uart_parity {
+    kUartParityNone,
+    kUartParityOdd,
+    kUartParityEven
+};
+
+struct uart_param {
+    unsigned int baudrate;
+    enum uart_datawidth nb_data;
+    enum uart_stopwidth nb_stop;
+    enum uart_parity parity;
+    bool hwctrl;
+};
+
+#define UART_SET_FORMAT 1
+#define UART_SET_SPEED  2
+
+int uart_open(const char *name, void **pdev);
+int uart_close(void *dev);
+int uart_control(void *dev, unsigned int cmd, void *arg);
+int uart_write(void *dev, const char *buf, size_t len);
+int uart_read(void *dev, char *buf, size_t len);
+void console_putc(char c);
+
+#endif /* TX_API_H && !TX_SOURCE_CODE */
 
 #ifdef __cplusplus
     extern "C"{
