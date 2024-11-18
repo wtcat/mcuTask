@@ -19,16 +19,23 @@ struct stm32_uart {
     const char *name;
     USART_TypeDef *reg;
     DMA_TypeDef *dma;
-    struct circ_buffer queue;
+    TX_MUTEX mtx;
+    struct circ_buffer txqueue;
+    struct circ_buffer rxqueue;
     int txchan;
     int rxchan;
     int irq;
     uint32_t clksrc;
     uint32_t clkbit;
-    rte_atomic32_t refcnt;
+    int refcnt;
+    bool rs485;
 };
 
 #define UART_ID(_uart) (int)((_uart) - uart_drivers)
+#define DEFAULT_SPEED 2000000
+
+#define RS485_SET_TX(_uart) (void)_uart
+#define RS485_SET_RX(_uart) (void)_uart
 
 static struct stm32_uart uart_drivers[8] = {
     [4] = {
@@ -43,12 +50,34 @@ static struct stm32_uart uart_drivers[8] = {
     }
 };
 
-
-static void stm32_uart_isr(void *arg) {
-    
+static __rte_always_inline DMA_Stream_TypeDef *
+stm32_get_dmastream(struct stm32_uart *uart, int chan) {
+    return (DMA_Stream_TypeDef *)((uint32_t)uart->dma + 
+        LL_DMA_STR_OFFSET_TAB[chan]);
 }
 
-static int stm32_uart_clkset(struct stm32_uart *uart, bool enable) {
+static void stm32_uart_isr(void *arg) {
+    struct stm32_uart *uart = (struct stm32_uart *)arg;
+    USART_TypeDef *reg = uart->reg;
+    uint32_t sr = reg->ISR;
+
+    /* Clear interrupt pending bits */
+    reg->ICR = sr;
+
+    /* Idle interrupt */
+    if (sr & LL_USART_ISR_IDLE) {
+
+    }
+
+    /* */
+    if (sr & LL_USART_ISR_TC) {
+        RS485_SET_RX(uart);
+    }
+
+}
+
+static int 
+stm32_uart_clkset(struct stm32_uart *uart, bool enable) {
     uint32_t devid = UART_ID(uart);
 
     if (devid == 1 || devid == 6) {
@@ -65,7 +94,8 @@ static int stm32_uart_clkset(struct stm32_uart *uart, bool enable) {
     return 0;
 }
 
-static struct stm32_uart *stm32_uart_find(const char *name) {
+static struct stm32_uart *
+stm32_uart_find(const char *name) {
     int ndev = (int)rte_array_size(uart_drivers) - 1;
     while (ndev >= 0) {
         struct stm32_uart *uart = &uart_drivers[ndev];
@@ -76,81 +106,8 @@ static struct stm32_uart *stm32_uart_find(const char *name) {
     return NULL;
 }
 
-int uart_open(const char *name, void **pdev) {
-    struct stm32_uart *uart;
-    int err;
-
-    if (!name || !pdev)
-        return -EINVAL;
-
-    uart = stm32_uart_find(name);
-    if (!uart)
-        return -ENODEV;
-
-    if (rte_atomic32_add_return(&uart->refcnt, 1) == 1) {
-        err = stm32_uart_clkset(uart, true);
-        if (err)
-            goto _failed;
-
-        err = request_irq(uart->irq, stm32_uart_isr, uart);
-        if (err)
-            goto _clkdis;
-
-        if (uart->dma) {
-            LL_DMA_InitTypeDef param;
-            if (uart->txchan) {
-                LL_DMA_StructInit(&param);
-                param.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
-                param.PeriphOrM2MSrcAddress = (uint32_t)&uart->reg->TDR;
-                param.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
-                LL_DMA_Init(uart->dma, uart->txchan, &param);
-                LL_USART_ClearFlag_TC(uart->reg);
-                LL_USART_EnableIT_TC(uart->reg);
-                // LL_USART_EnableDMAReq_TX(USART_TypeDef *USARTx);
-            }
-            if (uart->rxchan) {
-                LL_DMA_StructInit(&param);
-                param.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
-                param.PeriphOrM2MSrcAddress = (uint32_t)&uart->reg->RDR;
-                param.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
-                LL_DMA_Init(uart->dma, uart->rxchan, &param);
-                LL_USART_ClearFlag_IDLE(uart->reg);
-                LL_USART_EnableIT_IDLE(uart->reg);
-                // LL_USART_EnableDMAReq_TX(USART_TypeDef *USARTx);
-            }
-
-        }
-    }
-
-    *pdev = uart;
-    return 0;
-
-_clkdis:
-    stm32_uart_clkset(uart, false);
-_failed:
-    rte_atomic32_sub(&uart->refcnt, 1);
-    return err;
-}
-
-int uart_close(void *dev) {
-    struct stm32_uart *uart = (struct stm32_uart *)dev;
-
-    if (rte_atomic32_cmpset(&uart->refcnt.ucnt, 1, 0)) {
-        remove_irq(uart->irq, stm32_uart_isr, uart);
-        stm32_uart_clkset(uart, false);
-    } else {
-
-    }
-
-    return 0;
-}
-
-int uart_control(void *dev, unsigned int cmd, void *arg) {
-    struct stm32_uart *uart = (struct stm32_uart *)dev;
-
-    if (!uart || !arg)
-        return -EINVAL;
-
+static int 
+stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
     switch (cmd) {
     case UART_SET_FORMAT: {
         static const uint32_t datawidth_table[] = {
@@ -210,19 +167,136 @@ int uart_control(void *dev, unsigned int cmd, void *arg) {
     return 0;
 }
 
-int uart_write(void *dev, const char *buf, size_t len) {
+static size_t __fastcode
+stm32_uart_txfifo(USART_TypeDef *reg, const char *buf, size_t len) {
+    size_t remain = len;
+    while (remain > 0 && !(reg->ISR & LL_USART_ISR_TXE_TXFNF)) {
+        reg->TDR = *(uint8_t *)buf;
+        buf++;
+        remain--;
+    }
+    return len - remain;
+}
+
+int uart_open(const char *name, void **pdev) {
+    struct stm32_uart *uart;
+    struct uart_param param;
+    int err;
+
+    if (!name || !pdev)
+        return -EINVAL;
+
+    uart = stm32_uart_find(name);
+    if (!uart)
+        return -ENODEV;
+
+    guard(os_mutex)(&uart->mtx);
+    if (uart->refcnt++ == 0) {
+        err = stm32_uart_clkset(uart, true);
+        if (err)
+            goto _failed;
+
+        err = request_irq(uart->irq, stm32_uart_isr, uart);
+        if (err)
+            goto _clkdis;
+
+        if (uart->dma) {
+            LL_DMA_InitTypeDef param;
+            if (uart->txchan > 0) {
+                LL_DMA_StructInit(&param);
+                param.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
+                param.PeriphOrM2MSrcAddress = (uint32_t)&uart->reg->TDR;
+                param.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
+                LL_DMA_Init(uart->dma, uart->txchan, &param);
+                LL_USART_ClearFlag_TC(uart->reg);
+                LL_USART_EnableIT_TC(uart->reg);
+            }
+            if (uart->rxchan > 0) {
+                LL_DMA_StructInit(&param);
+                param.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
+                param.PeriphOrM2MSrcAddress = (uint32_t)&uart->reg->RDR;
+                param.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
+                LL_DMA_Init(uart->dma, uart->rxchan, &param);
+                LL_USART_ClearFlag_IDLE(uart->reg);
+                LL_USART_EnableIT_IDLE(uart->reg);
+                LL_USART_EnableDMAReq_RX(uart->reg);
+            }
+        }
+        
+        param.baudrate = DEFAULT_SPEED;
+        param.hwctrl   = false;
+        param.nb_data  = kUartDataWidth_8B;
+        param.nb_stop  = kUartStopWidth_1B;
+        param.parity   = kUartParityNone;
+        (void) stm32_uart_control(uart, UART_SET_FORMAT, &param);
+    }
+
+    *pdev = uart;
+    return 0;
+
+_clkdis:
+    stm32_uart_clkset(uart, false);
+_failed:
+    uart->refcnt--;
+    return err;
+}
+
+int uart_close(void *dev) {
+    struct stm32_uart *uart = (struct stm32_uart *)dev;
+
+    if (!stm32_uart_find(uart->name))
+        return -ENODEV;
+
+    guard(os_mutex)(&uart->mtx);
+    if (uart->refcnt > 0) {
+        if (--uart->refcnt == 0) {
+            remove_irq(uart->irq, stm32_uart_isr, uart);
+            stm32_uart_clkset(uart, false);
+        }
+    }
+
+    return 0;
+}
+
+int uart_control(void *dev, unsigned int cmd, void *arg) {
+    struct stm32_uart *uart = (struct stm32_uart *)dev;
+
+    if (!uart || !arg)
+        return -EINVAL;
+    
+    guard(os_mutex)(&uart->mtx);
+    return stm32_uart_control(dev, cmd, arg);
+}
+
+int __fastcode 
+uart_write(void *dev, const char *buf, size_t len, unsigned int options) {
     struct stm32_uart *uart = (struct stm32_uart *)dev;
     USART_TypeDef *reg = uart->reg;
 
-    while (len > 0 && !(reg->ISR & LL_USART_ISR_TXE_TXFNF)) {
-        reg->TDR = *(uint8_t *)buf;
-        buf++;
-        len--;
+    RS485_SET_TX(uart);
+    if (uart->txchan > 0 && len > 8) {
+        DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, uart->txchan);
+        uint32_t cr = stream->CR; 
+
+        SCB_CleanDCache_by_Addr((uint32_t *)buf, len);
+        LL_USART_EnableDMAReq_TX(uart->reg);
+        cr &= ~(DMA_SxCR_DIR | DMA_SxCR_CIRC | DMA_SxCR_EN) | 
+            LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
+        stream->CR   = cr;
+        stream->M0AR = (uint32_t)buf;
+        stream->NDTR = len;
+        stream->CR  |= DMA_SxCR_EN;
+        return 0;
+    } else {
+        LL_USART_DisableDMAReq_TX(uart->reg);
+        stm32_uart_txfifo(reg, buf, len);
+
     }
     return 0;
 }
 
-int uart_read(void *dev, char *buf, size_t len) {
+int __fastcode
+uart_read(void *dev, char *buf, size_t len, unsigned int options) {
     return 0;
 }
 
@@ -234,6 +308,10 @@ void __fastcode console_putc(char c) {
 }
 
 static int stm32_uart_init(void) {
+    for (size_t i = 0; i < rte_array_size(uart_drivers); i++) {
+        struct stm32_uart *uart = uart_drivers + i;
+        tx_mutex_create(&uart->mtx, (char *)uart->name, TX_INHERIT);
+    }
     return 0;
 }
 
