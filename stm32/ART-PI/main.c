@@ -1,6 +1,8 @@
 /*
  * Copyright 2024 wtcat
  */
+#include "basework/generic.h"
+#include "basework/rte_cpu.h"
 #include "tx_api.h"
 #include "basework/os/osapi.h"
 
@@ -28,7 +30,6 @@ void tx_application_define(void *unused) {
         __kernel_pool_start, (ULONG)__kernel_pool_size);
     tx_byte_pool_create(&app_pool, "application",
         __app_pool_start, (ULONG)__app_pool_size);
-
     do_sysinit();
     demo_test();
 }
@@ -57,22 +58,30 @@ void __general_free(void *ptr) {
     tx_byte_release(ptr);
 }
 
-void *kmalloc(size_t size, unsigned int flags) {
+void * __rte_must_check __kmalloc(size_t size, unsigned int flags) {
     void *ptr = NULL;
     tx_byte_allocate((flags & GMF_KERNEL)? &kernel_pool: &app_pool, 
         &ptr, size, (flags & GMF_WAIT)? TX_WAIT_FOREVER: TX_NO_WAIT);
     return ptr;
 }
 
-void *kzalloc(size_t size, unsigned int flags) {
+void *__rte_must_check __kzalloc(size_t size, unsigned int flags) {
     void *ptr = kmalloc(size, flags);
     if (ptr)
         memset(ptr, 0, size);
     return ptr;
 }
 
-void kfree(void *ptr) {
+void __kfree(void *ptr) {
     tx_byte_release(ptr);
+}
+
+void *__dma_coherent_alloc(size_t size, unsigned int flags) {
+    return NULL;
+}
+
+void __dma_coherent_free(void *ptr) {
+    
 }
 
 

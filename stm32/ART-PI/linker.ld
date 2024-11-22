@@ -245,6 +245,7 @@ SECTIONS
 
     .heap (NOLOAD) :
     {
+        . = ALIGN(8);
         _heap_start = ABSOLUTE(.);
         *(.heap)
         _heap_end = ORIGIN(sdram) + LENGTH(sdram);
