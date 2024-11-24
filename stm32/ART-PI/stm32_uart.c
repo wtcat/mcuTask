@@ -4,13 +4,7 @@
 #include <errno.h>
 #include <string.h>
 
-#include "basework/arch/generic/rte_atomic.h"
-#include "basework/arch/generic/rte_stdatomic.h"
-#include "basework/compiler_attributes.h"
-#include "basework/compiler_types.h"
-#include "basework/generic.h"
 #include "tx_api.h"
-#include "basework/rte_atomic.h"
 #include "basework/container/circbuf.h"
 
 #include "stm32h7xx.h"
@@ -18,7 +12,6 @@
 #include "stm32h7xx_ll_usart.h"
 #include "stm32h7xx_ll_rcc.h"
 #include "stm32h7xx_ll_dma.h"
-#include "tx_user.h"
 
 
 struct uart_queue {
@@ -32,7 +25,12 @@ struct tx_status {
     const char *txbuf;
     size_t len;
     size_t transfered;
-    bool busy;
+    TX_SEMAPHORE idle;
+};
+
+struct dma_chan {
+    int16_t ch;
+    int16_t id;
 };
 
 struct stm32_uart {
@@ -44,8 +42,8 @@ struct stm32_uart {
     struct uart_queue rxq;
     struct tx_status txstat;
     bool rs485;
-    int txchan;
-    int rxchan;
+    struct dma_chan txchan;
+    struct dma_chan rxchan;
     int irq;
     uint32_t clksrc;
     uint32_t clkbit;
@@ -58,21 +56,35 @@ struct stm32_uart {
 };
 
 
-#define UART_ID(_uart) (int)((_uart) - uart_drivers)
+#define UART_ID(_uart) (int)((_uart)->name[4] - '0')
 #define DEFAULT_SPEED 2000000
 #define DMA_MAXSEG UINT16_MAX
-#define UART_FIFOSIZE 16
+#define UART_FIFOSIZE 8
+#define DMA_CHAIN(ch, id) \
 
 #define RS485_SET_TX(_uart) (void)_uart
 #define RS485_SET_RX(_uart) (void)_uart
 
-static struct stm32_uart uart_drivers[8] = {
-    [4] = {
+static struct stm32_uart uart_drivers[] = {
+    {
+        .name    = "uart1",
+        .reg     = USART1,
+        .dma     = DMA1,
+        .txchan  = {-1, 0}, //LL_DMA_STREAM_0,
+        .rxchan  = {LL_DMA_STREAM_1, LL_DMAMUX1_REQ_USART1_RX}, //LL_DMA_STREAM_1,
+        .irq     = USART1_IRQn,
+        .clksrc  = LL_RCC_USART16_CLKSOURCE,
+        .clkbit  = LL_APB2_GRP1_PERIPH_USART1,
+        .rxq = {
+            .qsize = 64
+        }
+    },
+    {
         .name    = "uart4",
         .reg     = UART4,
         .dma     = DMA1,
-        .txchan  = LL_DMA_STREAM_0,
-        .rxchan  = LL_DMA_STREAM_1,
+        .txchan  = {-1, 0}, //LL_DMA_STREAM_0,
+        .rxchan  = {-1, 0}, //LL_DMA_STREAM_1,
         .irq     = UART4_IRQn,
         .clksrc  = LL_RCC_USART234578_CLKSOURCE,
         .clkbit  = LL_APB1_GRP1_PERIPH_UART4,
@@ -81,6 +93,18 @@ static struct stm32_uart uart_drivers[8] = {
         }
     }
 };
+
+static void
+txstat_init(struct stm32_uart *uart) {
+    tx_semaphore_create(&uart->txstat.idle, (CHAR *)uart->name, 1);
+    uart->txstat.transfered = 0;
+    uart->txstat.len = 0;
+}
+
+static void
+txstat_deinit(struct stm32_uart *uart) {
+    tx_semaphore_delete(&uart->txstat.idle);
+}
 
 static void 
 queue_reset(struct uart_queue *q) {
@@ -111,35 +135,36 @@ queue_destroy(struct uart_queue *q) {
 }
 
 static __rte_always_inline DMA_Stream_TypeDef *
-stm32_get_dmastream(struct stm32_uart *uart, int chan) {
+stm32_get_dmastream(struct stm32_uart *uart, const struct dma_chan *chan) {
     return (DMA_Stream_TypeDef *)((uint32_t)uart->dma + 
-        LL_DMA_STR_OFFSET_TAB[chan]);
+        LL_DMA_STR_OFFSET_TAB[chan->ch]);
 }
 
 static void __fastcode
-stm32_tx_completed(struct stm32_uart *uart) {
+stm32_tx_completed(struct stm32_uart *uart, USART_TypeDef *reg) {
     struct tx_status *txs = &uart->txstat;
     if (txs->transfered < txs->len) {
         size_t bytes = txs->len - txs->transfered;
         txs->transfered += uart->tx_start(uart, uart->reg, 
             txs->txbuf + txs->transfered, bytes);
     } else {
-        txs->busy = false;
+        reg->CR1 &= ~USART_CR1_TCIE;
         RS485_SET_RX(uart);
+        tx_semaphore_ceiling_put(&txs->idle, 1);
     }
 }
 
 static size_t __fastcode
 stm32_txfifo_start(struct stm32_uart *uart, USART_TypeDef *reg, 
     const char *buf, size_t len) {
+    size_t nbytes = 0;
     (void) uart;
-    uart->tx_start = stm32_txfifo_start;
-    while (len > 0 && !(reg->ISR & LL_USART_ISR_TXE_TXFNF)) {
-        reg->TDR = *(uint8_t *)buf;
-        buf++;
-        len--;
-    }
-    return len;
+    
+    len = rte_min(len, UART_FIFOSIZE);
+    while (nbytes < len)
+        reg->TDR = (uint8_t)buf[nbytes++];
+
+    return nbytes;
 }
 
 static int __fastcode __rte_maybe_unused
@@ -160,6 +185,7 @@ stm32_rxfifo_recv(struct stm32_uart *uart, USART_TypeDef *reg) {
                     while ((reg->ISR & LL_USART_ISR_RXNE_RXFNE))
                         (void) reg->RDR;
                     uart->rx_drops++;
+                    printk("recv: overflow\n");
                     break;
                 } else {
                     q->head = 0;
@@ -172,24 +198,21 @@ stm32_rxfifo_recv(struct stm32_uart *uart, USART_TypeDef *reg) {
         }
         tx_semaphore_ceiling_put(&q->sem, 1);
     }
+
     return 0;
 }
 
 static size_t __fastcode __rte_maybe_unused
 stm32_txdma_start(struct stm32_uart *uart, USART_TypeDef *reg, 
     const char *buf, size_t len) {
-    DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, uart->txchan);
+    DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, &uart->txchan);
     uint32_t cr = stream->CR;
-
-    SCB_CleanDCache_by_Addr((uint32_t *)buf, len);
-    uart->tx_start = stm32_txdma_start;
 
     cr &= ~(DMA_SxCR_DIR | DMA_SxCR_CIRC | DMA_SxCR_EN);
     cr |= LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
     
     stream->CR   = cr;
     while (stream->CR & DMA_SxCR_EN);
-    stream->PAR  = (uint32_t)&reg->TDR;
     stream->M0AR = (uint32_t)buf;
     stream->NDTR = len;
     stream->CR  |= DMA_SxCR_EN;
@@ -198,7 +221,7 @@ stm32_txdma_start(struct stm32_uart *uart, USART_TypeDef *reg,
 
 static int __rte_maybe_unused
 stm32_rxdma_recv(struct stm32_uart *uart, USART_TypeDef *reg) {
-    DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, uart->rxchan);
+    DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, &uart->rxchan);
     struct uart_queue *q = &uart->rxq;
     uint32_t remain = stream->NDTR;
     uint32_t space = CIRC_SPACE(q->head, q->tail, q->qsize);
@@ -217,6 +240,7 @@ stm32_rxdma_recv(struct stm32_uart *uart, USART_TypeDef *reg) {
         stream->CR &= ~DMA_SxCR_EN;
         while (stream->CR & DMA_SxCR_EN);
         queue_reset(q);
+        stream->CR |= DMA_SxCR_EN;
         uart->rx_drops++;
     }
 
@@ -225,7 +249,7 @@ stm32_rxdma_recv(struct stm32_uart *uart, USART_TypeDef *reg) {
 
 static int __rte_maybe_unused
 stm32_rxdma_prepare(struct stm32_uart *uart) {
-    DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, uart->rxchan);
+    DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, &uart->rxchan);
     uint32_t cr = stream->CR;
 
     LL_USART_EnableDMAReq_RX(uart->reg);
@@ -235,7 +259,6 @@ stm32_rxdma_prepare(struct stm32_uart *uart) {
     while (stream->CR & DMA_SxCR_EN);
 
     queue_reset(&uart->rxq);
-    stream->PAR  = (uint32_t)&uart->reg->RDR;
     stream->M0AR = (uint32_t)uart->rxq.buf;
     stream->NDTR = uart->rxq.qsize;
     stream->CR  |= DMA_SxCR_EN;
@@ -243,7 +266,7 @@ stm32_rxdma_prepare(struct stm32_uart *uart) {
 }
 
 static void __rte_maybe_unused
-stm32_dma_stop(struct stm32_uart *uart, int chan) {
+stm32_dma_stop(struct stm32_uart *uart, const struct dma_chan *chan) {
     DMA_Stream_TypeDef *stream = stm32_get_dmastream(uart, chan);
     stream->CR &= ~DMA_SxCR_EN;
     while (stream->CR & DMA_SxCR_EN);
@@ -259,12 +282,12 @@ stm32_uart_isr(void *arg) {
     reg->ICR = sr;
 
     /* Idle interrupt */
-    if (sr & LL_USART_ISR_IDLE)
+    if (sr & (LL_USART_ISR_IDLE | LL_USART_ISR_RXFT))
         uart->rx_start(uart, reg);
 
-    /* */
+    /* Tansmit completed */
     if (sr & LL_USART_ISR_TC)
-        stm32_tx_completed(uart);
+        stm32_tx_completed(uart, reg);
 }
 
 static int 
@@ -388,24 +411,22 @@ int uart_open(const char *name, void **pdev) {
 
         if (uart->dma) {
             LL_DMA_InitTypeDef param;
-            if (uart->txchan > 0) {
+            if (uart->txchan.ch > 0) {
                 LL_DMA_StructInit(&param);
                 param.Direction = LL_DMA_DIRECTION_MEMORY_TO_PERIPH;
                 param.PeriphOrM2MSrcAddress = (uint32_t)&uart->reg->TDR;
                 param.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
-                LL_DMA_Init(uart->dma, uart->txchan, &param);
-                LL_USART_ClearFlag_TC(uart->reg);
-                LL_USART_EnableIT_TC(uart->reg);
+                param.PeriphRequest = uart->txchan.id;
+                LL_DMA_Init(uart->dma, uart->txchan.ch, &param);
             }
-            if (uart->rxchan > 0) {
+            if (uart->rxchan.ch > 0) {
                 uart->rx_start = stm32_rxdma_recv;
                 LL_DMA_StructInit(&param);
                 param.Direction = LL_DMA_DIRECTION_PERIPH_TO_MEMORY;
                 param.PeriphOrM2MSrcAddress = (uint32_t)&uart->reg->RDR;
                 param.MemoryOrM2MDstIncMode = LL_DMA_MEMORY_INCREMENT;
-                LL_DMA_Init(uart->dma, uart->rxchan, &param);
-                LL_USART_ClearFlag_IDLE(uart->reg);
-                LL_USART_EnableIT_IDLE(uart->reg);
+                param.PeriphRequest = uart->rxchan.id;
+                LL_DMA_Init(uart->dma, uart->rxchan.ch, &param);
             }
         }
 
@@ -413,15 +434,20 @@ int uart_open(const char *name, void **pdev) {
         LL_USART_SetTXFIFOThreshold(uart->reg, 0);
         LL_USART_SetRXFIFOThreshold(uart->reg, 2);
         LL_USART_EnableFIFO(uart->reg);
+        
+       if (!uart->tx_start) 
+            uart->tx_start = stm32_txfifo_start;
 
-        // if (!uart->tx_start) {
-        //     uart->tx_start = stm32_txfifo_start;
-        //     LL_USART_DisableDMAReq_TX(uart->reg);
-        // }
         if (!uart->rx_start) {
             uart->rx_start = stm32_rxfifo_recv;
             LL_USART_DisableDMAReq_RX(uart->reg);
+            LL_USART_EnableIT_RXFT(uart->reg);
         }
+
+        LL_USART_ClearFlag_IDLE(uart->reg);
+        LL_USART_EnableIT_IDLE(uart->reg);
+
+        txstat_init(uart);
 
         param.baudrate = DEFAULT_SPEED;
         param.hwctrl   = false;
@@ -429,7 +455,7 @@ int uart_open(const char *name, void **pdev) {
         param.nb_stop  = kUartStopWidth_1B;
         param.parity   = kUartParityNone;
         (void) stm32_uart_control(uart, UART_SET_FORMAT, &param);
-        if (uart->rxchan > 0)
+        if (uart->rxchan.ch > 0)
             (void) stm32_rxdma_prepare(uart);
     }
 
@@ -454,13 +480,14 @@ int uart_close(void *dev) {
     guard(os_mutex)(&uart->mtx);
     if (uart->refcnt > 0) {
         if (--uart->refcnt == 0) {
-            if (uart->txchan > 0)
-                stm32_dma_stop(uart, uart->txchan);
-            if (uart->rxchan > 0)
-                stm32_dma_stop(uart, uart->rxchan);
+            if (uart->txchan.ch > 0)
+                stm32_dma_stop(uart, &uart->txchan);
+            if (uart->rxchan.ch > 0)
+                stm32_dma_stop(uart, &uart->rxchan);
             stm32_uart_clkset(uart, false);
             remove_irq(uart->irq, stm32_uart_isr, uart);
             queue_destroy(&uart->rxq);
+            txstat_deinit(uart);
         }
     }
 
@@ -483,20 +510,31 @@ uart_write(void *dev, const char *buf, size_t len, unsigned int options) {
     struct tx_status *txs = &uart->txstat;
     USART_TypeDef *reg = uart->reg;
 
-    RS485_SET_TX(uart);
-
+    guard(os_mutex)(&uart->mtx);
+    
     txs->txbuf = buf;
-    txs->transfered = 0;
     txs->len = len;
-    txs->busy = true;
 
-    if (uart->txchan > 0 && len > UART_FIFOSIZE) {
+    if (uart->txchan.ch > 0 && len > UART_FIFOSIZE) {
         LL_USART_EnableDMAReq_TX(uart->reg);
-        stm32_txdma_start(uart, reg, buf, len);
+        SCB_CleanDCache_by_Addr((uint32_t *)buf, len);
+        uart->tx_start = stm32_txdma_start;
+        scoped_guard(os_irq) {
+            RS485_SET_TX(uart);
+            txs->transfered = stm32_txdma_start(uart, reg, buf, len);
+            reg->CR1 |= USART_CR1_TCIE;
+        }
     } else {
         LL_USART_DisableDMAReq_TX(uart->reg);
-        stm32_txfifo_start(uart, reg, buf, len);
+        uart->tx_start = stm32_txfifo_start;
+        scoped_guard(os_irq) {
+            RS485_SET_TX(uart);
+            txs->transfered = stm32_txfifo_start(uart, reg, buf, len);
+            reg->CR1 |= USART_CR1_TCIE;
+        }
     }
+
+    tx_semaphore_get(&uart->txstat.idle, TX_WAIT_FOREVER);
     return 0;
 }
 
@@ -509,8 +547,10 @@ uart_read(void *dev, char *buf, size_t len, unsigned int options) {
     if (!uart || !buf)
         return -EINVAL;
 
+    guard(os_mutex)(&uart->mtx);
     q = &uart->rxq;
     ret = 0;
+
     while (len > 0) {
         size_t used = CIRC_CNT(q->head, q->tail, q->qsize);
         size_t remain = CIRC_CNT_TO_END(q->head, q->tail, q->qsize);
@@ -522,11 +562,14 @@ uart_read(void *dev, char *buf, size_t len, unsigned int options) {
             }
             
             size_t bytes = rte_min_t(size_t, remain, len);
-            memcpy(buf, q->buf + q->tail, bytes);
+            if (uart->rxchan.ch > 0)
+                SCB_InvalidateDCache_by_Addr(q->buf + q->tail, bytes);
+
+            memcpy(buf + ret, q->buf + q->tail, bytes);
             q->tail += bytes;
             len     -= bytes;
             ret     += bytes;
-        } else if (!(options & DIO_NOBLOCK)) {
+        } else if (!ret && !(options & O_NOBLOCK)) {
             tx_semaphore_get(&q->sem, TX_WAIT_FOREVER);
         } else {
             break;
@@ -551,4 +594,4 @@ static int stm32_uart_init(void) {
     return 0;
 }
 
-SYSINIT(stm32_uart_init, 200);
+SYSINIT(stm32_uart_init, SI_DRIVER_ORDER);
