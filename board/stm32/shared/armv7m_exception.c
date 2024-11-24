@@ -1,8 +1,9 @@
 /*
  * Copyright 2024 wtcat
  */
+#define TX_USE_BOARD_PRIVATE
 #include "tx_api.h"
-#include "stm32h7xx.h"
+
 
 typedef unsigned int __u32;
 struct callee_saved {
@@ -312,9 +313,7 @@ void __rte_naked _stm32_exception_handler(void) {
         "bl   stm32_fault_process\n"
         "add  sp, #40\n"
         "pop  {r0, pc}\n"
-        :
-        :
-        :
+        :::
     );
     for ( ; ; );
 }

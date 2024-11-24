@@ -14,16 +14,6 @@ extern char __app_pool_size[];
 static TX_BYTE_POOL kernel_pool;
 static TX_BYTE_POOL app_pool;
 
-LINKER_ROSET(sysinit, struct sysinit_item);
-
-static void do_sysinit(void) {
-    LINKER_SET_FOREACH(sysinit, item, struct sysinit_item) {
-        int err = item->handler();
-        if (err)
-            printk("Failed to execute %s (%d)\n", item->name, err);
-    }
-}
-
 static void demo_test(void);
 void tx_application_define(void *unused) {
     tx_byte_pool_create(&kernel_pool, "kernel",
@@ -86,11 +76,26 @@ void __dma_coherent_free(void *ptr) {
 
 
 static void demo_thread_1(ULONG arg) {
-    int count = 0;
+    char buffer[128];
+    // int count = 0;
+    void *dev = NULL;
 
+    if (uart_open("uart1", &dev) < 0)
+        return;
+
+    printk("Opened uart1\n");
+
+    static const char text[] = {"hello, USART1 (Copyright 2024 wtcat)\n"};
+    uart_write(dev, text, sizeof(text) - 1, 0);
+    printk("demo_thread_1 write okay\n");
     for ( ; ; ) {
-        printk("Thread-1: count(%d)\n", count++);
-        tx_thread_sleep(TX_MSEC(1000));
+        size_t bytes = uart_read(dev, buffer, 64, 0);
+        if (bytes > 0) {
+            buffer[bytes] = '\0';
+            uart_write(dev, buffer, bytes, 0);
+        }
+        // printk("Thread-1: count(%d)\n", count++);
+        // tx_thread_sleep(TX_MSEC(1000));
     }
 }
 

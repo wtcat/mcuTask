@@ -247,4 +247,14 @@
  */
 #define TX_THREAD_API_EXTENSION
 
+#ifdef TX_USE_BOARD_PRIVATE
+#include "stm32h7xx.h"
+
+#define BOARD_IRQ_MAX 150
+#define BOARD_SYSTICK_CLKFREQ HAL_RCCEx_GetD1SysClockFreq()
+
+void platform_irq_dispatch(void);
+void platform_systick_handler(void);
+#endif /* TX_USE_BOARD_PRIVATE */
+
 #endif /* TX_USER_H_ */

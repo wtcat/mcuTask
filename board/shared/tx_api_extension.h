@@ -34,6 +34,26 @@ DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), __restore_interr
 #define __fastbss   __rte_section(".fastbss")
 #define __fastdata  __rte_section(".fastdata")
 
+/* Clear bss section */
+#define _clear_bss_section(_start, _end) \
+do { \
+	extern char _start[]; \
+	extern char _end[]; \
+	for (uint32_t *dest = (uint32_t *)_start; dest < (uint32_t *)_end;) \
+		*dest++ = 0; \
+} while (0)
+
+/* Initialize data section */
+#define _copy_data_section(_start, _end, _loadstart) \
+do { \
+	extern char _start[]; \
+	extern char _end[]; \
+	extern char _loadstart[]; \
+	for (uint32_t *src = (uint32_t *)_loadstart, *dest = (uint32_t *)_start; \
+		 dest < (uint32_t *)_end;) \
+		*dest++ = *src++; \
+} while (0)
+
 /*
  * System intitialize 
  */
@@ -42,7 +62,7 @@ struct sysinit_item {
    const char *name;
 };
 
-/* system initialize order */
+/* System initialize order */
 #define SI_PREDRIVER_ORDER     40
 #define SI_DRIVER_ORDER        50
 #define SI_APPLICATION_ORDER   150
@@ -56,6 +76,8 @@ struct sysinit_item {
       .handler = _handler, \
       .name = #_handler \
    }
+
+void do_sysinit(void);
 
 /*
  * Memory allocate interface

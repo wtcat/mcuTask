@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
 
 # Setup toolchain
 set(CROSS_COMPILER arm-none-eabi-)
-set(WKSAPCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../..)
+set(WKSAPCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 
 include(${WKSAPCE_PATH}/cmake/cortex_m7.cmake)
 include(${WKSAPCE_PATH}/cmake/utils.cmake)
@@ -42,19 +42,19 @@ add_compile_options(
 )
 
 add_executable(${PROJECT_NAME}
-    cstub.c
     system_stm32h7xx.c
     main.c
-    stm32_exception.c
-    stm32_platform.c
+    stm32_startup.c
     stm32_uart.c
     stm32_pins.c
 )
 
 # Add subdirectory
 add_subdirectory(${WKSAPCE_PATH}/rtos rtos)
-add_subdirectory(${WKSAPCE_PATH}/stm32/Drivers drivers)
 add_subdirectory(${WKSAPCE_PATH}/basework basework)
+add_subdirectory(${WKSAPCE_PATH}/board/shared shared)
+add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
+add_subdirectory(${WKSAPCE_PATH}/board/stm32/Drivers drivers)
 
 # Link target
 collect_link_libraries(libs ${PROJECT_NAME})
