@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#include "basework/generic.h"
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "basework/lib/iovpr.h"
@@ -18,9 +19,10 @@ struct irq_desc {
 };
 
 #define LINKER_SYM(_sym) extern char _sym[];
-#define VECTOR_SIZE (VECTOR_MAX + 16)
-#define VECTOR_MAX  (WAKEUP_PIN_IRQn + 1)
-#define SYSTEM_CLK 1000000
+#define VECTOR_SIZE  (VECTOR_MAX + 16)
+#define VECTOR_MAX   (WAKEUP_PIN_IRQn + 1)
+#define VECTOR_GET() (SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk)
+#define IRQ_GET()    (VECTOR_GET() - 16)
 
 LINKER_SYM(_sbss)
 LINKER_SYM(_ebss)
@@ -78,10 +80,9 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	[16 ... VECTOR_SIZE-1] = (void *)stm32_irq_dispatch
 };
 
-
 static void default_irq_handler(void *arg) {
-	(void) arg;
-	while (1);
+	printk("Warnning***: please install interrupt(%d) handler\n", 
+		(int)IRQ_GET());
 }
 
 void _stm32_reset(void) {
@@ -135,8 +136,8 @@ static void __fastcode stm32_systick_handler(void) {
 }
 
 static void __fastcode stm32_irq_dispatch(void) {
-	int vector = SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk;
-	struct irq_desc *desc = _irqdesc_table + vector;
+	int irq = IRQ_GET();
+	struct irq_desc *desc = _irqdesc_table + irq;
 
 #ifdef TX_ENABLE_EXECUTION_CHANGE_NOTIFY
     _tx_execution_isr_enter()
@@ -159,8 +160,14 @@ void _tx_initialize_low_level(void) {
 	NVIC_SetPriority(PendSV_IRQn, 15);
 	NVIC_SetPriority(SysTick_IRQn, 13);
 
+	/* Setup default interrupt handler */
+	for (size_t i = 0; i < rte_array_size(_irqdesc_table); i++) {
+		_irqdesc_table[i].handler = default_irq_handler;
+		_irqdesc_table[i].arg = NULL;
+	}
+
 	/* Redirect vector table to ram region*/
-	memcpy(_ram_vectors, irq_vectors, VECTOR_SIZE);
+	memcpy(_ram_vectors, irq_vectors, sizeof(_ram_vectors));
 	SCB->VTOR = (uint32_t)_ram_vectors;
 	__DSB();
 
