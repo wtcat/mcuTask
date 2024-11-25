@@ -1,6 +1,7 @@
 /*
  * Copyright 2024 wtcat
  */
+#include "basework/compiler_attributes.h"
 #include "basework/generic.h"
 #include "basework/rte_cpu.h"
 #include "tx_api.h"
@@ -74,28 +75,25 @@ void __dma_coherent_free(void *ptr) {
     
 }
 
-
+static char dma_buffer[128] __rte_aligned(32);
 static void demo_thread_1(ULONG arg) {
-    char buffer[128];
     // int count = 0;
     void *dev = NULL;
 
     if (uart_open("uart1", &dev) < 0)
         return;
 
-    printk("Opened uart1\n");
-
     static const char text[] = {"hello, USART1 (Copyright 2024 wtcat)\n"};
     uart_write(dev, text, sizeof(text) - 1, 0);
     printk("demo_thread_1 write okay\n");
     for ( ; ; ) {
-        size_t bytes = uart_read(dev, buffer, 64, 0);
+        memset(dma_buffer, 0, sizeof(dma_buffer));
+        size_t bytes = uart_read(dev, dma_buffer, sizeof(dma_buffer) - 1, 0);
         if (bytes > 0) {
-            buffer[bytes] = '\0';
-            uart_write(dev, buffer, bytes, 0);
+            printk("recv: bytes(%d)\n", bytes);
+            dma_buffer[bytes] = '\0';
+            uart_write(dev, dma_buffer, bytes, 0);
         }
-        // printk("Thread-1: count(%d)\n", count++);
-        // tx_thread_sleep(TX_MSEC(1000));
     }
 }
 
