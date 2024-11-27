@@ -71,26 +71,22 @@ void __fastcode platform_irq_dispatch(void) {
 }
 
 int request_irq(int irq, void (*handler)(void *), void *arg) {
-	TX_INTERRUPT_SAVE_AREA
-
 	if (irq >= BOARD_IRQ_MAX)
 		return -EINVAL;
+
 	if (!handler)
 		return -EINVAL;
 
-	
-	TX_DISABLE
-	_irqdesc_table[irq].handler = handler;
-	_irqdesc_table[irq].arg = arg;
-	TX_RESTORE
+	scoped_guard(os_irq) {
+		_irqdesc_table[irq].handler = handler;
+		_irqdesc_table[irq].arg = arg;
+	}
 
 	NVIC_EnableIRQ(irq);
 	return 0;
 }
 
 int remove_irq(int irq, void (*handler)(void *), void *arg) {
-	TX_INTERRUPT_SAVE_AREA
-
 	if (irq >= BOARD_IRQ_MAX)
 		return -EINVAL;
 
@@ -98,10 +94,9 @@ int remove_irq(int irq, void (*handler)(void *), void *arg) {
 	(void) arg;
 	NVIC_DisableIRQ(irq);
 
-	TX_DISABLE
-	_irqdesc_table[irq].handler = default_irq_handler;
-	_irqdesc_table[irq].arg = NULL;
-	TX_RESTORE
-
+	scoped_guard(os_irq) {
+		_irqdesc_table[irq].handler = default_irq_handler;
+		_irqdesc_table[irq].arg = NULL;
+	}
 	return 0;
 }

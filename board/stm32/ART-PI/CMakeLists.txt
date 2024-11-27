@@ -37,7 +37,7 @@ add_compile_options(
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1
-
+    -mlong-calls
     -Wno-unused-parameter
 )
 
@@ -47,6 +47,7 @@ add_executable(${PROJECT_NAME}
     stm32_startup.c
     stm32_uart.c
     stm32_pins.c
+    stm32_gpio.c
 )
 
 # Add subdirectory

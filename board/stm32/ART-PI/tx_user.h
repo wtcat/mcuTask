@@ -246,18 +246,34 @@
  * CPU architecture configuration
  */
 #define TX_ENABLE_WFI  /* Support wfi instruction */
-
+#define TX_PORT_USE_BASEPRI 
+#define TX_PORT_BASEPRI 0x80
 
 /*
  * Enable tx-api extension
  */
 #define TX_THREAD_API_EXTENSION
 
+/*
+ * Board private
+ */
 #ifdef TX_USE_BOARD_PRIVATE
 #include "stm32h7xx.h"
+#include "stm32h7xx_ll_exti.h"
+#include "stm32h7xx_ll_system.h"
+#include "stm32h7xx_ll_gpio.h"
 
+/* Systick */
 #define BOARD_IRQ_MAX 150
 #define BOARD_SYSTICK_CLKFREQ HAL_RCCEx_GetD1SysClockFreq()
+
+/* GPIO */
+#define STM32_GPIO(_p, _n)     ((((_p) - 'A') << 8) | (_n))
+#define STM32_GPIO_PIN(_gpio)  ((_gpio) & 0xFF)
+#define STM32_GPIO_PORT(_gpio) (((_gpio) >> 8) & 0xFF)
+
+#define GPIO_USER_KEY1   STM32_GPIO('H', 4)
+
 
 void platform_irq_dispatch(void);
 void platform_systick_handler(void);

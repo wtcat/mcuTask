@@ -1,10 +1,10 @@
 /*
  * Copyright 2024 wtcat
  */
-#include "basework/compiler_attributes.h"
-#include "basework/generic.h"
-#include "basework/rte_cpu.h"
+#define TX_USE_BOARD_PRIVATE
+
 #include "tx_api.h"
+#include "basework/rte_cpu.h"
 #include "basework/os/osapi.h"
 
 extern char __kernel_pool_start[];
@@ -75,10 +75,18 @@ void __dma_coherent_free(void *ptr) {
     
 }
 
+static void gpio_key_isr(int line, void *arg) {
+    (void) arg;
+
+    printk("gpio_key_isr: line(%d)\n", line);
+}
+
 static char dma_buffer[128] __rte_aligned(32);
 static void demo_thread_1(ULONG arg) {
     // int count = 0;
     void *dev = NULL;
+
+    gpio_request_irq(GPIO_USER_KEY1, gpio_key_isr, NULL, false, true);
 
     if (uart_open("uart1", &dev) < 0)
         return;

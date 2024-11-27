@@ -9,8 +9,10 @@
 static void uart_pins_configure(void) {
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     
-    __HAL_RCC_GPIOI_CLK_ENABLE();
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
+    __HAL_RCC_GPIOH_CLK_ENABLE();
+    __HAL_RCC_GPIOI_CLK_ENABLE();
 
     /*
      * PI9 -> UART4_RX

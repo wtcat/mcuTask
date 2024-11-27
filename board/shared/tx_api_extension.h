@@ -63,9 +63,10 @@ struct sysinit_item {
 };
 
 /* System initialize order */
-#define SI_PREDRIVER_ORDER     40
-#define SI_DRIVER_ORDER        50
-#define SI_APPLICATION_ORDER   150
+#define SI_MEMORY_ORDER        10
+#define SI_PREDRIVER_ORDER     70
+#define SI_DRIVER_ORDER        100
+#define SI_APPLICATION_ORDER   200
 
 #define SYSINIT(_handler, _order) \
     enum { __enum_##_handler = _order}; \
@@ -99,6 +100,9 @@ void  __kfree(void *ptr);
 int printk(const char *fmt, ...) __rte_printf(1, 2);
 int request_irq(int irq, void (*handler)(void *), void *arg);
 int remove_irq(int irq, void (*handler)(void *), void *arg);
+int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg,
+					 bool rising_edge, bool falling_edge);
+int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg);
 
 /*
  * uart driver
