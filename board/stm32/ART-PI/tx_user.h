@@ -243,6 +243,12 @@
 #define TX_DISABLE_ERROR_CHECKING
 
 /*
+ * CPU architecture configuration
+ */
+#define TX_ENABLE_WFI  /* Support wfi instruction */
+
+
+/*
  * Enable tx-api extension
  */
 #define TX_THREAD_API_EXTENSION

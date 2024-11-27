@@ -274,6 +274,15 @@ stm32_dma_stop(struct stm32_uart *uart, const struct stm32_dmachan *chan) {
     while (stream->CR & DMA_SxCR_EN);
 }
 
+static void
+stm32_dmatxrx_stop(struct stm32_uart *uart) {
+    if (stm32_dmachan_valid(&uart->rxchan))
+        stm32_dma_stop(uart, &uart->rxchan);
+
+    if (stm32_dmachan_valid(&uart->txchan))
+        stm32_dma_stop(uart, &uart->txchan);
+}
+
 static void __fastcode
 stm32_uart_isr(void *arg) {
     struct stm32_uart *uart = (struct stm32_uart *)arg;
@@ -352,6 +361,8 @@ stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
             cr1 |= datawidth_table[p->nb_data];
         }
 
+        stm32_dmatxrx_stop(uart);
+
         clkfreq = LL_RCC_GetUSARTClockFreq(uart->clksrc);
         scoped_guard(os_irq) {
             uart->reg->CR1 = cr1;
@@ -371,6 +382,7 @@ stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
     case UART_SET_SPEED: {
         uint32_t clkfreq = LL_RCC_GetUSARTClockFreq(uart->clksrc);
         uint32_t baudrate = *(uint32_t *)arg;
+        stm32_dmatxrx_stop(uart);
         scoped_guard(os_irq) {
             uart->reg->CR1 &= ~USART_CR1_UE;
             LL_USART_SetBaudRate(uart->reg, clkfreq, 0, 0, baudrate);
@@ -381,6 +393,9 @@ stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
     default:
         break;
     }
+
+    if (stm32_dmachan_valid(&uart->rxchan))
+        (void) stm32_rxdma_prepare(uart);
 
     return 0;
 }
@@ -457,8 +472,6 @@ int uart_open(const char *name, void **pdev) {
         param.nb_stop  = kUartStopWidth_1B;
         param.parity   = kUartParityNone;
         (void) stm32_uart_control(uart, UART_SET_FORMAT, &param);
-        if (stm32_dmachan_valid(&uart->rxchan))
-            (void) stm32_rxdma_prepare(uart);
     }
 
     *pdev = uart;
