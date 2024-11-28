@@ -609,4 +609,4 @@ static int stm32_uart_init(void) {
     return 0;
 }
 
-SYSINIT(stm32_uart_init, SI_DRIVER_ORDER);
+SYSINIT(stm32_uart_init, SI_DRIVER_LEVEL, 00);

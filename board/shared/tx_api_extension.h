@@ -62,17 +62,20 @@ struct sysinit_item {
    const char *name;
 };
 
-/* System initialize order */
-#define SI_MEMORY_ORDER        10
-#define SI_PREDRIVER_ORDER     70
-#define SI_DRIVER_ORDER        100
-#define SI_APPLICATION_ORDER   200
+/* System initialize level */
+#define SI_MEMORY_LEVEL        10
+#define SI_PREDRIVER_LEVEL     70
+#define SI_DRIVER_LEVEL        80
+#define SI_APPLICATION_LEVEL   90
 
-#define SYSINIT(_handler, _order) \
+#define SYSINIT(_handler, _level, _order) \
+    __SYSINIT(_handler, _level, _order)
+
+#define __SYSINIT(_handler, _level, _order) \
+    ___SYSINIT(_handler, 0x##_level##_order)
+
+#define ___SYSINIT(_handler, _order) \
     enum { __enum_##_handler = _order}; \
-    __SYSINIT(_handler, _order)
-
-#define __SYSINIT(_handler, _order) \
    static LINKER_ROSET_ITEM_ORDERED(sysinit, struct sysinit_item, entry, _order) = { \
       .handler = _handler, \
       .name = #_handler \

@@ -247,4 +247,4 @@ _found:
 	return 0;
 }
 
-SYSINIT(gpio_init_irq, SI_PREDRIVER_ORDER);
+SYSINIT(gpio_init_irq, SI_PREDRIVER_LEVEL, 10);

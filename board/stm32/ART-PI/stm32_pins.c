@@ -50,4 +50,4 @@ static int stm32_pins_init(void) {
 }
 
 
-SYSINIT(stm32_pins_init, SI_PREDRIVER_ORDER);
+SYSINIT(stm32_pins_init, SI_PREDRIVER_LEVEL, 10);

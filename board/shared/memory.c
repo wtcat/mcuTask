@@ -63,4 +63,4 @@ static int memory_init(void) {
     return 0;
 }
 
-SYSINIT(memory_init, SI_MEMORY_ORDER);
+SYSINIT(memory_init, SI_MEMORY_LEVEL, 10);
