@@ -125,6 +125,13 @@ SECTIONS
     {
         _sramfuncs = .;
         rtos/threadx/libthreadx.a:(.text*)
+        libc.a: *memset*.o(.text*)
+        libc.a: *memcpy*.o(.text*)
+        libc.a: *strlen*.o(.text*)
+        libc.a: *strcmp*.o(.text*)
+        libc.a: *_aeabi_uldivmod*.o(.text*)
+        libc.a: *_udivmoddi4*.o(.text*)
+
         *(.itcm*)
         . = ALIGN(4);
         _eramfuncs = .;
@@ -251,11 +258,11 @@ SECTIONS
         _heap_end = ORIGIN(sdram) + LENGTH(sdram);
     } > sdram
 
-    __kernel_pool_start = _ebss;
-    __kernel_pool_size = ORIGIN(sram) + LENGTH(sram) - _ebss;
+    _kernel_byte_pool_start = _ebss;
+    _kernel_byte_pool_size = ORIGIN(sram) + LENGTH(sram) - _ebss;
 
-    __app_pool_start = _heap_start;
-    __app_pool_size  = _heap_end - _heap_start;
+    _app_pool_byte_start = _heap_start;
+    _app_pool_byte_size  = _heap_end - _heap_start;
 
     /* Stabs debugging sections. */
 

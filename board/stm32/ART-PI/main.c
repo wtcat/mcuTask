@@ -7,20 +7,9 @@
 #include "basework/rte_cpu.h"
 #include "basework/os/osapi.h"
 
-extern char __kernel_pool_start[];
-extern char __kernel_pool_size[];
-extern char __app_pool_start[];
-extern char __app_pool_size[];
-
-static TX_BYTE_POOL kernel_pool;
-static TX_BYTE_POOL app_pool;
 
 static void demo_test(void);
 void tx_application_define(void *unused) {
-    tx_byte_pool_create(&kernel_pool, "kernel",
-        __kernel_pool_start, (ULONG)__kernel_pool_size);
-    tx_byte_pool_create(&app_pool, "application",
-        __app_pool_start, (ULONG)__app_pool_size);
     do_sysinit();
     demo_test();
 }
@@ -28,51 +17,6 @@ void tx_application_define(void *unused) {
 int main(void) {
     tx_kernel_enter();
     return 0;
-}
-
-/*
- * Memory allocate implemention
- */
-void *__general_malloc(size_t size) {
-    void *p = NULL;
-    tx_byte_allocate(&kernel_pool, &p, size, TX_NO_WAIT);
-    return p;
-}
-
-void *__general_calloc(size_t n, size_t size) {
-    void *p = NULL;
-    tx_byte_allocate(&kernel_pool, &p, n *size, TX_NO_WAIT);
-    return p;
-}
-
-void __general_free(void *ptr) {
-    tx_byte_release(ptr);
-}
-
-void * __rte_must_check __kmalloc(size_t size, unsigned int flags) {
-    void *ptr = NULL;
-    tx_byte_allocate((flags & GMF_KERNEL)? &kernel_pool: &app_pool, 
-        &ptr, size, (flags & GMF_WAIT)? TX_WAIT_FOREVER: TX_NO_WAIT);
-    return ptr;
-}
-
-void *__rte_must_check __kzalloc(size_t size, unsigned int flags) {
-    void *ptr = kmalloc(size, flags);
-    if (ptr)
-        memset(ptr, 0, size);
-    return ptr;
-}
-
-void __kfree(void *ptr) {
-    tx_byte_release(ptr);
-}
-
-void *__dma_coherent_alloc(size_t size, unsigned int flags) {
-    return NULL;
-}
-
-void __dma_coherent_free(void *ptr) {
-    
 }
 
 static void gpio_key_isr(int line, void *arg) {
