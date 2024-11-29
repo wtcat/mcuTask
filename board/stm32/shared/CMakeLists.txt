@@ -2,6 +2,6 @@
 
 target_sources(${PROJECT_NAME}
     PRIVATE
-    irq.c
-    armv7m_exception.c
+    cortexm_irq.c
+    cortexm_exception.c
 )

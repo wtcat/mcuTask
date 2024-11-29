@@ -8,4 +8,5 @@ target_sources(${PROJECT_NAME}
     platform.c
     sysinit.c
     cstub.c
+    irq.c
 )

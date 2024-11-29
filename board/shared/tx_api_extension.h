@@ -76,9 +76,10 @@ struct sysinit_item {
 
 #define ___SYSINIT(_handler, _order) \
     enum { __enum_##_handler = _order}; \
-   static LINKER_ROSET_ITEM_ORDERED(sysinit, struct sysinit_item, entry, _order) = { \
-      .handler = _handler, \
-      .name = #_handler \
+    static LINKER_ROSET_ITEM_ORDERED(sysinit, struct sysinit_item, \
+        _handler, _order) = { \
+        .handler = _handler, \
+        .name = #_handler \
    }
 
 void do_sysinit(void);
@@ -101,6 +102,10 @@ void  __kfree(void *ptr);
  * Platform interface
  */
 int printk(const char *fmt, ...) __rte_printf(1, 2);
+int init_irq(void);
+int enable_irq(int irq);
+int disable_irq(int irq);
+void dispatch_irq(void);
 int request_irq(int irq, void (*handler)(void *), void *arg);
 int remove_irq(int irq, void (*handler)(void *), void *arg);
 int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg,
@@ -144,7 +149,7 @@ int uart_control(void *dev, unsigned int cmd, void *arg);
 ssize_t uart_write(void *dev, const char *buf, size_t len, unsigned int options);
 ssize_t uart_read(void *dev, char *buf, size_t len, unsigned int options);
 void console_putc(char c);
-
+int  console_getc(void);
 
 #ifdef __cplusplus
 }

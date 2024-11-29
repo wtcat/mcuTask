@@ -7,8 +7,6 @@
 #include "tx_api.h"
 #include "tx_thread.h"
 
-#include "stm32h7xx.h"
-#include "stm32h7xx_ll_bus.h"
 
 #define VECTOR_SIZE  (VECTOR_MAX + 16)
 #define VECTOR_MAX   (WAKEUP_PIN_IRQn + 1)
@@ -43,12 +41,13 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	(void *)_stm32_exception_handler, /* Debug Monitor */
 	(void *)_stm32_exception_handler, /* Reserved */
 	(void *)PendSV_Handler, /* PendSV */
-	(void *)platform_systick_handler, /* SysTick */
+	(void *)cortexm_systick_handler, /* SysTick */
 
-	[16 ... VECTOR_SIZE-1] = (void *)platform_irq_dispatch
+	[16 ... VECTOR_SIZE-1] = (void *)dispatch_irq
 };
 
-void _stm32_reset(void) {
+void __attribute__((optimize("O0"))) 
+_stm32_reset(void) {
 	/* Clear bss section */
 	_clear_bss_section(_sbss, _ebss);
 

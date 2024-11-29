@@ -246,8 +246,8 @@
  * CPU architecture configuration
  */
 #define TX_ENABLE_WFI  /* Support wfi instruction */
-#define TX_PORT_USE_BASEPRI 
-#define TX_PORT_BASEPRI 0x80
+// #define TX_PORT_USE_BASEPRI 
+// #define TX_PORT_BASEPRI 0x80
 
 /*
  * Enable tx-api extension
@@ -262,10 +262,13 @@
 #include "stm32h7xx_ll_exti.h"
 #include "stm32h7xx_ll_system.h"
 #include "stm32h7xx_ll_gpio.h"
+#include "stm32h7xx_ll_bus.h"
 
 /* Systick */
 #define BOARD_IRQ_MAX 150
 #define BOARD_SYSTICK_CLKFREQ HAL_RCCEx_GetD1SysClockFreq()
+
+#define IRQ_VECTOR_GET()  ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) - 16)
 
 /* GPIO */
 #define STM32_GPIO(_p, _n)     ((((_p) - 'A') << 8) | (_n))
@@ -275,8 +278,8 @@
 #define GPIO_USER_KEY1   STM32_GPIO('H', 4)
 
 
-void platform_irq_dispatch(void);
-void platform_systick_handler(void);
+void cortexm_systick_handler(void);
+
 #endif /* TX_USE_BOARD_PRIVATE */
 
 #endif /* TX_USER_H_ */

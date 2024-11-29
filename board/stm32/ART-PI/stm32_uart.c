@@ -594,11 +594,20 @@ uart_read(void *dev, char *buf, size_t len, unsigned int options) {
     return ret;
 }
 
-void __fastcode console_putc(char c) {
-    USART_TypeDef *reg = UART4;
+/*
+ * Console port
+ */
+#define CONSOLE_PORT (UART4)
 
-    while (!(reg->ISR & LL_USART_ISR_TXE_TXFNF));
-    reg->TDR = (uint8_t)c;
+void __fastcode console_putc(char c) {
+    while (!(CONSOLE_PORT->ISR & LL_USART_ISR_TXE_TXFNF));
+    CONSOLE_PORT->TDR = (uint8_t)c;
+}
+
+int __fastcode console_getc(void) {
+    if (CONSOLE_PORT->ISR & LL_USART_ISR_RXNE_RXFNE)
+        return CONSOLE_PORT->RDR & 0xFF;
+    return -1;
 }
 
 static int stm32_uart_init(void) {

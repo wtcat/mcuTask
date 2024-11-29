@@ -124,7 +124,10 @@ SECTIONS
     .itcm :
     {
         _sramfuncs = .;
+        /* optimize kernel */
         rtos/threadx/libthreadx.a:(.text*)
+
+        /* optimize libc */
         libc.a: *memset*.o(.text*)
         libc.a: *memcpy*.o(.text*)
         libc.a: *strlen*.o(.text*)
