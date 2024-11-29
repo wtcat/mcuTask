@@ -37,7 +37,7 @@ add_compile_options(
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1
-    # -mlong-calls
+    -mlong-calls
     -Wno-unused-parameter
 )
 
