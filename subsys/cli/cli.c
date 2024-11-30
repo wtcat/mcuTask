@@ -39,7 +39,7 @@
 
 LINKER_ROSET(cli, struct cli_command);
 static const char cli_prompt[] = ">> "; /* CLI prompt displayed to the user */
-static const char cli_unrecog[] = "CMD: Command not recognised\r\n";
+static const char cli_unrecog[] = "Command not recognised\r\n";
 
 static inline void 
 cli_print(struct cli_process *cli, const char *msg) {
@@ -63,6 +63,7 @@ int cli_init(struct cli_process *cli) {
 	if (!cli->cmd_prompt)
 		cli->cmd_prompt = cli_prompt;
 	cli->cmd_pending = 0;
+	cli->buf_ptr = cli->cmd_buf;
 	cli_print(cli, cli->cmd_prompt);
 	return 0;
 }
@@ -84,14 +85,16 @@ int cli_process(struct cli_process *cli) {
 	while ((argv[argc] != NULL) && (argc < 30))
 		argv[++argc] = strtok(NULL, " ");
 
-	const struct cli_command *clic = cli_find(cli, argv[0]);
-	if (clic != NULL) {
-		int ret = clic->exec(argc, argv);
+	if (argc > 0) {
+		const struct cli_command *clic = cli_find(cli, argv[0]);
+		if (clic != NULL) {
+			int ret = clic->exec(argc, argv);
 
-		/* Print the CLI prompt to the user. */
-		cli_print(cli, cli_prompt); 
-		cli->cmd_pending = 0;
-		return ret;
+			/* Print the CLI prompt to the user. */
+			cli_print(cli, cli_prompt); 
+			cli->cmd_pending = 0;
+			return ret;
+		}
 	}
 	
 	/* Command not found */
@@ -107,6 +110,8 @@ int cli_input(struct cli_process *cli, char c) {
 		return -EBUSY;
 
 	switch (c) {
+	case '\n':
+		break;
 	case '\r':
 		if (!cli->cmd_pending) {
 			*cli->buf_ptr = '\0'; /* Terminate the msg and reset the msg ptr. */
