@@ -46,6 +46,9 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	[16 ... VECTOR_SIZE-1] = (void *)dispatch_irq
 };
 
+/*
+ * Avoid xxxx_section to be optimized to memset/memcpy
+ */
 void __attribute__((optimize("O0"))) 
 _stm32_reset(void) {
 	/* Clear bss section */
