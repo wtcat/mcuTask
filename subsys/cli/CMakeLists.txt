@@ -1,6 +1,7 @@
 # Shell
 target_sources(subsys
     PRIVATE
-    empty.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli_os.c
 )
 

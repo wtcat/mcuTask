@@ -52,6 +52,10 @@ function(compile_options)
   target_compile_options(common_interface INTERFACE ${ARGV})
 endfunction()
 
+function(compile_definitions)
+	target_compile_definitions(common_interface INTERFACE ${ARGV})
+  endfunction()
+
 function(add_subdirectory_ifdef feature_toggle)
   if(${${feature_toggle}})
     add_subdirectory(${ARGN})

@@ -12,6 +12,17 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
+/*
+ * Thread extension API
+ */
+#define tx_thread_spawn(a, b, c, d, e, f, g, h, i, j) \
+    tx_thread_create((a), (b), (VOID(*)(ULONG))(void *)(c), (ULONG)(d), (e), (f), (g), (h), (i), (j))
+
+#define TX_THREAD_DEFINE(_name, _size, ...) \
+    struct __VA_ARGS__ {   \
+        TX_THREAD task;  \
+        char stack[_size]; \
+    } _name;
 
 #if defined(__GNUC__) || defined(__clang__)
 #include "basework/cleanup.h"
@@ -111,6 +122,7 @@ int remove_irq(int irq, void (*handler)(void *), void *arg);
 int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg,
 					 bool rising_edge, bool falling_edge);
 int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg);
+
 
 /*
  * uart driver

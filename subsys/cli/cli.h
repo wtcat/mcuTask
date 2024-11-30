@@ -41,6 +41,7 @@
 #include "tx_user.h"
 #include "basework/linker.h"
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -56,14 +57,14 @@ struct cli_command {
 };
 
 struct cli_process {
-    void (*println)(const char *s);
+    void (*println)(struct cli_process *cli, const char *s);
 	const struct cli_command *cmd_tbl;
 	size_t cmd_cnt;
     const char *cmd_prompt;
-
     char cmd_buf[SUBSYS_CLI_BUF_SIZE];
     volatile char *buf_ptr;
     volatile uint8_t cmd_pending;
+    void *priv;
 };
 
 /* 
@@ -80,7 +81,13 @@ struct cli_process {
 int cli_init(struct cli_process *cli);
 int cli_deinit(struct cli_process *cli);
 int cli_process(struct cli_process *cli);
-int cli_inpput(struct cli_process *cli, char c);
+int cli_input(struct cli_process *cli, char c);
+
+/*
+ * os platform api
+ */
+int cli_run(const char *console, int prio);
+int cli_stop(void);
 
 #ifdef __cplusplus
 }

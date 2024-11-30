@@ -7,4 +7,4 @@ target_sources(subsys
     empty.c
 )
 
-add_subdirectory_ifdef(CONFIG_CLI cli)
+add_subdirectory_ifdef(CONFIG_SUBSYS_CLI cli)

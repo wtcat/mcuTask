@@ -23,6 +23,7 @@ endif(POLICY CMP0076)
 # set(CONFIG_FILEX  1)
 # set(CONFIG_USBX   1)
 # set(CONFIG_LEVELX 1)
+set(CONFIG_SUBSYS_CLI 1)
 
 # Add configure files
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
@@ -53,6 +54,7 @@ add_executable(${PROJECT_NAME}
 # Add subdirectory
 add_subdirectory(${WKSAPCE_PATH}/rtos rtos)
 add_subdirectory(${WKSAPCE_PATH}/basework basework)
+add_subdirectory(${WKSAPCE_PATH}/subsys subsys)
 add_subdirectory(${WKSAPCE_PATH}/board/shared shared)
 add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
 add_subdirectory(${WKSAPCE_PATH}/board/stm32/Drivers drivers)

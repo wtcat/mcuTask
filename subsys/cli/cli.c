@@ -43,7 +43,20 @@ static const char cli_unrecog[] = "CMD: Command not recognised\r\n";
 
 static inline void 
 cli_print(struct cli_process *cli, const char *msg) {
-	cli->println(msg);
+	cli->println(cli, msg);
+}
+
+static const struct cli_command *
+cli_find(struct cli_process *cli, const char *cmd) {
+    LINKER_SET_FOREACH(cli, item, struct cli_command) {
+        if (!strcmp(cmd, item->cmd))
+			return (const struct cli_command *)item;
+    }
+	for (size_t i = 0; i < cli->cmd_cnt; i++) {
+		if (!strcmp(cmd, cli->cmd_tbl[i].cmd))
+			return &cli->cmd_tbl[i];
+	}
+	return NULL;
 }
 
 int cli_init(struct cli_process *cli) {
@@ -71,17 +84,16 @@ int cli_process(struct cli_process *cli) {
 	while ((argv[argc] != NULL) && (argc < 30))
 		argv[++argc] = strtok(NULL, " ");
 
-	for (size_t i = 0; i < cli->cmd_cnt; i++) {
-		if (strcmp(argv[0], cli->cmd_tbl[i].cmd) == 0) {
-			int ret = cli->cmd_tbl[i].exec(argc, argv);
+	const struct cli_command *clic = cli_find(cli, argv[0]);
+	if (clic != NULL) {
+		int ret = clic->exec(argc, argv);
 
-            /* Print the CLI prompt to the user. */
-			cli_print(cli, cli_prompt); 
-			cli->cmd_pending = 0;
-			return ret;
-		}
+		/* Print the CLI prompt to the user. */
+		cli_print(cli, cli_prompt); 
+		cli->cmd_pending = 0;
+		return ret;
 	}
-
+	
 	/* Command not found */
 	cli_print(cli, cli_unrecog);
 	cli_print(cli, cli_prompt); /* Print the CLI prompt to the user. */
