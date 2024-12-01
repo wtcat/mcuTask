@@ -34,16 +34,36 @@
 #include <string.h>
 
 #include "basework/rte_atomic.h"
+#include "basework/lib/iovpr.h"
 #include "subsys/cli/cli.h"
 
+struct format_buffer {
+    struct cli_process *cli;
+    char   buf[128];
+    size_t len;
+};
 
 LINKER_ROSET(cli, struct cli_command);
-static const char cli_prompt[] = ">> "; /* CLI prompt displayed to the user */
-static const char cli_unrecog[] = "Command not recognised\r\n";
+static const char cli_prompt[] = ">> ";
+static const char cli_unrecog[] = "Command not found\r\n";
 
 static inline void 
-cli_print(struct cli_process *cli, const char *msg) {
-	cli->println(cli, msg);
+cli_puts(struct cli_process *cli, const char *msg) {
+	cli->ifdev->puts(cli, msg, strlen(msg));
+}
+
+static void cli_fputc(int c, void *arg) {
+    struct format_buffer *p = (struct format_buffer *)arg;
+
+    if (p->len < sizeof(p->buf) - 2) {
+        p->buf[p->len++] = (char)c;
+        if (c == '\n')
+            p->buf[p->len++] = '\r';
+    } else {
+        p->buf[p->len] = '\0';
+		p->cli->ifdev->puts(p->cli, p->buf, p->len);
+        p->len = 0;
+    }
 }
 
 static const struct cli_command *
@@ -64,7 +84,7 @@ int cli_init(struct cli_process *cli) {
 		cli->cmd_prompt = cli_prompt;
 	cli->cmd_pending = 0;
 	cli->buf_ptr = cli->cmd_buf;
-	cli_print(cli, cli->cmd_prompt);
+	cli_puts(cli, cli->cmd_prompt);
 	return 0;
 }
 
@@ -88,27 +108,35 @@ int cli_process(struct cli_process *cli) {
 	if (argc > 0) {
 		const struct cli_command *clic = cli_find(cli, argv[0]);
 		if (clic != NULL) {
-			int ret = clic->exec(argc, argv);
+			int ret = clic->exec(cli, argc, argv);
 
 			/* Print the CLI prompt to the user. */
-			cli_print(cli, cli_prompt); 
+			cli_puts(cli, cli->cmd_prompt); 
 			cli->cmd_pending = 0;
 			return ret;
 		}
+
+		/* Command not found */
+		char c = argv[0][0];
+		if (c != '\n' && c != '\r')
+			cli_puts(cli, cli_unrecog);
 	}
 	
-	/* Command not found */
-	cli_print(cli, cli_unrecog);
-	cli_print(cli, cli_prompt); /* Print the CLI prompt to the user. */
-
+	/* Print the CLI prompt to the user. */
+	cli_puts(cli, cli->cmd_prompt);
 	cli->cmd_pending = 0;
+
 	return -ENODATA;
 }
 
 int cli_input(struct cli_process *cli, char c) {
+	char   echo_buf[4];
+	size_t len;
+
 	if (cli->cmd_pending)
 		return -EBUSY;
 
+	len = 0;
 	switch (c) {
 	case '\n':
 		break;
@@ -116,22 +144,51 @@ int cli_input(struct cli_process *cli, char c) {
 		if (!cli->cmd_pending) {
 			*cli->buf_ptr = '\0'; /* Terminate the msg and reset the msg ptr. */
 			cli->cmd_pending = 1;
-            rte_wmb();
 			cli->buf_ptr = cli->cmd_buf; /* Reset buf_ptr to beginning. */
+			echo_buf[len++] = '\r';
+			echo_buf[len++] = '\n';
 		}
 		break;
 	case '\b':
 		/* Backspace. Delete character. */
-		if (cli->buf_ptr > cli->cmd_buf)
+		if (cli->buf_ptr > cli->cmd_buf) {
 			cli->buf_ptr--;
+			echo_buf[len++] = '\b';
+			echo_buf[len++] = ' ';
+			echo_buf[len++] = '\b';
+		}
 		break;
 	default:
 		/* Normal character received, add to buffer. */
-		if ((cli->buf_ptr - cli->cmd_buf) < SUBSYS_CLI_BUF_SIZE)
+		if ((cli->buf_ptr - cli->cmd_buf) < SUBSYS_CLI_BUF_SIZE) {
 			*cli->buf_ptr++ = c;
-		else
-			return -E2BIG;
-		break;
+			echo_buf[len++] = c;
+			break;
+		}
+		return -E2BIG;
 	}
+
+	/* Echo char */
+	cli->ifdev->puts(cli, echo_buf, len);
+
 	return 0;
+}
+
+int cli_println(struct cli_process *cli, const char *fmt, ...) {
+    struct format_buffer fb;
+	va_list ap;
+    int len;
+
+    fb.cli = cli;
+    fb.len = 0;
+
+	va_start(ap, fmt);
+    len = _IO_Vprintf(cli_fputc, &fb, fmt, ap);
+	va_end(ap);
+    if (fb.len > 0) {
+        fb.buf[fb.len] = '\0';
+		cli->ifdev->puts(cli, fb.buf, fb.len);
+    }
+
+    return len;
 }

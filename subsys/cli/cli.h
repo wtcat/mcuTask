@@ -38,6 +38,8 @@
 #define SUBSYS_CLI_H_
 
 #include <stddef.h>
+#include <stdarg.h>
+
 #include "tx_user.h"
 #include "basework/linker.h"
 
@@ -50,14 +52,22 @@ extern "C" {
 #define SUBSYS_CLI_BUF_SIZE 128
 #endif
 
+struct cli_process;
 struct cli_command {
 	const char *cmd;
     const char *help;
-	int (*exec)(int argc, char *argv[]);
+	int (*exec)(struct cli_process *cli, int argc, char *argv[]);
+};
+
+struct cli_ifdev {
+    void *(*open)(const char *dev);
+    int   (*close)(void *dev);
+    int   (*getc)(void *dev);
+    void  (*puts)(struct cli_process *cli, const char *s, size_t len);
 };
 
 struct cli_process {
-    void (*println)(struct cli_process *cli, const char *s);
+    const struct cli_ifdev *ifdev;
 	const struct cli_command *cmd_tbl;
 	size_t cmd_cnt;
     const char *cmd_prompt;
@@ -82,12 +92,19 @@ int cli_init(struct cli_process *cli);
 int cli_deinit(struct cli_process *cli);
 int cli_process(struct cli_process *cli);
 int cli_input(struct cli_process *cli, char c);
+int cli_println(struct cli_process *cli, const char *fmt, ...);
 
 /*
  * os platform api
  */
-int cli_run(const char *console, int prio);
+int cli_run(const char *console, int prio, void *stack, size_t stack_size,
+    const char *prompt, const struct cli_ifdev *ifdev);
 int cli_stop(void);
+
+/*
+ * CLI device list
+ */
+extern const struct cli_ifdev _cli_ifdev_uart;
 
 #ifdef __cplusplus
 }

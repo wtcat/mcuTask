@@ -60,6 +60,7 @@ static void __rte_unused demo_thread_2(ULONG arg) {
 }
 
 static void demo_test(void) {
+    static ULONG stack[256];
     // static TX_THREAD tx_demo1;
     // static ULONG txdemo_stack1[1024/sizeof(ULONG)] __rte_section(".dtcm");
 
@@ -70,12 +71,13 @@ static void demo_test(void) {
     //     sizeof(txdemo_stack1), 10, 10, TX_NO_TIME_SLICE, TX_AUTO_START);
     tx_thread_create(&tx_demo2, "demo", demo_thread_2, 0, txdemo_stack2, 
         sizeof(txdemo_stack2), 11, 11, TX_NO_TIME_SLICE, TX_AUTO_START);
-    cli_run("uart1", 15);
+    cli_run("uart1", 15, stack, sizeof(stack), "[task]# ", &_cli_ifdev_uart);
 }
 
 
-static int test_cli(int argc, char *argv[]) {
-    printk("test-cli\n");
+static int test_cli(struct cli_process *cli, int argc, char *argv[]) {
+    printk("%s\n", __func__);
+    cli_println(cli, "test-cli\n");
     return 0;
 }
 
