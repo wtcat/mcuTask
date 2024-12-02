@@ -55,6 +55,7 @@ extern "C" {
 struct cli_process;
 struct cli_command {
 	const char *cmd;
+    const char *usage;
     const char *help;
 	int (*exec)(struct cli_process *cli, int argc, char *argv[]);
 };
@@ -80,10 +81,11 @@ struct cli_process {
 /* 
  * Define a command 
  */
-#define CLI_CMD(_name, _help, _fn) \
+#define CLI_CMD(_name, _usage, _help, _fn) \
     static LINKER_ROSET_ITEM_ORDERED(cli, \
         struct cli_command, _name, _name) = { \
         .cmd  = #_name, \
+        .usage = _usage, \
         .help = _help, \
         .exec = _fn \
     };

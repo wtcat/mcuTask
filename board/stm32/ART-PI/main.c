@@ -81,4 +81,4 @@ static int test_cli(struct cli_process *cli, int argc, char *argv[]) {
     return 0;
 }
 
-CLI_CMD(test, "test command line interface", test_cli)
+CLI_CMD(test, "test", "test command line interface", test_cli)

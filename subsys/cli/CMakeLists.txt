@@ -4,5 +4,11 @@ target_sources(subsys
     ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
     ${CMAKE_CURRENT_SOURCE_DIR}/cli_os.c
     ${CMAKE_CURRENT_SOURCE_DIR}/cli_uart.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli_help.c
 )
 
+# Memory command
+target_sources(subsys
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli_mem.c
+)
