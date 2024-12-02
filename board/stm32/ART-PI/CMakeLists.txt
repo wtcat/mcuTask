@@ -61,10 +61,12 @@ add_subdirectory(${WKSAPCE_PATH}/board/stm32/Drivers drivers)
 
 # Link target
 collect_link_libraries(libs ${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
+    -Wl,--whole-archive
     -Wl,--start-group
     ${libs}
     -Wl,--end-group
+    -Wl,--no-whole-archive
 )
 
 # Generate binary

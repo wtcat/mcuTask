@@ -7,6 +7,8 @@
 
 #include <sys/types.h>
 
+struct stat;
+
 int _close_r(struct _reent *ptr, int fd) {
     (void) ptr;
     (void) fd;
@@ -35,4 +37,15 @@ _ssize_t _write_r(struct _reent *ptr, int fd, const void *buf, size_t nbytes) {
     (void) buf;
     (void) nbytes;
 	return -ENOSYS;
+}
+
+int _fstat(int file, struct stat *st) {
+    (void) file;
+    (void) st;
+    return -ENOSYS;
+}
+
+int _isatty(int fd) {
+    (void) fd;
+    return -ENOSYS;
 }

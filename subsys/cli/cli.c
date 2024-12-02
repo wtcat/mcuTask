@@ -37,6 +37,11 @@
 #include "basework/lib/iovpr.h"
 #include "subsys/cli/cli.h"
 
+struct find_arg {
+	const struct cli_command *cmd;
+	const char *name;
+};
+
 struct format_buffer {
     struct cli_process *cli;
     char   buf[128];
@@ -66,17 +71,22 @@ static void cli_fputc(int c, void *arg) {
     }
 }
 
+static bool
+cli_find_cb(const struct cli_command *cmd, void *arg) {
+	struct find_arg *p = (struct find_arg *)arg;
+	rte_mb();
+	if (!strcmp(cmd->cmd, p->name)) {
+		p->cmd = cmd;
+		return true;
+	}
+	return false;
+}
+
 static const struct cli_command *
 cli_find(struct cli_process *cli, const char *cmd) {
-    LINKER_SET_FOREACH(cli, item, struct cli_command) {
-        if (!strcmp(cmd, item->cmd))
-			return (const struct cli_command *)item;
-    }
-	for (size_t i = 0; i < cli->cmd_cnt; i++) {
-		if (!strcmp(cmd, cli->cmd_tbl[i].cmd))
-			return &cli->cmd_tbl[i];
-	}
-	return NULL;
+	struct find_arg param = {NULL, cmd};
+	cli_foreach(cli, cli_find_cb, &param);
+	return param.cmd;
 }
 
 int cli_init(struct cli_process *cli) {
@@ -191,4 +201,21 @@ int cli_println(struct cli_process *cli, const char *fmt, ...) {
     }
 
     return len;
+}
+
+void cli_foreach(struct cli_process *cli, 
+	bool (*iter)(const struct cli_command *, void *), 
+	void *arg) {
+	if (cli == NULL || iter == NULL)
+		return;
+
+    LINKER_SET_FOREACH(cli, item, struct cli_command) {
+        if (iter((const struct cli_command *)item, arg))
+			return;
+    }
+
+	for (size_t i = 0; i < cli->cmd_cnt; i++) {
+		if (iter(&cli->cmd_tbl[i], arg))
+			return;
+	}
 }

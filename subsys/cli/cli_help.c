@@ -5,26 +5,20 @@
 #include <string.h>
 #include "subsys/cli/cli.h"
 
-LINKER_ROSET(cli, struct cli_command);
 
-static void 
-cli_show_cmd(struct cli_process *cli, const struct cli_command *cmd) {
-    cli_println(cli, "\t%-40s  %s\n",
+static bool cmd_iterator(const struct cli_command *cmd, void *arg) {
+    struct cli_process *cli = arg;
+
+    cli_println(cli, "  %-30s  %s\n",
         cmd->usage, cmd->help);
+    return false;
 }
 
 static int cli_cmd_help(struct cli_process *cli, int argc, char *argv[]) {
     (void) argc;
     (void) argv;
     cli_println(cli, "\nAll commands list:\n\n");
-
-    LINKER_SET_FOREACH(cli, item, struct cli_command) {
-        cli_show_cmd(cli, (const struct cli_command *)item);
-    }
-    
-	for (size_t i = 0; i < cli->cmd_cnt; i++)
-        cli_show_cmd(cli, &cli->cmd_tbl[i]);
-
+    cli_foreach(cli, cmd_iterator, cli);
 	return 0;
 }
 

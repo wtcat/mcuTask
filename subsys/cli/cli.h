@@ -37,6 +37,7 @@
 #ifndef SUBSYS_CLI_H_
 #define SUBSYS_CLI_H_
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdarg.h>
 
@@ -95,7 +96,9 @@ int cli_deinit(struct cli_process *cli);
 int cli_process(struct cli_process *cli);
 int cli_input(struct cli_process *cli, char c);
 int cli_println(struct cli_process *cli, const char *fmt, ...);
-
+void cli_foreach(struct cli_process *cli, 
+	bool (*iter)(const struct cli_command *, void *), 
+	void *arg);
 /*
  * os platform api
  */
