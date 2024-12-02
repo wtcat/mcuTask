@@ -9,9 +9,8 @@ LINKER_ROSET(cli, struct cli_command);
 
 static void 
 cli_show_cmd(struct cli_process *cli, const struct cli_command *cmd) {
-    size_t len = strlen(cmd->usage);
-    cli_println(cli, "\t%s -- %-*.*s\n",
-        cmd->usage, len, cmd->help);
+    cli_println(cli, "\t%-40s  %s\n",
+        cmd->usage, cmd->help);
 }
 
 static int cli_cmd_help(struct cli_process *cli, int argc, char *argv[]) {
