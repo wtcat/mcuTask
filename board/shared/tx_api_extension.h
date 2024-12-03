@@ -6,8 +6,10 @@
 #define TX_API_EXTENSION_H_
 
 #include <sys/types.h>
+
 #include "basework/generic.h"
 #include "basework/linker.h"
+#include "basework/cleanup.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -24,14 +26,12 @@ extern "C"{
         char stack[_size]; \
     } _name;
 
-#if defined(__GNUC__) || defined(__clang__)
-#include "basework/cleanup.h"
-
-typedef struct TX_MUTEX_STRUCT TX_MUTEX;
+/*
+ * Define lock guard
+ */
 DEFINE_GUARD(os_mutex, TX_MUTEX *, tx_mutex_get(_T, 0xFFFFFFFFUL), tx_mutex_put(_T))
-
 DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), __restore_interrupt((_T)->key), unsigned int key)	
-#endif /* __GNUC__ ||  __clang__ */
+
 
 /*
  * Device I/O options

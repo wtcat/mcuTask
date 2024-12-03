@@ -7,9 +7,10 @@
 #include <errno.h>
 #include <stdbool.h>
 
+#include "tx_api.h"
 #include "basework/bitops.h"
 #include "basework/container/list.h"
-#include "tx_api.h"
+
 
 struct stm32_extiline {
 	uint16_t irq;
@@ -214,7 +215,9 @@ int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg) {
 	return -ENODEV;
 
 _found:
-	scoped_guard(os_irq) { rte_list_del(&target->node); }
+	scoped_guard(os_irq) { 
+		rte_list_del(&target->node); 
+	}
 	if (rte_list_empty(&exti_heads[pin])) {
 		stm32_exti_enable(pin, false);
 		stm32_exti_trigger(pin, false, false);
