@@ -17,7 +17,7 @@ static void uart_pins_configure(void) {
     /*
      * PI9 -> UART4_RX
      * PA0 -> UART4_TX
-    */
+     */
     GPIO_InitStruct.Pin = GPIO_PIN_9;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -35,7 +35,7 @@ static void uart_pins_configure(void) {
     /*
      * PA9  -> USART1_TX
      * PA10 -> USART1_RX
-    */
+     */
     GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;

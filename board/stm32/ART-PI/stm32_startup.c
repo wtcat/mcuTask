@@ -69,20 +69,15 @@ _stm32_reset(void) {
 	SCB->VTOR = (uint32_t)_ram_vectors;
 	__DSB();
 
-	/* Initialize HAL layer */
-	HAL_Init();
-
-	/* Clock initialize */
-	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
-
 	/* Enable I- and D-Caches */
 	SCB_EnableICache();
 	SCB_EnableDCache();
 
 	printk("stm32 starting ...\n");
 	_tx_thread_system_stack_ptr = (void *)irq_vectors[0];
-	main();
+
+	/* Schedule kernel */
+	tx_kernel_enter();
 
 	/* 
 	 * Should never reached here 
