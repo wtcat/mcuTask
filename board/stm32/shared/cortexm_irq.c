@@ -18,6 +18,7 @@ void __fastcode cortexm_systick_handler(void) {
 }
 
 void _tx_initialize_low_level(void) {
+	NVIC_SetPriorityGrouping(__NVIC_PRIO_BITS);
 	for (int i = 0; i < BOARD_IRQ_MAX; i++) {
 		NVIC_DisableIRQ(i);
 		NVIC_ClearPendingIRQ(i);
