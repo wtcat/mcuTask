@@ -263,7 +263,7 @@
 
 /* Systick */
 #define BOARD_IRQ_MAX 81
-#define BOARD_SYSTICK_CLKFREQ 0
+#define BOARD_SYSTICK_CLKFREQ HAL_RCC_GetSysClockFreq()
 
 #define IRQ_VECTOR_GET()  ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) - 16)
 
