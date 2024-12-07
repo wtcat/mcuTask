@@ -2,6 +2,7 @@
  * Copyright 2024 wtcat
  */
 #define TX_USE_BOARD_PRIVATE
+#define TX_USE_SECTION_INIT_API_EXTENSION 1
 #include <stdint.h>
 
 #include "tx_api.h"
@@ -66,7 +67,6 @@ _stm32_reset(void) {
 	/* Clock initialize */
 	stm32_clock_up();
 
-	printk("stm32 starting ...\n");
 	_tx_thread_system_stack_ptr = (void *)_sys_vectors[0];
 
 	/* Schedule kernel */

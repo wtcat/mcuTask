@@ -1,5 +1,8 @@
-# Shell
-target_sources(subsys
+# Command line interface
+
+static_library(cli)
+
+target_sources(cli
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/cli.c
     ${CMAKE_CURRENT_SOURCE_DIR}/cli_os.c
@@ -8,7 +11,7 @@ target_sources(subsys
 )
 
 # Memory command
-target_sources(subsys
+target_sources(cli
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/cli_mem.c
 )

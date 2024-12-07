@@ -5,9 +5,11 @@ include_dirs(.)
 target_sources(${PROJECT_NAME}
     PRIVATE
     platform.c
+    device.c
     sysinit.c
     cstub.c
     irq.c
+    nanosleep.c
 )
 
 if (CONFIG_KMALLOC)

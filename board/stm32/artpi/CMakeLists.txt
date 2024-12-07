@@ -26,6 +26,7 @@ endif(POLICY CMP0076)
 set(CONFIG_KMALLOC 1)
 set(CONFIG_MALLOC  1)
 set(CONFIG_SUBSYS_CLI 1)
+set(CONFIG_SUBSYS_SD  1)
 
 # Add configure files
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)

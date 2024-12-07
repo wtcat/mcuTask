@@ -2,6 +2,7 @@
  * Copyright 2024 wtcat
  */
 #define TX_USE_BOARD_PRIVATE
+#define TX_USE_SECTION_INIT_API_EXTENSION 1
 #include <stdint.h>
 
 #include "tx_api.h"

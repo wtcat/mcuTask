@@ -1,10 +1,4 @@
-# Sub system
-
-static_library(subsys)
-
-target_sources(subsys
-    PRIVATE
-    empty.c
-)
+# Subsystem
 
 add_subdirectory_ifdef(CONFIG_SUBSYS_CLI cli)
+add_subdirectory_ifdef(CONFIG_SUBSYS_SD  sd)

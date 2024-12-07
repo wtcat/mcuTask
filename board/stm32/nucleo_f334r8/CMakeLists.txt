@@ -46,7 +46,7 @@ add_executable(${PROJECT_NAME}
     main.c
     stm32_clock.c
     stm32_startup.c
-    # stm32_uart.c
+    stm32_uart.c
     # stm32_pins.c
     # stm32_gpio.c
 )

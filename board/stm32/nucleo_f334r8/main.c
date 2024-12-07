@@ -45,5 +45,4 @@ static void demo_test(void) {
  
 }
 
-void console_putc(char c) {}
 
