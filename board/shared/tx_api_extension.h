@@ -93,11 +93,19 @@ void device_foreach(bool (*iterator)(struct device *, void *), void *user);
 /*
  * Custom define section
  */
-#define __fastcode  __rte_section(".itcm")
-#define __fastbss   __rte_section(".fastbss")
-#define __fastdata  __rte_section(".fastdata")
+#ifndef __fastcode
+#define __fastcode
+#endif
+#ifndef __fastbss
+#define __fastbss
+#endif
+#ifndef __fastdata
+#define __fastdata
+#endif
 
 #if TX_USE_SECTION_INIT_API_EXTENSION
+#define LINKER_SYMBOL(_s) extern char _s[];
+
 /* Clear bss section */
 #define _clear_bss_section(_start, _end) \
 do { \

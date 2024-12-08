@@ -921,7 +921,7 @@ __weak HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruc
   */
 HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, uint32_t FLatency)
 {
-  HAL_StatusTypeDef halstatus;
+  // HAL_StatusTypeDef halstatus;
   uint32_t tickstart;
   uint32_t common_system_clock;
 
@@ -1234,9 +1234,9 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
 #endif /* DUAL_CORE && CORE_CM4 */
 
   /* Configure the source of time base considering new system clocks settings*/
-  halstatus = HAL_InitTick(uwTickPrio);
+  // halstatus = HAL_InitTick(uwTickPrio);
 
-  return halstatus;
+  return HAL_OK;
 }
 
 /**
