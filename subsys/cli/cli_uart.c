@@ -6,7 +6,7 @@
 #include "subsys/cli/cli.h"
 
 static void *cli_uart_open(const char *dev) {
-    void *udev;
+    struct device *udev;
 
     if (!uart_open(dev, &udev))
         return udev;

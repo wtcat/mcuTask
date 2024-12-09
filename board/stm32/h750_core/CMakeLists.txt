@@ -18,14 +18,15 @@ if (POLICY CMP0076)
     cmake_policy(SET CMP0076 NEW)
 endif(POLICY CMP0076)
 
-# Configure options 
+# Configure options
+include(${WKSAPCE_PATH}/cmake/options.cmake)
 # set(CONFIG_NETX   1)
 # set(CONFIG_FILEX  1)
 # set(CONFIG_USBX   1)
 # set(CONFIG_LEVELX 1)
-set(CONFIG_KMALLOC 1)
-set(CONFIG_SUBSYS_CLI 1)
-set(CONFIG_SUBSYS_SD  1)
+# set(CONFIG_KMALLOC 1)
+# set(CONFIG_SUBSYS_CLI 1)
+# set(CONFIG_SUBSYS_SD  1)
 
 # Add configure files
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)

@@ -1,7 +1,6 @@
 /*
  * Copyright 2024 wtcat
  */
-
 #define TX_USE_BOARD_PRIVATE
 
 #include <errno.h>
@@ -29,7 +28,9 @@ struct tx_status {
 
 struct stm32_uart {
 #define to_uart(_dev)(struct stm32_uart *)(_dev)
-    const char *name;
+    /* Must be place at first */
+    struct device dev;
+
     USART_TypeDef *reg;
     union {
         DMA_TypeDef *dma;
@@ -53,7 +54,7 @@ struct stm32_uart {
 };
 
 
-#define UART_ID(_uart) (int)((_uart)->name[4] - '0')
+#define UART_ID(_uart) (int)((_uart)->dev.name[4] - '0')
 #define DEFAULT_SPEED 2000000
 #define DMA_MAXSEG UINT16_MAX
 #define UART_FIFOSIZE 8
@@ -64,7 +65,9 @@ struct stm32_uart {
 
 static struct stm32_uart uart_drivers[] = {
     {
-        .name    = "uart1",
+        .dev = {
+            .name    = "uart1"
+        },
         .reg     = USART1,
         .dma     = DMA1,
         .txchan  = {LL_DMA_STREAM_0, LL_DMAMUX1_REQ_USART1_TX}, //LL_DMA_STREAM_0,
@@ -77,7 +80,9 @@ static struct stm32_uart uart_drivers[] = {
         }
     },
     {
-        .name    = "uart4",
+        .dev = {
+            .name    = "uart4"
+        },
         .reg     = UART4,
         .dma     = DMA1,
         .txchan  = {-1, 0}, //LL_DMA_STREAM_0,
@@ -93,7 +98,7 @@ static struct stm32_uart uart_drivers[] = {
 
 static void
 txstat_init(struct stm32_uart *uart) {
-    tx_semaphore_create(&uart->txstat.idle, (CHAR *)uart->name, 0);
+    tx_semaphore_create(&uart->txstat.idle, (CHAR *)uart->dev.name, 0);
     uart->txstat.transfered = 0;
     uart->txstat.len = 0;
 }
@@ -158,7 +163,7 @@ stm32_txfifo_start(struct stm32_uart *uart, USART_TypeDef *reg,
     size_t nbytes = 0;
     (void) uart;
     
-    len = rte_min(len, UART_FIFOSIZE);
+    len = rte_min_t(size_t, len, UART_FIFOSIZE);
     while (nbytes < len)
         reg->TDR = (uint8_t)buf[nbytes++];
 
@@ -316,22 +321,10 @@ stm32_uart_clkset(struct stm32_uart *uart, bool enable) {
     return 0;
 }
 
-static struct stm32_uart *
-stm32_uart_find(const char *name) {
-    int ndev = (int)rte_array_size(uart_drivers) - 1;
-    while (ndev >= 0) {
-        struct stm32_uart *uart = &uart_drivers[ndev];
-        if (!strcmp(uart->name, name))
-            return uart;
-        ndev--;
-    }
-    return NULL;
-}
-
 static int 
 stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
     switch (cmd) {
-    case UART_SET_FORMAT: {
+    case UART_CONFIGURE: {
         static const uint32_t datawidth_table[] = {
             LL_USART_DATAWIDTH_7B,
             LL_USART_DATAWIDTH_8B,
@@ -376,7 +369,7 @@ stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
         }
         break;
     }
-    case UART_SET_SPEED: {
+    case UART_SETSPEED: {
         uint32_t clkfreq = LL_RCC_GetUSARTClockFreq(uart->clksrc);
         uint32_t baudrate = *(uint32_t *)arg;
         stm32_dmatxrx_stop(uart);
@@ -397,7 +390,7 @@ stm32_uart_control(struct stm32_uart *uart, unsigned int cmd, void *arg) {
     return 0;
 }
 
-int uart_open(const char *name, void **pdev) {
+int uart_open(const char *name, struct device **pdev) {
     struct stm32_uart *uart;
     struct uart_param param;
     int err;
@@ -405,13 +398,13 @@ int uart_open(const char *name, void **pdev) {
     if (!name || !pdev)
         return -EINVAL;
 
-    uart = stm32_uart_find(name);
+    uart = (struct stm32_uart *)device_find(name);
     if (!uart)
         return -ENODEV;
 
     guard(os_mutex)(&uart->mtx);
     if (uart->refcnt++ == 0) {
-        err = queue_create(&uart->rxq, uart->name);
+        err = queue_create(&uart->rxq, uart->dev.name);
         if (err)
             goto _failed;
 
@@ -468,10 +461,10 @@ int uart_open(const char *name, void **pdev) {
         param.nb_data  = kUartDataWidth_8B;
         param.nb_stop  = kUartStopWidth_1B;
         param.parity   = kUartParityNone;
-        (void) stm32_uart_control(uart, UART_SET_FORMAT, &param);
+        (void) stm32_uart_control(uart, UART_CONFIGURE, &param);
     }
 
-    *pdev = uart;
+    *pdev = &uart->dev;
     return 0;
 
 _remove_irq:
@@ -483,10 +476,10 @@ _failed:
     return err;
 }
 
-int uart_close(void *dev) {
+int uart_close(struct device *dev) {
     struct stm32_uart *uart = (struct stm32_uart *)dev;
 
-    if (!stm32_uart_find(uart->name))
+    if (!device_find(dev->name))
         return -ENODEV;
 
     guard(os_mutex)(&uart->mtx);
@@ -506,18 +499,18 @@ int uart_close(void *dev) {
     return 0;
 }
 
-int uart_control(void *dev, unsigned int cmd, void *arg) {
+int uart_control(struct device *dev, unsigned int cmd, void *arg) {
     struct stm32_uart *uart = (struct stm32_uart *)dev;
 
     if (!uart || !arg)
         return -EINVAL;
     
     guard(os_mutex)(&uart->mtx);
-    return stm32_uart_control(dev, cmd, arg);
+    return stm32_uart_control(uart, cmd, arg);
 }
 
 ssize_t __fastcode 
-uart_write(void *dev, const char *buf, size_t len, unsigned int options) {
+uart_write(struct device *dev, const char *buf, size_t len, unsigned int options) {
     struct stm32_uart *uart = (struct stm32_uart *)dev;
     struct tx_status *txs = &uart->txstat;
     USART_TypeDef *reg = uart->reg;
@@ -551,7 +544,7 @@ uart_write(void *dev, const char *buf, size_t len, unsigned int options) {
 }
 
 ssize_t __fastcode
-uart_read(void *dev, char *buf, size_t len, unsigned int options) {
+uart_read(struct device *dev, char *buf, size_t len, unsigned int options) {
     struct stm32_uart *uart = to_uart(dev);
     struct uart_queue *q;
     size_t ret;
@@ -592,11 +585,15 @@ uart_read(void *dev, char *buf, size_t len, unsigned int options) {
 }
 
 static int stm32_uart_init(void) {
+    int err = 0;
     for (size_t i = 0; i < rte_array_size(uart_drivers); i++) {
         struct stm32_uart *uart = uart_drivers + i;
-        tx_mutex_create(&uart->mtx, (char *)uart->name, TX_INHERIT);
+        tx_mutex_create(&uart->mtx, (char *)uart->dev.name, TX_INHERIT);
+        err = device_register(&uart->dev);
+        if (err)
+            break;
     }
-    return 0;
+    return err;
 }
 
 SYSINIT(stm32_uart_init, SI_DRIVER_LEVEL, 00);

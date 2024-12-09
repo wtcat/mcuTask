@@ -187,47 +187,13 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg,
 					 bool rising_edge, bool falling_edge);
 int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg);
 
-
-/*
- * uart driver
- */
-enum uart_datawidth {
-    kUartDataWidth_7B,
-    kUartDataWidth_8B,
-    kUartDataWidth_9B,
-};
-
-enum uart_stopwidth {
-    kUartStopWidth_1B,
-    kUartStopWidth_2B,
-};
-
-enum uart_parity {
-    kUartParityNone,
-    kUartParityOdd,
-    kUartParityEven
-};
-
-struct uart_param {
-    unsigned int baudrate;
-    enum uart_datawidth nb_data;
-    enum uart_stopwidth nb_stop;
-    enum uart_parity parity;
-    bool hwctrl;
-};
-
-#define UART_SET_FORMAT 1
-#define UART_SET_SPEED  2
-
-int uart_open(const char *name, void **pdev);
-int uart_close(void *dev);
-int uart_control(void *dev, unsigned int cmd, void *arg);
-ssize_t uart_write(void *dev, const char *buf, size_t len, unsigned int options);
-ssize_t uart_read(void *dev, char *buf, size_t len, unsigned int options);
 void console_putc(char c);
 int  console_getc(void);
 
 #ifdef __cplusplus
 }
 #endif
+
+#include "drivers/uart.h"
+
 #endif /* TX_API_EXTENSION_H_ */
