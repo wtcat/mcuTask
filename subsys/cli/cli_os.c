@@ -11,10 +11,16 @@ static struct cli_process cli_inst;
 static TX_THREAD cli_pid;
 static TX_MUTEX cli_mtx;
 
+static const char cli_panel[] = {
+    "\n* McuTask Command Line *\n\n"
+};
+
 static void cli_thread(void *arg) {
     struct cli_process *cli = (struct cli_process *)arg;
     const struct cli_ifdev *ifdev = cli->ifdev;
 
+    cli->ifdev->puts(cli, cli_panel, sizeof(cli_panel) - 1);
+    
     for ( ; ; ) {
         int c = ifdev->getc(cli->priv);
         if (c < 0)
