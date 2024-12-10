@@ -270,6 +270,7 @@
 #include "stm32h7xx_ll_usart.h"
 #include "stm32h7xx_ll_rcc.h"
 #include "stm32h7xx_ll_dma.h"
+#include "stm32h7xx_ll_crc.h"
 
 /* Systick */
 #define BOARD_IRQ_MAX 150
