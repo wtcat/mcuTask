@@ -261,6 +261,8 @@
 /*
  * Board private
  */
+#define HRTIMER_US(us) ((us) * 240) /* timer_freq: 240mhz */
+
 #ifdef TX_USE_BOARD_PRIVATE
 #include "stm32h7xx.h"
 #include "stm32h7xx_ll_exti.h"
@@ -271,6 +273,7 @@
 #include "stm32h7xx_ll_rcc.h"
 #include "stm32h7xx_ll_dma.h"
 #include "stm32h7xx_ll_crc.h"
+#include "stm32h7xx_ll_tim.h"
 
 /* Systick */
 #define BOARD_IRQ_MAX 150

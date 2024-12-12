@@ -10,6 +10,7 @@
 #include "basework/generic.h"
 #include "basework/linker.h"
 #include "basework/container/queue.h"
+#include "basework/hrtimer_.h"
 
 #ifdef __cplusplus
 extern "C"{

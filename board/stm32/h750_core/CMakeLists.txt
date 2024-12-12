@@ -52,6 +52,7 @@ add_executable(${PROJECT_NAME}
     stm32_uart.c
     stm32_pins.c
     stm32_gpio.c
+    stm32_hrtimer.c
 )
 
 # Add subdirectory
