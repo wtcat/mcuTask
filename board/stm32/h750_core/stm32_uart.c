@@ -7,6 +7,8 @@
 #include <string.h>
 
 #include "tx_api.h"
+#include "tx_thread.h"
+
 #include "basework/container/circbuf.h"
 
 #include "stm32_dma.h"
@@ -61,6 +63,10 @@ struct stm32_uart {
 
 #define RS485_SET_TX(_uart) (void)_uart
 #define RS485_SET_RX(_uart) (void)_uart
+
+#ifndef BOARD_CONSOLE_DEVICE
+#define BOARD_CONSOLE_DEVICE "uart1"
+#endif
 
 
 static struct stm32_uart uart_drivers[] = {
@@ -584,6 +590,26 @@ uart_read(struct device *dev, char *buf, size_t len, unsigned int options) {
     return ret;
 }
 
+
+static struct stm32_uart *console_dev;
+
+static void console_puts(const char *s, size_t len) {
+    if (TX_THREAD_GET_SYSTEM_STATE() == 0) {
+        uart_write(&console_dev->dev, s, len, 0);
+        return;
+    } 
+
+    /*
+     * if we are in interrupt context, then use poll write
+     */
+    USART_TypeDef *reg = console_dev->reg;
+	while (len > 0) {
+		while (!(reg->ISR & LL_USART_ISR_TXE_TXFNF));
+		reg->TDR = (uint8_t)*s++;
+		len--;
+	}
+}
+
 static int stm32_uart_init(void) {
     int err = 0;
     for (size_t i = 0; i < rte_array_size(uart_drivers); i++) {
@@ -593,6 +619,13 @@ static int stm32_uart_init(void) {
         if (err)
             break;
     }
+
+    uart_open(BOARD_CONSOLE_DEVICE, (struct device **)&console_dev);
+    if (console_dev) {
+        printk("Opened console\n");
+        __console_puts = console_puts;
+    }
+
     return err;
 }
 

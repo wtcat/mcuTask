@@ -196,12 +196,15 @@ static void stm32_clock_setup(void) {
 #define CONSOLE_PORT (USART1)
 #define CONSOLE_SPEED 2000000
 
-void console_putc(char c) {
-    while (!(CONSOLE_PORT->ISR & LL_USART_ISR_TXE_TXFNF));
-    CONSOLE_PORT->TDR = (uint8_t)c;
+static void early_puts(const char *s, size_t len) {
+	while (len > 0) {
+		while (!(CONSOLE_PORT->ISR & LL_USART_ISR_TXE_TXFNF));
+		CONSOLE_PORT->TDR = (uint8_t)*s++;
+		len--;
+	}
 }
 
-int console_getc(void) {
+static int early_getc(void) {
     if (CONSOLE_PORT->ISR & LL_USART_ISR_RXNE_RXFNE)
         return CONSOLE_PORT->RDR & 0xFF;
     return -1;
@@ -240,4 +243,7 @@ static void early_console_init(void) {
 	LL_USART_EnableDirectionTx(CONSOLE_PORT);
 	LL_USART_EnableDirectionRx(CONSOLE_PORT);
 	CONSOLE_PORT->CR1 |= USART_CR1_UE;
+
+	__console_puts = early_puts;
+	__console_getc = early_getc;
 }

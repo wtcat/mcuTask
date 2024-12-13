@@ -5,6 +5,7 @@
 #ifndef TX_API_EXTENSION_H_
 #define TX_API_EXTENSION_H_
 
+#include <stdarg.h>
 #include <sys/types.h>
 
 #include "basework/generic.h"
@@ -178,6 +179,8 @@ void  __kfree(void *ptr);
  * Platform interface
  */
 int printk(const char *fmt, ...) __rte_printf(1, 2);
+int vprintk(const char *fmt, va_list ap);
+
 int init_irq(void);
 int enable_irq(int irq);
 int disable_irq(int irq);
@@ -188,8 +191,15 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg,
 					 bool rising_edge, bool falling_edge);
 int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg);
 
-void console_putc(char c);
-int  console_getc(void);
+/*
+ * Console interface
+ */
+typedef void (*console_puts_t)(const char *, size_t);
+typedef int  (*console_getc_t)(void);
+
+extern console_puts_t __console_puts;
+extern console_getc_t __console_getc;
+
 
 #ifdef __cplusplus
 }

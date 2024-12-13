@@ -6,22 +6,51 @@
 
 #include "basework/lib/iovpr.h"
 
-#ifndef __fastcode
-#define __fastcode
-#endif
+struct printk_buffer {
+#define BUF_SIZE 128
+	char buf[BUF_SIZE + 2];
+	uint16_t len;
+};
+
+static void empty_puts(const char *s, size_t len) {
+	(void) s;
+	(void) len;
+}
+
+static int empty_getc(void) {
+	return -1;
+}
+
+console_puts_t __console_puts = empty_puts;
+console_getc_t __console_getc = empty_getc;
 
 static void __fastcode put_char(int c, void *arg) {
-	console_putc((char)c);
+	struct printk_buffer *p = (struct printk_buffer *)arg;
+	if (rte_unlikely(p->len >= BUF_SIZE)) {
+		__console_puts(p->buf, p->len);
+		p->len = 0;
+	}
 	if (c == '\n')
-		console_putc('\r');
+		p->buf[p->len++] = '\r';
+	p->buf[p->len++] = (char)c;
+}
+
+int vprintk(const char *fmt, va_list ap) {
+	struct printk_buffer pb;
+
+	pb.len = 0;
+	int len = _IO_Vprintf(put_char, &pb, fmt, ap);
+	if (pb.len > 0)
+		__console_puts(pb.buf, pb.len);
+
+	return len;
 }
 
 int printk(const char *fmt, ...) {
 	va_list ap;
 
 	va_start(ap, fmt);
-	int len = _IO_Vprintf(put_char, NULL, fmt, ap);
+	int len = vprintk(fmt, ap);
 	va_end(ap);
-
 	return len;
 }
