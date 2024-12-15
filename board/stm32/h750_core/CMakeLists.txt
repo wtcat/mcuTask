@@ -49,10 +49,11 @@ add_executable(${PROJECT_NAME}
     system_stm32h7xx.c
     main.c
     stm32_startup.c
+    stm32_dma.c
     stm32_uart.c
     stm32_pins.c
     stm32_gpio.c
-    stm32_hrtimer.c
+    # stm32_hrtimer.c
 )
 
 # Add subdirectory

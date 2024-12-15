@@ -51,12 +51,23 @@ static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rt
 	[16 ... VECTOR_SIZE-1] = (void *)dispatch_irq
 };
 
+static void switch_to_threadsp(void) {
+	__asm__ volatile(
+		"mrs r2, control\n"
+		"orr r2, #0x2\n"
+		"msr control, r2\n"
+		"isb\n"
+		"dsb\n"
+	);
+}
 /*
  * Avoid xxxx_section to be optimized to memset/memcpy
  */
 void __attribute__((optimize("O0"))) 
 _stm32_reset(void) {
 	SystemInit();
+
+	__set_PSP((uint32_t)&_main_stack[2048]);
 
 	/* Clear bss section */
 	_clear_bss_section(_sbss, _ebss);
@@ -87,6 +98,7 @@ _stm32_reset(void) {
 	printk("stm32 starting ...\n");
 	_tx_thread_system_stack_ptr = (void *)irq_vectors[0];
 
+	switch_to_threadsp();
 	/* Schedule kernel */
 	tx_kernel_enter();
 

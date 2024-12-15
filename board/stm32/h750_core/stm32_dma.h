@@ -22,11 +22,16 @@ struct stm32_dmastat {
 };
 
 struct stm32_dmachan {
+    union {
+        void   *dma;
+        struct stm32_dmastat *stat;
+    };
     int16_t ch;
-    int16_t id;
+    uint8_t id;
+    uint8_t en;
 };
 
-#define stm32_dmachan_valid(_chan) ((_chan)->ch >= 0)
+#define stm32_dmachan_valid(_chan) ((_chan)->dma != NULL)
 
 #define stm32_dmaisr_read(_sta, _chan) ({ \
     uint16_t __ch = (_chan)->ch; \
@@ -40,6 +45,10 @@ struct stm32_dmachan {
     uint32_t __mask = (_mask) << ((__ch & 3) << 3); \
     (_sta)->icr[__ch >> 2] = __mask; \
 } while (0)
+
+
+int stm32_dma_request(struct stm32_dmachan *chan, void (*dma_isr)(void *), void *arg);
+int stm32_dma_release(struct stm32_dmachan *chan);
 
 #ifdef __cplusplus
 }
