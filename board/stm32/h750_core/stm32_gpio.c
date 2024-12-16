@@ -40,7 +40,7 @@ static struct stm32_extiline extiline_vec[] __fastdata = {
 		.imask = GENMASK(15, 10),
 	}};
 
-static GPIO_TypeDef *gpio_ports[] __fastdata = {
+GPIO_TypeDef *stm32_gpio_ports[] __fastdata = {
 	GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF, 
 	GPIOG, GPIOH, GPIOI, GPIOJ, GPIOK,
 };
@@ -155,7 +155,7 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg),
 		return -EINVAL;
 
 	port = STM32_GPIO_PORT(gpio);
-	if (port >= rte_array_size(gpio_ports))
+	if (port >= rte_array_size(stm32_gpio_ports))
 		return -EINVAL;
 
 	guard(os_mutex)(&mutex);
@@ -180,7 +180,7 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg),
 	LL_GPIO_StructInit(&iocfg);
 	iocfg.Pin = BIT(pin);
 	iocfg.Mode = LL_GPIO_MODE_INPUT;
-	LL_GPIO_Init(gpio_ports[port], &iocfg);
+	LL_GPIO_Init(stm32_gpio_ports[port], &iocfg);
 
 	/* Configure gpio interrupt */
 	stm32_set_exti_source(STM32_GPIO_PORT(gpio), pin);

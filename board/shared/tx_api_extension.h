@@ -59,33 +59,7 @@ DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), \
 #endif /* TX_USE_KERNEL_API_EXTENSION */
 
 
-/*
- * Device class definition
- */
-#if TX_USE_DEVICE_API_EXTENSION
-#define DEVICE_CLASS_DEFINE(_type, ...) \
-    struct _type { \
-        const char *name; \
-        STAILQ_ENTRY(device) link; \
-        __VA_ARGS__ \
-    }
 
-/* 
- * Device structure
- */
-DEVICE_CLASS_DEFINE(device);
-
-/* 
- * Device helper interface
- */
-#define dev_extension(_dev, _type) (_type *)((_dev) + 1)
-#define to_devclass(p) (struct device *)(p)
-
-struct device *device_find(const char *name);
-int  device_register(struct device *dev);
-int  device_unregister(struct device *dev);
-void device_foreach(bool (*iterator)(struct device *, void *), void *user);
-#endif /* TX_USE_DEVICE_API_EXTENSION */
 
 /*
  * Device I/O options
@@ -200,11 +174,13 @@ typedef int  (*console_getc_t)(void);
 extern console_puts_t __console_puts;
 extern console_getc_t __console_getc;
 
+/*
+ * Device Driver
+ */
+#include "drivers/device.h"
+#include "drivers/uart.h"
 
 #ifdef __cplusplus
 }
 #endif
-
-#include "drivers/uart.h"
-
 #endif /* TX_API_EXTENSION_H_ */

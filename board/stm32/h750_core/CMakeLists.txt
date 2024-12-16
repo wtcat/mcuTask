@@ -31,11 +31,17 @@ include(${WKSAPCE_PATH}/cmake/options.cmake)
 # Add configure files
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
 
+if (CONFIG_FILEX)
+    set(FILEX_CUSTOM_PORT port)
+    set(FX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/fx_user.h)
+endif()
+
 # Add compile options
 include_dirs(
     ${WKSAPCE_PATH}
     ${WKSAPCE_PATH}/basework/arch/arm
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/port
 )
 add_compile_options(
     -DSTM32H750xx=1
@@ -53,6 +59,7 @@ add_executable(${PROJECT_NAME}
     stm32_uart.c
     stm32_pins.c
     stm32_gpio.c
+    stm32_leds.c
     # stm32_hrtimer.c
 )
 

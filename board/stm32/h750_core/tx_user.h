@@ -75,7 +75,7 @@
    processing is done directly from the timer ISR, thereby eliminating the timer thread control
    block, stack, and context switching to activate it.  */
 
-#define TX_TIMER_PROCESS_IN_ISR
+// #define TX_TIMER_PROCESS_IN_ISR
 
 
 /* Determine if in-line timer reactivation should be used within the timer expiration processing.
@@ -282,12 +282,19 @@
 #define IRQ_VECTOR_GET()  ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) - 16)
 
 /* GPIO */
+extern GPIO_TypeDef *stm32_gpio_ports[];
+
 #define STM32_GPIO(_p, _n)     ((((_p) - 'A') << 8) | (_n))
 #define STM32_GPIO_PIN(_gpio)  ((_gpio) & 0xFF)
 #define STM32_GPIO_PORT(_gpio) (((_gpio) >> 8) & 0xFF)
 
-#define GPIO_USER_KEY1   STM32_GPIO('H', 4)
+#define STM32_PIN_SET(_port, _mask) \
+   stm32_gpio_ports[(_port)]->BSRR |= (_mask)
+#define STM32_PIN_CLR(_port, _mask) \
+   stm32_gpio_ports[(_port)]->BSRR |= ((_mask) << 16)
 
+/* Button */
+#define GPIO_USER_KEY1   STM32_GPIO('D', 10)
 
 void cortexm_systick_handler(void);
 
