@@ -25,6 +25,14 @@
 
 static __fastdata HRTIMER_CONTEXT_DEFINE(hrtimer);
 
+static void lptimer_reload(uint16_t expire) {
+    HR_TIMER->CR  = 0;
+    HR_TIMER->IER = LPTIM_IER_ARRMIE;
+    HR_TIMER->CR  = LPTIM_CR_ENABLE;
+    HR_TIMER->ARR = expire;
+    HR_TIMER->CR  = LPTIM_CR_SNGSTRT | LPTIM_CR_ENABLE;
+}
+
 static void __fastcode 
 load_next_timer(void) {
     if (hrtimer.first) {
