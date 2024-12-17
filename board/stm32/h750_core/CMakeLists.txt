@@ -32,8 +32,16 @@ include(${WKSAPCE_PATH}/cmake/options.cmake)
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
 
 if (CONFIG_FILEX)
-    set(FILEX_CUSTOM_PORT port)
+    set(FILEX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
     set(FX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/fx_user.h)
+endif()
+if (CONFIG_NETX)
+    set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/)
+    set(NX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/ux_user.h)
+endif()
+if (CONFIG_USBX)
+    set(USBX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/)
+    set(UX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/ux_user.h)
 endif()
 
 # Add compile options
