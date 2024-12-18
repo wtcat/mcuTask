@@ -11,6 +11,7 @@
 struct link_header {
     uint8_t  dst_addr;
     uint8_t  src_addr;
+    uint8_t  seq_num;
     uint16_t len;
 } __rte_packed;
 
