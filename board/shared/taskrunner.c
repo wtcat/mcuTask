@@ -81,6 +81,8 @@ int __task_cancel(struct task *task, bool wait) {
             rte_list_del(&task->node);
             return 0;
         }
+        if (task->runner->curr != task)
+            return 0;
     }
     if (wait) {
         struct cancel_task ct;
@@ -100,9 +102,13 @@ int __delayed_task_post(struct task_runner *runner, struct delayed_task *task,
         return __task_post(runner, &task->base);
 
     tx_timer_deactivate(&task->timer);
-    __task_cancel(&task->base, false);
-    task->base.runner = runner;
-    task->timer.tx_timer_internal.tx_timer_internal_remaining_ticks = ticks;
+    scoped_guard(os_irq) {
+        if (task->base.node.next != NULL)
+            rte_list_del(&task->base.node);
+        task->base.runner = runner;
+        task->timer.tx_timer_internal.tx_timer_internal_remaining_ticks = ticks;
+    }
+
     return (int)tx_timer_activate(&task->timer);
 }
 
