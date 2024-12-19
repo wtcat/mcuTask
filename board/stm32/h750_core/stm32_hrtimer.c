@@ -22,10 +22,13 @@
 #define HR_TIMER_CLKEN() LL_APB4_GRP1_EnableClock(LL_APB4_GRP1_PERIPH_LPTIM2)
 #define HR_TIMER_MAX     (UINT16_MAX)
 
+#define HR_USEC(n) ((n) * 1875ul / 1000 + 1)
+
 
 static __fastdata HRTIMER_CONTEXT_DEFINE(hrtimer);
 
-static void lptimer_reload(uint16_t expire) {
+static void __fastcode 
+lptimer_reload(uint16_t expire) {
     HR_TIMER->CR  = 0;
     HR_TIMER->IER = LPTIM_IER_ARRMIE;
     HR_TIMER->CR  = LPTIM_CR_ENABLE;
@@ -34,18 +37,14 @@ static void lptimer_reload(uint16_t expire) {
 }
 
 static void __fastcode 
-load_next_timer(void) {
-    if (hrtimer.first) {
-        struct hrtimer *next_timer = _hrtimer_first(&hrtimer);
+load_next_timer(struct hrtimer *next_timer) {
+    if (next_timer) {
         uint64_t expire = next_timer->expire - hrtimer.jiffies;
         if (expire > (uint64_t)HR_TIMER_MAX)
             hrtimer.loadv = HR_TIMER_MAX;
         else
             hrtimer.loadv = expire;
-
-        // HR_TIMER->CR1 &= ~0x1;
-        // HR_TIMER->CNT = hrtimer.loadv;
-        // HR_TIMER->CR1 |= 1;
+        lptimer_reload((uint16_t)hrtimer.loadv);
     }
 }
 
@@ -55,8 +54,8 @@ stm32_timer_isr(void *arg) {
     // uint32_t arr = HR_TIMER->ARR;
 
     (void) arg;
-    if (HR_TIMER->ISR & LPTIM_ISR_ARROK) {
-        HR_TIMER->ICR |= LPTIM_ICR_ARROKCF;
+    if (HR_TIMER->ISR & LPTIM_ISR_ARRM) {
+        HR_TIMER->ICR |= LPTIM_ICR_ARRMCF;
 
         TX_DISABLE
         struct hrtimer *timer = _hrtimer_first(&hrtimer);
@@ -68,7 +67,7 @@ stm32_timer_isr(void *arg) {
         );
 
         hrtimer.jiffies = now;
-        load_next_timer();
+        load_next_timer(timer);
         TX_RESTORE
     }
 
@@ -89,9 +88,7 @@ hrtimer_start(struct hrtimer *timer, uint64_t expire) {
                 hrtimer.loadv = HR_TIMER_MAX;
             else
                 hrtimer.loadv = expire;
-            // HR_TIMER->CR1 &= ~0x1;
-            // HR_TIMER->CNT = hrtimer.loadv;
-            // HR_TIMER->CR1 |= 1;
+            lptimer_reload((uint16_t)hrtimer.loadv);
         }
     }
     return 0;
@@ -102,7 +99,7 @@ hrtimer_stop(struct hrtimer *timer) {
     scoped_guard(os_irq) {
         if (_hrtimer_remove(&hrtimer, timer)) {
             hrtimer.jiffies += hrtimer.loadv - HR_TIMER->CNT;
-            load_next_timer();
+            load_next_timer(timer);
         }
     }
     return 0;
@@ -115,7 +112,7 @@ int stm32_hrtimer_init(void) {
     if (!err) {
         HR_TIMER_CLKEN();
         LL_LPTIM_SetClockSource(HR_TIMER, LL_LPTIM_CLK_SOURCE_INTERNAL);
-        LL_LPTIM_SetPrescaler(HR_TIMER, LL_LPTIM_PRESCALER_DIV8);
+        LL_LPTIM_SetPrescaler(HR_TIMER, LL_LPTIM_PRESCALER_DIV64);
         LL_LPTIM_SetPolarity(HR_TIMER, LL_LPTIM_OUTPUT_POLARITY_REGULAR);
         LL_LPTIM_SetUpdateMode(HR_TIMER, LL_LPTIM_UPDATE_MODE_IMMEDIATE);
         LL_LPTIM_SetCounterMode(HR_TIMER, LL_LPTIM_COUNTER_MODE_INTERNAL);
@@ -123,18 +120,6 @@ int stm32_hrtimer_init(void) {
 
         /* counting start is initiated by software */
         LL_LPTIM_TrigSw(HR_TIMER);
-
-        /* HR_TIMER interrupt set-up before enabling */
-        LL_LPTIM_DisableIT_CMPM(HR_TIMER);
-        LL_LPTIM_ClearFLAG_CMPM(HR_TIMER);
-
-        /* Autoreload match Interrupt */
-        LL_LPTIM_EnableIT_ARRM(HR_TIMER);
-        LL_LPTIM_ClearFLAG_ARRM(HR_TIMER);
-
-        /* ARROK bit validates the write operation to ARR register */
-        LL_LPTIM_EnableIT_ARROK(HR_TIMER);
-        LL_LPTIM_ClearFlag_ARROK(HR_TIMER);
     }
 
     return err;

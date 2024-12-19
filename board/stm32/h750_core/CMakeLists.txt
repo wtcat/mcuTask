@@ -61,13 +61,14 @@ add_compile_options(
 
 add_executable(${PROJECT_NAME}
     system_stm32h7xx.c
-    main.c
     stm32_startup.c
+    stm32_qflash.c
     stm32_dma.c
     stm32_uart.c
     stm32_pins.c
     stm32_gpio.c
     stm32_leds.c
+    main.c
     # stm32_hrtimer.c
 )
 

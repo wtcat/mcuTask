@@ -5,6 +5,7 @@ include_dirs(.)
 target_sources(${PROJECT_NAME}
     PRIVATE
     platform.c
+    taskrunner.c
     device.c
     sysinit.c
     cstub.c

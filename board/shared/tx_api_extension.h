@@ -6,11 +6,14 @@
 #define TX_API_EXTENSION_H_
 
 #include <stdarg.h>
+#include <sys/_intsup.h>
 #include <sys/types.h>
 
+#include "basework/compiler_attributes.h"
 #include "basework/generic.h"
 #include "basework/linker.h"
 #include "basework/container/queue.h"
+#include "basework/container/list.h"
 #include "basework/hrtimer_.h"
 
 #ifdef __cplusplus
@@ -37,7 +40,7 @@ extern "C"{
 #include "basework/cleanup.h"
 
 #define tx_thread_spawn(a, b, c, d, e, f, g, h, i, j) \
-    tx_thread_create((a), (b), (VOID(*)(ULONG))(void *)(c), (ULONG)(d), (e), (f), (g), (h), (i), (j))
+    tx_thread_create((a), (CHAR *)(b), (VOID(*)(ULONG))(void *)(c), (ULONG)(d), (e), (f), (g), (h), (i), (j))
 
 #define TX_THREAD_DEFINE(_name, _size, ...) \
     struct __VA_ARGS__ {   \
@@ -58,6 +61,53 @@ DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), \
     __restore_interrupt((_T)->key), unsigned int key)	
 #endif /* TX_USE_KERNEL_API_EXTENSION */
 
+
+/*
+ * Task Runner
+ */
+struct task_runner {
+    TX_THREAD pid;
+    TX_SEMAPHORE sem;
+    struct rte_list pending;
+    struct task *curr;
+};
+
+struct task {
+    struct rte_list node;
+    void (*handler)(struct task *);
+    struct task_runner *runner;
+};
+
+struct delayed_task {
+    struct task base;
+    TX_TIMER timer;
+};
+
+#define to_delayedtask(_task) \
+    rte_container_of(_task, struct delayed_task, base)
+
+extern struct task_runner _system_taskrunner;
+
+int __task_post(struct task_runner *runner, struct task *task);
+int task_post(struct task_runner *runner, struct task *task);
+int __delayed_task_post(struct task_runner *runner, struct delayed_task *task, 
+    unsigned long ticks);
+int delayed_task_post(struct task_runner *runner, struct delayed_task *task, 
+    unsigned long ticks);
+int __task_cancel(struct task *task, bool wait);
+int task_cancel(struct task *task, bool wait);
+int __delayed_task_cancel(struct delayed_task *task, bool wait);
+int delayed_task_cancel(struct delayed_task *task, bool wait);
+void init_task(struct task *task, void (*handler)(struct task *));
+void init_delayed_task(struct delayed_task *task, void (*handler)(struct task *));
+int task_runner_construct(struct task_runner *runner, const char *name, void *stack, 
+    size_t stack_size, unsigned int prio, int cpu);
+
+#define ktask_post(_task) \
+    task_post(&_system_taskrunner, (_task))
+
+#define delayed_ktask_post(_task, _delay) \
+    delayed_task_post(&_system_taskrunner, (_task), (_delay))
 
 
 

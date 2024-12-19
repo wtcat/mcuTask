@@ -19,7 +19,7 @@ struct led_info {
     uint16_t offtime;
 };
 
-static TX_TIMER led_timer;
+static struct delayed_task led_task;
 static uint8_t led_node = GREEN;
 static bool led_active;
 static const struct led_info led_array[] = {
@@ -47,19 +47,19 @@ static inline void stm32_led_off(uint32_t gpio) {
     STM32_PIN_SET(port, BIT(pin));
 }
 
-static VOID led_timer_cb(ULONG id) {
+static void led_flash_task(struct task *led) {
     const struct led_info *info = &led_array[led_node];
-    (void) id;
+    struct delayed_task *task = to_delayedtask(led);
 
     if (!led_active) {
         stm32_led_on(info->gpio);
-        tx_timer_change(&led_timer, info->ontime, 0);
+        delayed_ktask_post(task, info->ontime);
     } else {
         stm32_led_off(info->gpio);
-        tx_timer_change(&led_timer, info->offtime, 0);
+        delayed_ktask_post(task, info->offtime);
     }
+
     led_active = !led_active;
-    tx_timer_activate(&led_timer);
 }
 
 static int stm32_leds_init(void) {
@@ -74,9 +74,9 @@ static int stm32_leds_init(void) {
     for (size_t i = 0; i < rte_array_size(led_array); i++)
         stm32_led_off(led_array[i].gpio);
 
-    tx_timer_create(&led_timer, "leds", led_timer_cb, 0,
-            TX_MSEC(1000), 0, TX_AUTO_ACTIVATE);    
-
+    init_delayed_task(&led_task, led_flash_task);
+    delayed_ktask_post(&led_task, TX_MSEC(1000));
+ 
     return 0;
 }
 

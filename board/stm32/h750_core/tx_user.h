@@ -253,10 +253,13 @@
  * Enable tx-api extension
  */
 #define TX_THREAD_API_EXTENSION
+#define TX_TASK_RUNNER_STACK_SIZE 1024
+#define TX_TASK_RUNNER_PRIO 12
 
-#define __fastcode  //__rte_section(".itcm")
-#define __fastbss   //__rte_section(".fastbss")
-#define __fastdata  //__rte_section(".fastdata")
+#define __fastcode  __rte_section(".itcm")
+#define __fastbss   __rte_section(".fastbss")
+#define __fastdata  __rte_section(".fastdata")
+
 
 /*
  * Board private
