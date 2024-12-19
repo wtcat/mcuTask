@@ -151,6 +151,8 @@ do { \
 		 dest < (uint32_t *)_end;) \
 		*dest++ = *src++; \
 } while (0)
+
+void __do_init_array(void);
 #endif /* TX_USE_SECTION_INIT_API_EXTENSION */
 
 /*

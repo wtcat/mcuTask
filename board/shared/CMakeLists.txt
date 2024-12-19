@@ -11,6 +11,7 @@ target_sources(${PROJECT_NAME}
     cstub.c
     irq.c
     nanosleep.c
+    init_array.c
 )
 
 if (CONFIG_KMALLOC)
@@ -24,5 +25,12 @@ if (CONFIG_MALLOC)
     target_sources(${PROJECT_NAME}
         PRIVATE
         malloc.c
+    )
+endif()
+
+if (CONFIG_CPLUSPLUS)
+    target_sources(${PROJECT_NAME}
+        PRIVATE
+        cppnew.cc
     )
 endif()

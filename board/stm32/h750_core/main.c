@@ -2,6 +2,7 @@
  * Copyright 2024 wtcat
  */
 #define TX_USE_BOARD_PRIVATE
+#define TX_USE_SECTION_INIT_API_EXTENSION 1
 
 #include "tx_api.h"
 #include "basework/rte_cpu.h"
@@ -19,6 +20,7 @@ void tx_application_define(void *unused) {
 	LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
 
     do_sysinit();
+    __do_init_array();
     demo_test();
 }
 

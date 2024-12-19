@@ -94,8 +94,10 @@ SECTIONS
     .init_section :
     {
         _sinit = ABSOLUTE(.);
-        *(.init_array .init_array.*)
+        KEEP(*(SORT(.init_array.*)))
+        KEEP(*(.init_array)) 
         _einit = ABSOLUTE(.);
+
     } > flash
 
     .ARM.extab :

@@ -1,7 +1,7 @@
 #############################
 # Set common compile options
 #############################
-set(CC_FLAGS   "-std=gnu11 -O2 -Wall -Werror -Wextra")
+set(CC_FLAGS   "-O2 -Wall -Werror -Wextra")
 set(SPEC_FLAGS "--specs=nosys.specs")
 set(LD_FLAGS   "-Wl,-Map=${CMAKE_BINARY_DIR}/mcutask.map -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld")
 

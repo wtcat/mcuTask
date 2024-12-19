@@ -10,3 +10,4 @@ option(CONFIG_SUBSYS_SD     "Enable SDIO/SD/MMC " OFF)
 
 # Others
 option(CONFIG_KMALLOC      "Enable kmalloc/kfree" ON)
+option(CONFIG_CPLUSPLUS    "Enable c++ language support" OFF)
