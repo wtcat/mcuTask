@@ -33,6 +33,10 @@ static void __rte_unused demo_thread_2(ULONG arg) {
     }
 }
 
+static void timer_cb(struct hrtimer *timer) {
+    // printk("HRTIMER TIMEOUT\n");
+}
+
 static void demo_test(void) {
     // static TX_THREAD tx_demo2;
     // static ULONG txdemo_stack2[1024/sizeof(ULONG)] __rte_section(".dtcm");
@@ -47,10 +51,9 @@ static void demo_test(void) {
     // gpio_request_irq(GPIO_USER_KEY1, gpio_key_isr, NULL, false, true);
 
 
-    // static struct hrtimer timer;
+    static struct hrtimer timer;
 
-    // hrtimer_init(&timer);
-    // timer.routine = timer_cb;
-    // hrtimer_start(&timer, HRTIMER_US(1000000));
-
+    hrtimer_init(&timer);
+    timer.routine = timer_cb;
+    hrtimer_start(&timer, HRTIMER_US(1000000));
 }

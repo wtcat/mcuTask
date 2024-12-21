@@ -2,6 +2,7 @@
  * Copyright 2024 wtcat
  */
 
+
 #define TX_USE_BOARD_PRIVATE
 
 #include <errno.h>
@@ -63,7 +64,7 @@ struct stm32_uart {
 #define BOARD_CONSOLE_DEVICE "uart1"
 #endif
 
-static struct stm32_uart *console_dev;
+struct stm32_uart *__stdout_device;
 static struct stm32_uart uart_drivers[] = {
     {
         .dev = {
@@ -143,15 +144,17 @@ static void __fastcode
 stm32_tx_completed(struct stm32_uart *uart, USART_TypeDef *reg) {
     struct tx_status *txs = &uart->txstat;
 
-    if (txs->transfered < txs->len) {
-        size_t bytes = txs->len - txs->transfered;
-        txs->transfered += uart->tx_start(uart, uart->reg, 
-            txs->txbuf + txs->transfered, bytes);
-        return;
-    }
     if (txs->txbuf) {
+        if (txs->transfered < txs->len) {
+            size_t bytes = txs->len - txs->transfered;
+            txs->transfered += uart->tx_start(uart, uart->reg, 
+                txs->txbuf + txs->transfered, bytes);
+            return;
+        }
+    
         reg->CR1 &= ~USART_CR1_TCIE;
         RS485_SET_RX(uart);
+        txs->txbuf = NULL;
         tx_semaphore_ceiling_put(&txs->idle, 1);
     }
 }
@@ -529,6 +532,7 @@ uart_write(struct device *dev, const char *buf, size_t len, unsigned int options
     USART_TypeDef *reg = uart->reg;
 
     guard(os_mutex)(&uart->mtx);
+
     txs->txbuf = buf;
     txs->len = len;
 
@@ -552,7 +556,6 @@ uart_write(struct device *dev, const char *buf, size_t len, unsigned int options
     }
 
     tx_semaphore_get(&uart->txstat.idle, TX_WAIT_FOREVER);
-    txs->txbuf = NULL;
 
     return 0;
 }
@@ -560,15 +563,12 @@ uart_write(struct device *dev, const char *buf, size_t len, unsigned int options
 ssize_t __fastcode
 uart_read(struct device *dev, char *buf, size_t len, unsigned int options) {
     struct stm32_uart *uart = to_uart(dev);
-    struct uart_queue *q;
-    size_t ret;
-
+ 
     if (!uart || !buf)
         return -EINVAL;
 
-    guard(os_mutex)(&uart->mtx);
-    q = &uart->rxq;
-    ret = 0;
+    struct uart_queue *q = &uart->rxq;
+    size_t ret = 0;
 
     while (len > 0) {
         size_t used = CIRC_CNT(q->head, q->tail, q->qsize);
@@ -601,14 +601,14 @@ uart_read(struct device *dev, char *buf, size_t len, unsigned int options) {
 static void __rte_maybe_unused
 console_puts(const char *s, size_t len) {
     if (TX_THREAD_GET_SYSTEM_STATE() == 0) {
-        uart_write(&console_dev->dev, s, len, 0);
+        uart_write(&__stdout_device->dev, s, len, 0);
         return;
     } 
 
     /*
      * if we are in interrupt context, then use poll write
      */
-    USART_TypeDef *reg = console_dev->reg;
+    USART_TypeDef *reg = __stdout_device->reg;
 	while (len > 0) {
 		while (!(reg->ISR & LL_USART_ISR_TXE_TXFNF));
 		reg->TDR = (uint8_t)*s++;
@@ -629,8 +629,8 @@ static int stm32_uart_init(void) {
     /*
      * Open console
      */
-    uart_open(BOARD_CONSOLE_DEVICE, (struct device **)&console_dev);
-    if (console_dev) {
+    uart_open(BOARD_CONSOLE_DEVICE, (struct device **)&__stdout_device);
+    if (__stdout_device) {
         printk("Opened console\n");
         __console_puts = console_puts;
     }

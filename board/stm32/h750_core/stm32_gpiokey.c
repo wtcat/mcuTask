@@ -22,7 +22,7 @@ static void stm32_gpiokey_task(struct task *task) {
     struct stm32_gpiokey *key = (struct stm32_gpiokey *)task;
     int state = stm32_pin_get(key->gpio);
     if (state == key->state) {
-        // printk("gpiokey state: %d\n", state);
+        printk("gpiokey state: %d\n", state);
     }
 }
 

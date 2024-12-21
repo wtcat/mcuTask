@@ -253,6 +253,10 @@
  * Enable tx-api extension
  */
 #define TX_THREAD_API_EXTENSION
+
+#define TX_SYSTEM_PANIC() for ( ; ; )
+
+/* Task runner */
 #define TX_TASK_RUNNER_STACK_SIZE 1024
 #define TX_TASK_RUNNER_PRIO 12
 
@@ -260,6 +264,9 @@
 #define __fastbss   __rte_section(".fastbss")
 #define __fastdata  __rte_section(".fastdata")
 
+/* HR-Timer */
+#define HR_TIMER_PRESCALER 4
+#define HR_USEC(n) ((n) * (240 / HR_TIMER_PRESCALER))
 
 /*
  * Board private

@@ -57,6 +57,7 @@ add_compile_options(
     -DUSE_FULL_LL_DRIVER=1
     # -mlong-calls
     -Wno-unused-parameter
+    -Wno-implicit-fallthrough
 )
 
 add_executable(${PROJECT_NAME}
@@ -69,8 +70,8 @@ add_executable(${PROJECT_NAME}
     stm32_gpio.c
     stm32_leds.c
     stm32_gpiokey.c
+    stm32_hrtimer.c
     main.c
-    # stm32_hrtimer.c
 )
 
 # Add subdirectory
