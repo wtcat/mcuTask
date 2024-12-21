@@ -287,17 +287,28 @@
 /* GPIO */
 extern GPIO_TypeDef *stm32_gpio_ports[];
 
-#define STM32_GPIO(_p, _n)     ((((_p) - 'A') << 8) | (_n))
+#define STM32_GPIO(_p, _n, _pull)     (((_pull) << 16) | (((_p) - 'A') << 8) | (_n))
 #define STM32_GPIO_PIN(_gpio)  ((_gpio) & 0xFF)
 #define STM32_GPIO_PORT(_gpio) (((_gpio) >> 8) & 0xFF)
+#define STM32_GPIO_PULL(_gpio) (((_gpio) >> 16) & 0xFF)
 
-#define STM32_PIN_SET(_port, _mask) \
+#define STM32_PINS_SET(_port, _mask) \
    stm32_gpio_ports[(_port)]->BSRR |= (_mask)
-#define STM32_PIN_CLR(_port, _mask) \
+
+#define STM32_PINS_CLR(_port, _mask) \
    stm32_gpio_ports[(_port)]->BSRR |= ((_mask) << 16)
 
-/* Button */
-#define GPIO_USER_KEY1   STM32_GPIO('D', 10)
+
+static inline void stm32_pin_set(uint32_t gpio, int value) {
+   int shift = STM32_GPIO_PIN(gpio) + (!value << 4);
+   STM32_PINS_SET(STM32_GPIO_PORT(gpio), 1 << shift);
+}
+
+static inline int stm32_pin_get(uint32_t gpio) {
+   uint32_t inp = stm32_gpio_ports[STM32_GPIO_PORT(gpio)]->IDR;
+   int pin = STM32_GPIO_PIN(gpio);
+   return !!(inp & (1 << pin));
+}
 
 void cortexm_systick_handler(void);
 

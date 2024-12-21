@@ -24,27 +24,23 @@ static uint8_t led_node = GREEN;
 static bool led_active;
 static const struct led_info led_array[] = {
     [RED] = {
-        .gpio    = STM32_GPIO('C', 0),
+        .gpio    = STM32_GPIO('C', 0, 0),
         .ontime  = TX_MSEC(1000),
         .offtime = TX_MSEC(1000),
     },
     [GREEN] = {
-        .gpio    = STM32_GPIO('C', 1),
+        .gpio    = STM32_GPIO('C', 1, 0),
         .ontime  = TX_MSEC(100),
         .offtime = TX_MSEC(1500),
     }
 };
 
 static inline void stm32_led_on(uint32_t gpio) {
-    int port = STM32_GPIO_PORT(gpio);
-    int pin  = STM32_GPIO_PIN(gpio);
-    STM32_PIN_CLR(port, BIT(pin));
+    stm32_pin_set(gpio, 0);
 }
 
 static inline void stm32_led_off(uint32_t gpio) {
-    int port = STM32_GPIO_PORT(gpio);
-    int pin  = STM32_GPIO_PIN(gpio);
-    STM32_PIN_SET(port, BIT(pin));
+    stm32_pin_set(gpio, 1);
 }
 
 static void led_flash_task(struct task *led) {

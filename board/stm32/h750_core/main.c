@@ -24,11 +24,6 @@ void tx_application_define(void *unused) {
     demo_test();
 }
 
-static void gpio_key_isr(int line, void *arg) {
-    (void) arg;
-    printk("gpio_key_isr: line(%d)\n", line);
-}
-
 static void __rte_unused demo_thread_2(ULONG arg) {
     int count = 0;
 
@@ -38,10 +33,6 @@ static void __rte_unused demo_thread_2(ULONG arg) {
     }
 }
 
-// static void timer_cb(struct hrtimer *timer) {
-//     printk("timer_cb\n");
-//     hrtimer_start(timer, HRTIMER_US(1000000));
-// }
 static void demo_test(void) {
     // static TX_THREAD tx_demo2;
     // static ULONG txdemo_stack2[1024/sizeof(ULONG)] __rte_section(".dtcm");
@@ -53,7 +44,7 @@ static void demo_test(void) {
         "[task]# ", &_cli_ifdev_uart);
     printk("cli runnng with error(%d)\n", err);
 
-    gpio_request_irq(GPIO_USER_KEY1, gpio_key_isr, NULL, false, true);
+    // gpio_request_irq(GPIO_USER_KEY1, gpio_key_isr, NULL, false, true);
 
 
     // static struct hrtimer timer;

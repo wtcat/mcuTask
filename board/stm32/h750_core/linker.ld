@@ -158,8 +158,8 @@ SECTIONS
         _sram4_heap_start = ABSOLUTE(.);
     } > sram4
 
-    _kernel_byte_pool_start = _ebss;
-    _kernel_byte_pool_size = ORIGIN(sram) + LENGTH(sram) - _ebss;
+    _kernel_byte_pool_start = _sram4_heap_start;
+    _kernel_byte_pool_size = ORIGIN(sram4) + LENGTH(sram4) - _sram4_heap_start;
 
 
     /* Stabs debugging sections. */

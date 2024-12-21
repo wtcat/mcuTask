@@ -180,6 +180,7 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg),
 	LL_GPIO_StructInit(&iocfg);
 	iocfg.Pin = BIT(pin);
 	iocfg.Mode = LL_GPIO_MODE_INPUT;
+	iocfg.Pull = STM32_GPIO_PULL(gpio);
 	LL_GPIO_Init(stm32_gpio_ports[port], &iocfg);
 
 	/* Configure gpio interrupt */
