@@ -5,7 +5,13 @@
 #ifndef DRIVERS_DEVICE_H_
 #define DRIVERS_DEVICE_H_
 
+#include <stdint.h>
 #include <stdbool.h>
+
+#include "tx_user.h"
+
+#include "basework/bitops.h"
+#include "basework/container/queue.h"
 
 #ifdef __cplusplus
 extern "C"{

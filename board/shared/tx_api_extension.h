@@ -167,7 +167,8 @@ struct sysinit_item {
 /* System initialize level */
 #define SI_EARLY_LEVEL         5
 #define SI_MEMORY_LEVEL        10
-#define SI_PREDRIVER_LEVEL     70
+#define SI_PREDRIVER_LEVEL     60
+#define SI_BUSDRIVER_LEVEL     70
 #define SI_DRIVER_LEVEL        80
 #define SI_APPLICATION_LEVEL   90
 
