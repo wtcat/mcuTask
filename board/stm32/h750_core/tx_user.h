@@ -265,13 +265,12 @@
 #define __fastdata  __rte_section(".fastdata")
 
 /* HR-Timer */
-#define HR_TIMER_PRESCALER 4
-#define HR_USEC(n) ((n) * (240 / HR_TIMER_PRESCALER))
+#define HR_TIMER_PRESCALER 5
+#define HRTIMER_US(n) ((n) * (240 / HR_TIMER_PRESCALER))
 
 /*
  * Board private
  */
-#define HRTIMER_US(us) ((us) * 240) /* timer_freq: 240mhz */
 
 #ifdef TX_USE_BOARD_PRIVATE
 #include "stm32h7xx.h"

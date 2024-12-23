@@ -61,9 +61,9 @@ static void cli_fputc(int c, void *arg) {
     struct format_buffer *p = (struct format_buffer *)arg;
 
     if (p->len < sizeof(p->buf) - 2) {
-        p->buf[p->len++] = (char)c;
         if (c == '\n')
             p->buf[p->len++] = '\r';
+		p->buf[p->len++] = (char)c;
     } else {
         p->buf[p->len] = '\0';
 		p->cli->ifdev->puts(p->cli, p->buf, p->len);

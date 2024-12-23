@@ -33,8 +33,16 @@ static void __rte_unused demo_thread_2(ULONG arg) {
     }
 }
 
-static void timer_cb(struct hrtimer *timer) {
-    // printk("HRTIMER TIMEOUT\n");
+static void timer_cb_1s(struct hrtimer *timer) {
+    printk("HRTIMER TIMEOUT 1s\n");
+    if (hrtimer_start(timer, HRTIMER_US(1000000)))
+        printk("failed to start timer_cb_1s\n");
+}
+
+static void timer_cb_2(struct hrtimer *timer) {
+    printk("timer_cb_2\n");
+    if (hrtimer_start(timer, HRTIMER_US(1004000)))
+        printk("failed to start timer_cb_2\n");
 }
 
 static void demo_test(void) {
@@ -52,8 +60,17 @@ static void demo_test(void) {
 
 
     static struct hrtimer timer;
-
     hrtimer_init(&timer);
-    timer.routine = timer_cb;
-    hrtimer_start(&timer, HRTIMER_US(1000000));
+    timer.name = "T1";
+    timer.routine = timer_cb_1s;
+    if (hrtimer_start(&timer, HRTIMER_US(1000000)))
+        printk("failed 1\n");
+
+    static struct hrtimer timer_1;
+    hrtimer_init(&timer_1);
+    timer_1.name = "T2";
+    timer_1.routine = timer_cb_2;
+    if (hrtimer_start(&timer_1, HRTIMER_US(1004000)))
+        printk("failed 2\n");
+
 }
