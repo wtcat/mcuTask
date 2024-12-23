@@ -11,9 +11,8 @@
  */
 
 #define TX_USE_BOARD_PRIVATE
-
-#include "drivers/i2c.h"
 #include "tx_api.h"
+#include "drivers/i2c.h"
 
 #include "stm32h7xx_ll_i2c.h"
 
@@ -980,7 +979,6 @@ static int i2c_stm32_get_config(struct device *dev, uint32_t *config) {
 
 static int i2c_stm32_runtime_configure(struct device *dev, uint32_t config) {
 	struct stm32_i2c *data = (struct stm32_i2c *)dev;
-	const struct stm32_i2c_config *cfg = data->config;
 	I2C_TypeDef *i2c = data->i2c;
 	uint32_t i2c_clock = 0U;
 	int ret;
