@@ -267,6 +267,8 @@
 /* HR-Timer */
 #define HR_TIMER_PRESCALER 5
 #define HRTIMER_US(n) ((n) * (240 / HR_TIMER_PRESCALER))
+#define HRTIMER_JIFFIES  *((volatile uint32_t *)0x40000024UL)
+#define HRTIMER_CYCLE_TO_US(n) ((n) / (240 / HR_TIMER_PRESCALER))
 
 /*
  * Board private

@@ -15,7 +15,6 @@
 struct stm32_hrtimer {
     struct hrtimer_context base;
     uint64_t jiffies;
-    uint32_t prevalue;
 };
 
 
@@ -65,12 +64,8 @@ CLI_CMD(timdump, "timdump",
 
 static __rte_always_inline uint64_t 
 current_jiffies(struct stm32_hrtimer *ctx) {
-    uint32_t now = HR_TIMER->CNT;
-
     if (rte_unlikely(HR_TIMER->SR & TIM_SR_UIF))
-        ctx->jiffies += HR_TIMER_MAX;
-
-    printk("*jiffies: 0x%llx counter(0x%lx)\n", ctx->jiffies, now);
+        return ctx->jiffies + HR_TIMER_MAX + HR_TIMER->CNT;
     return ctx->jiffies + HR_TIMER->CNT;
 }
 
@@ -87,8 +82,6 @@ load_next_event(struct stm32_hrtimer *ctx, uint32_t expire, struct hrtimer *time
     }
 
     HR_TIMER->DIER |= TIM_DIER_CC1IE;
-    printk("now(0x%lx) next(0x%lx) expire(0x%lx) timer(%s)\n",
-        now, next, expire, timer->name);
     return 0;
 }
 
@@ -105,8 +98,6 @@ load_next_timer(struct stm32_hrtimer *ctx, struct hrtimer *next_timer) {
         } else {
             expire = HR_TIMER_MAX_ERROR;
         }
-        printk("next_expire(0x%llx) jiffies(0x%llx) expire(0x%llx)\n", 
-            next_timer->expire, jiffies, expire);
         return load_next_event(ctx, (uint32_t)expire, next_timer);
     }
     return 0;
@@ -120,10 +111,8 @@ stm32_timer_isr(void *arg) {
 
     HR_TIMER->SR = 0;
 
-    if (rte_unlikely(sr & TIM_SR_UIF)) {
+    if (rte_unlikely(sr & TIM_SR_UIF))
         ctx->jiffies += HR_TIMER_MAX;
-        printk("Timer overflow\n");
-    }
 
     if (sr & TIM_SR_CC1IF) {
         HR_TIMER->DIER &= ~TIM_DIER_CC1IE;
@@ -153,7 +142,6 @@ hrtimer_start(struct hrtimer *timer, uint64_t expire) {
     struct stm32_hrtimer *ctx = &stm32_hrtimer;
     scoped_guard(os_irq) {
         uint64_t next = current_jiffies(ctx) + expire;
-        printk("hrtimer_start: 0x%llx\n", next);
         if (_hrtimer_insert(&ctx->base, timer, next)) {
             if (rte_unlikely(expire > (uint64_t)HR_TIMER_MAX))
                 expire = HR_TIMER_MAX / 2;
