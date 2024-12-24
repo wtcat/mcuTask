@@ -11,12 +11,13 @@
  */
 
 #define TX_USE_BOARD_PRIVATE
+
 #include "tx_api.h"
 #include "drivers/i2c.h"
 
-#include "stm32h7xx_ll_i2c.h"
 
 // #define CONFIG_I2C_TARGET
+#define CONFIG_STM32_I2C1 
 
 #define NSEC_PER_SEC 1000000000ul
 #define LOG_ERR(fmt, ...) printk("[E]<i2c>: " fmt "\n", ##__VA_ARGS__)
@@ -162,7 +163,8 @@ static uint32_t i2c_valid_timing_nbr;
 static int i2c_stm32_runtime_configure(struct device *dev, uint32_t config);
 
 static uint32_t get_periph_clkrate(void) {
-	return 0;
+	/* APB1: 120MHZ */
+	return 120000000;
 }
 
 static inline uint32_t i2c_map_dt_bitrate(uint32_t bitrate) {
@@ -964,13 +966,13 @@ static int i2c_stm32_get_config(struct device *dev, uint32_t *config) {
 
 	/* I2C BIT RATE */
 	if (data->current_timing.i2c_speed == 100000) {
-		LOG_INF("timings = <%d I2C_BITRATE_STANDARD 0x%X>;",
+		LOG_INF("timings = <%ld I2C_BITRATE_STANDARD 0x%lX>;",
 				data->current_timing.periph_clock, data->current_timing.timing_setting);
 	} else if (data->current_timing.i2c_speed == 400000) {
-		LOG_INF("timings = <%d I2C_BITRATE_FAST 0x%X>;",
+		LOG_INF("timings = <%ld I2C_BITRATE_FAST 0x%lX>;",
 				data->current_timing.periph_clock, data->current_timing.timing_setting);
 	} else if (data->current_timing.i2c_speed == 1000000) {
-		LOG_INF("timings = <%d I2C_SPEED_FAST_PLUS 0x%X>;",
+		LOG_INF("timings = <%ld I2C_SPEED_FAST_PLUS 0x%lX>;",
 				data->current_timing.periph_clock, data->current_timing.timing_setting);
 	}
 
@@ -1117,7 +1119,7 @@ static int stm32_i2cbus_init(struct stm32_i2c *dev) {
 	return 0;
 }
 
-#ifdef CONFIG_I2C1
+#ifdef CONFIG_STM32_I2C1
 static const struct stm32_i2c_config i2c1_config = {
     .evt_irq = I2C1_EV_IRQn,
     .err_irq = I2C1_ER_IRQn,
@@ -1129,8 +1131,8 @@ static struct stm32_i2c i2c1_bus = {
 	.base = {
         .name = "i2c1",
         .dops = {
-            .configure = i2c_stm32_runtime_configure,
-            .transfer = i2c_stm32_transfer,
+            .configure  = i2c_stm32_runtime_configure,
+            .transfer   = i2c_stm32_transfer,
             .get_config = i2c_stm32_get_config,
     #ifdef CONFIG_I2C_TARGET
             .target_register = i2c_stm32_target_register,
@@ -1141,11 +1143,11 @@ static struct stm32_i2c i2c1_bus = {
 	.i2c = I2C1,
 	.config = &i2c1_config
 };
-#endif /* CONFIG_I2C1 */
+#endif /* CONFIG_STM32_I2C1 */
 
 static int stm32_i2c_init(void) {
 	int err = 0;
-#ifdef CONFIG_I2C1
+#ifdef CONFIG_STM32_I2C1
 	err = stm32_i2cbus_init(&i2c1_bus);
 #endif
 	return err;

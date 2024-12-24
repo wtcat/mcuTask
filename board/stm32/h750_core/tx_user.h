@@ -284,6 +284,7 @@
 #include "stm32h7xx_ll_crc.h"
 #include "stm32h7xx_ll_tim.h"
 #include "stm32h7xx_ll_i2c.h"
+#include "stm32h7xx_ll_spi.h"
 
 /* Systick */
 #define BOARD_IRQ_MAX 150

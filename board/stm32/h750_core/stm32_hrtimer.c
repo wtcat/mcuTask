@@ -15,7 +15,7 @@
 struct stm32_hrtimer {
     struct hrtimer_context base;
     uint64_t jiffies;
-    uint32_t start;
+    uint32_t prevalue;
 };
 
 
@@ -65,8 +65,12 @@ CLI_CMD(timdump, "timdump",
 
 static __rte_always_inline uint64_t 
 current_jiffies(struct stm32_hrtimer *ctx) {
+    uint32_t now = HR_TIMER->CNT;
+
     if (rte_unlikely(HR_TIMER->SR & TIM_SR_UIF))
-        return ctx->jiffies + HR_TIMER_MAX + HR_TIMER->CNT;
+        ctx->jiffies += HR_TIMER_MAX;
+
+    printk("*jiffies: 0x%llx counter(0x%lx)\n", ctx->jiffies, now);
     return ctx->jiffies + HR_TIMER->CNT;
 }
 
@@ -76,8 +80,6 @@ load_next_event(struct stm32_hrtimer *ctx, uint32_t expire, struct hrtimer *time
     uint32_t next = now + expire;
 
     HR_TIMER->CCR1 = next;
-    ctx->start = now;
-
     now = HR_TIMER->CNT;
     if (next - now > expire) {
         printk("Time error\n");
@@ -85,6 +87,8 @@ load_next_event(struct stm32_hrtimer *ctx, uint32_t expire, struct hrtimer *time
     }
 
     HR_TIMER->DIER |= TIM_DIER_CC1IE;
+    printk("now(0x%lx) next(0x%lx) expire(0x%lx) timer(%s)\n",
+        now, next, expire, timer->name);
     return 0;
 }
 
@@ -101,6 +105,8 @@ load_next_timer(struct stm32_hrtimer *ctx, struct hrtimer *next_timer) {
         } else {
             expire = HR_TIMER_MAX_ERROR;
         }
+        printk("next_expire(0x%llx) jiffies(0x%llx) expire(0x%llx)\n", 
+            next_timer->expire, jiffies, expire);
         return load_next_event(ctx, (uint32_t)expire, next_timer);
     }
     return 0;
@@ -113,6 +119,7 @@ stm32_timer_isr(void *arg) {
     uint32_t sr = HR_TIMER->SR;
 
     HR_TIMER->SR = 0;
+
     if (rte_unlikely(sr & TIM_SR_UIF)) {
         ctx->jiffies += HR_TIMER_MAX;
         printk("Timer overflow\n");
@@ -145,9 +152,11 @@ int __fastcode
 hrtimer_start(struct hrtimer *timer, uint64_t expire) {
     struct stm32_hrtimer *ctx = &stm32_hrtimer;
     scoped_guard(os_irq) {
-        if (_hrtimer_insert(&ctx->base, timer, current_jiffies(ctx) + expire)) {
+        uint64_t next = current_jiffies(ctx) + expire;
+        printk("hrtimer_start: 0x%llx\n", next);
+        if (_hrtimer_insert(&ctx->base, timer, next)) {
             if (rte_unlikely(expire > (uint64_t)HR_TIMER_MAX))
-                expire = HR_TIMER_MAX;
+                expire = HR_TIMER_MAX / 2;
             return load_next_event(ctx, expire, timer);
         }
     }
@@ -159,7 +168,7 @@ hrtimer_stop(struct hrtimer *timer) {
     struct stm32_hrtimer *ctx = &stm32_hrtimer;
     scoped_guard(os_irq) {
         if (_hrtimer_remove(&ctx->base, timer))
-            return load_next_timer(ctx, timer);
+            return load_next_timer(ctx, _hrtimer_first(&ctx->base));
     }
     return 0;
 }
@@ -178,7 +187,7 @@ int stm32_hrtimer_init(void) {
         LL_TIM_GenerateEvent_UPDATE(HR_TIMER);
         HR_TIMER->SR = 0;
         HR_TIMER->DIER = TIM_DIER_UIE;
-        HR_TIMER->CR1 |= TIM_CR1_CEN | TIM_CR1_UDIS;
+        HR_TIMER->CR1 |= TIM_CR1_CEN;/* | TIM_CR1_UDIS*/;
     }
 
     return err;

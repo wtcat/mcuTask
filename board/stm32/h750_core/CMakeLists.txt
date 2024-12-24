@@ -71,6 +71,7 @@ add_executable(${PROJECT_NAME}
     stm32_leds.c
     stm32_gpiokey.c
     stm32_hrtimer.c
+    stm32_i2c.c
     main.c
 )
 

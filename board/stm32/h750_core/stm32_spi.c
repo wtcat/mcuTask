@@ -10,14 +10,8 @@
 
 #include "drivers/spi.h"
 
-#if defined(CONFIG_DCACHE) &&                               \
-	!defined(CONFIG_NOCACHE_MEMORY)
-/* currently, manual cache coherency management is only done on dummy_rx_tx_buffer */
-#define SPI_STM32_MANUAL_CACHE_COHERENCY_REQUIRED	1
-#else
-#define  SPI_STM32_MANUAL_CACHE_COHERENCY_REQUIRED	0
-#endif /* defined(CONFIG_DCACHE) && !defined(CONFIG_NOCACHE_MEMORY) */
 
+#define SPI_STM32_MANUAL_CACHE_COHERENCY_REQUIRED	1
 #define WAIT_1US	1U
 
 /*
