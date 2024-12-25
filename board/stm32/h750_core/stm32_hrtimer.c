@@ -30,38 +30,6 @@ struct stm32_hrtimer {
 
 static __fastdata struct stm32_hrtimer stm32_hrtimer;
 
-#ifdef HRTIMER_DEBUG_ON
-#include "subsys/cli/cli.h"
-
-static void stm32_hrtimer_dump(void) {
-    printk("Timer2 register dump:\n");
-    printk("CR1    = 0x%08"PRIx32"\n", HR_TIMER->CR1);
-    printk("CR2    = 0x%08"PRIx32"\n", HR_TIMER->CR2);
-    printk("DIER   = 0x%08"PRIx32"\n", HR_TIMER->DIER);
-    printk("SR     = 0x%08"PRIx32"\n", HR_TIMER->SR);
-    printk("EGR    = 0x%08"PRIx32"\n", HR_TIMER->EGR);
-    printk("CNT    = 0x%08"PRIx32"\n", HR_TIMER->CNT);
-    printk("CCR1   = 0x%08"PRIx32"\n", HR_TIMER->CCR1);
-    printk("PSC    = 0x%08"PRIx32"\n", HR_TIMER->PSC);
-    printk("ARR    = 0x%08"PRIx32"\n", HR_TIMER->ARR);
-    printk("RCR    = 0x%08"PRIx32"\n", HR_TIMER->RCR);
-}
-
-static int stm32_hrtimer_cmd(struct cli_process *cli, int argc, 
-    char *argv[]) {
-    (void) cli;
-    (void) argc;
-    (void) argv;
-    stm32_hrtimer_dump();
-	return 0;
-}
-
-CLI_CMD(timdump, "timdump",
-    "SHow timer register status",
-    stm32_hrtimer_cmd
-);
-#endif
-
 static __rte_always_inline uint64_t 
 current_jiffies(struct stm32_hrtimer *ctx) {
     if (rte_unlikely(HR_TIMER->SR & TIM_SR_UIF))
@@ -182,3 +150,35 @@ int stm32_hrtimer_init(void) {
 }
 
 SYSINIT(stm32_hrtimer_init, SI_PREDRIVER_LEVEL, 10);
+
+#ifdef HRTIMER_DEBUG_ON
+#include "subsys/cli/cli.h"
+
+static void stm32_hrtimer_dump(void) {
+    printk("Timer2 register dump:\n");
+    printk("CR1    = 0x%08"PRIx32"\n", HR_TIMER->CR1);
+    printk("CR2    = 0x%08"PRIx32"\n", HR_TIMER->CR2);
+    printk("DIER   = 0x%08"PRIx32"\n", HR_TIMER->DIER);
+    printk("SR     = 0x%08"PRIx32"\n", HR_TIMER->SR);
+    printk("EGR    = 0x%08"PRIx32"\n", HR_TIMER->EGR);
+    printk("CNT    = 0x%08"PRIx32"\n", HR_TIMER->CNT);
+    printk("CCR1   = 0x%08"PRIx32"\n", HR_TIMER->CCR1);
+    printk("PSC    = 0x%08"PRIx32"\n", HR_TIMER->PSC);
+    printk("ARR    = 0x%08"PRIx32"\n", HR_TIMER->ARR);
+    printk("RCR    = 0x%08"PRIx32"\n", HR_TIMER->RCR);
+}
+
+static int stm32_hrtimer_cmd(struct cli_process *cli, int argc, 
+    char *argv[]) {
+    (void) cli;
+    (void) argc;
+    (void) argv;
+    stm32_hrtimer_dump();
+	return 0;
+}
+
+CLI_CMD(timdump, "timdump",
+    "SHow timer register status",
+    stm32_hrtimer_cmd
+);
+#endif

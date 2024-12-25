@@ -33,17 +33,29 @@ static void __rte_unused demo_thread_2(ULONG arg) {
     }
 }
 
+volatile uint32_t test_buffer[100];
+static int test_idx;
 static void timer_cb_1s(struct hrtimer *timer) {
-    printk("HRTIMER TIMEOUT 1s\n");
-    if (hrtimer_start(timer, HRTIMER_US(1000000)))
+    static uint32_t prevalue;
+    uint32_t now = HRTIMER_JIFFIES;
+
+    if (test_idx < 100)
+        test_buffer[test_idx++] = HRTIMER_CYCLE_TO_US(now - prevalue);
+    else
+        return;
+        
+    prevalue = now;
+    if (hrtimer_start(timer, HRTIMER_US(5)))
         printk("failed to start timer_cb_1s\n");
+
+    
 }
 
-static void timer_cb_2(struct hrtimer *timer) {
-    printk("timer_cb_2\n");
-    if (hrtimer_start(timer, HRTIMER_US(1004000)))
-        printk("failed to start timer_cb_2\n");
-}
+// static void timer_cb_2(struct hrtimer *timer) {
+//     printk("timer_cb_2\n");
+//     if (hrtimer_start(timer, HRTIMER_US(1004000)))
+//         printk("failed to start timer_cb_2\n");
+// }
 
 static void demo_test(void) {
     // static TX_THREAD tx_demo2;
@@ -63,14 +75,15 @@ static void demo_test(void) {
     hrtimer_init(&timer);
     timer.name = "T1";
     timer.routine = timer_cb_1s;
-    if (hrtimer_start(&timer, HRTIMER_US(1000000)))
+    if (hrtimer_start(&timer, HRTIMER_US(10)))
         printk("failed 1\n");
 
-    static struct hrtimer timer_1;
-    hrtimer_init(&timer_1);
-    timer_1.name = "T2";
-    timer_1.routine = timer_cb_2;
-    if (hrtimer_start(&timer_1, HRTIMER_US(1004000)))
-        printk("failed 2\n");
+
+    // static struct hrtimer timer_1;
+    // hrtimer_init(&timer_1);
+    // timer_1.name = "T2";
+    // timer_1.routine = timer_cb_2;
+    // if (hrtimer_start(&timer_1, HRTIMER_US(1004000)))
+    //     printk("failed 2\n");
 
 }

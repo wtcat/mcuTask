@@ -1,17 +1,26 @@
 /*
  * Copyright (c) 2024 wtcat
  */
-// #define TX_SOURCE_CODE
+
+#define TX_SOURCE_CODE
 
 #include "tx_api.h"
-// #include "tx_trace.h"
-// #include "tx_thread.h"
+#include "tx_trace.h"
+#include "tx_thread.h"
 
 
-#if 0
-static void nanosleep_timeout(void) {
+struct sleep_timer {
+    struct hrtimer timer;
+    TX_THREAD *thread;
+};
+
+#if 1
+static void sleep_timeout(struct hrtimer *timer) {
+    struct sleep_timer *stimer = rte_container_of(timer, 
+        struct sleep_timer, timer);
     TX_INTERRUPT_SAVE_AREA
 
+    (void) timer;
     TX_DISABLE
 #ifdef TX_NOT_INTERRUPTABLE
     /* Resume the thread!  */
@@ -20,13 +29,22 @@ static void nanosleep_timeout(void) {
 #else
     _tx_thread_preempt_disable++;
     TX_RESTORE
-    _tx_thread_system_resume(&_tx_timer_thread);
+    _tx_thread_system_resume(stimer->thread);
 #endif
 }
 
 UINT tx_os_nanosleep(uint64_t time) {
     TX_INTERRUPT_SAVE_AREA
     TX_THREAD *thread_ptr;
+    struct sleep_timer stimer;
+    ULONG usec;
+
+    usec = time / 1000;
+    if (usec == 0)
+        return TX_SUCCESS;
+
+    hrtimer_init(&stimer.timer);
+    stimer.timer.routine = sleep_timeout;
 
     /* Lockout interrupts while the thread is being resumed.  */
     TX_DISABLE
@@ -67,6 +85,9 @@ UINT tx_os_nanosleep(uint64_t time) {
     thread_ptr->tx_thread_state = TX_SUSPENDED;
 
 #ifdef TX_NOT_INTERRUPTABLE
+    stimer.thread = thread_ptr;
+    hrtimer_start(&stimer.timer, HRTIMER_US(usec));
+
     /* Call actual non-interruptable thread suspension routine.  */
     _tx_thread_system_ni_suspend(thread_ptr, TX_NO_WAIT);
     //TODO:
@@ -76,7 +97,9 @@ UINT tx_os_nanosleep(uint64_t time) {
     thread_ptr->tx_thread_suspend_status =  TX_SUCCESS;
     thread_ptr->tx_thread_timer.tx_timer_internal_remaining_ticks = TX_NO_WAIT;
     _tx_thread_preempt_disable++;
-    //TODO:
+ 
+    stimer.thread = thread_ptr;
+    hrtimer_start(&stimer.timer, HRTIMER_US(usec));
     TX_RESTORE
     _tx_thread_system_suspend(thread_ptr);
 #endif
