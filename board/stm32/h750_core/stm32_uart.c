@@ -53,7 +53,6 @@ struct stm32_uart {
 
 
 #define UART_ID(_uart) (int)((_uart)->dev.name[4] - '0')
-#define DEFAULT_SPEED 2000000
 #define DMA_MAXSEG UINT16_MAX
 #define UART_FIFOSIZE 8
 
@@ -466,7 +465,7 @@ int uart_open(const char *name, struct device **pdev) {
 
         txstat_init(uart);
 
-        param.baudrate = DEFAULT_SPEED;
+        param.baudrate = CONSOLE_DEFAULT_SPEED;
         param.hwctrl   = false;
         param.nb_data  = kUartDataWidth_8B;
         param.nb_stop  = kUartStopWidth_1B;

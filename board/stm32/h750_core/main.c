@@ -26,10 +26,14 @@ void tx_application_define(void *unused) {
 
 static void __rte_unused demo_thread_2(ULONG arg) {
     int count = 0;
-
+    uint32_t prevalue = 0;
     for ( ; ; ) {
-        printk("Thread-2: count(%d)\n", count++);
-        tx_thread_sleep(TX_MSEC(10000));
+        uint32_t now = HRTIMER_JIFFIES;
+        uint32_t diff = HRTIMER_CYCLE_TO_US(now - prevalue);
+        prevalue = now;
+        printk("Thread-2: count(%d) time_diff(%ld)\n", count++, diff);
+        // tx_thread_sleep(TX_MSEC(10000));
+        tx_os_nanosleep(1000000000);
     }
 }
 
@@ -58,10 +62,10 @@ static void timer_cb_1s(struct hrtimer *timer) {
 // }
 
 static void demo_test(void) {
-    // static TX_THREAD tx_demo2;
-    // static ULONG txdemo_stack2[1024/sizeof(ULONG)] __rte_section(".dtcm");
-    // tx_thread_create(&tx_demo2, "demo", demo_thread_2, 0, txdemo_stack2, 
-    //     sizeof(txdemo_stack2), 11, 11, TX_NO_TIME_SLICE, TX_AUTO_START);
+    static TX_THREAD tx_demo2;
+    static ULONG txdemo_stack2[1024/sizeof(ULONG)] __rte_section(".dtcm");
+    tx_thread_create(&tx_demo2, "demo", demo_thread_2, 0, txdemo_stack2, 
+        sizeof(txdemo_stack2), 11, 11, TX_NO_TIME_SLICE, TX_AUTO_START);
 
     static ULONG stack[256];
     int err = cli_run("uart1", 15, stack, sizeof(stack), 

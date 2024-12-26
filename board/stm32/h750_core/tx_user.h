@@ -294,6 +294,9 @@
 
 #define IRQ_VECTOR_GET()  ((SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk) - 16)
 
+/* Console */
+#define CONSOLE_DEFAULT_SPEED 2000000
+
 /* GPIO */
 extern GPIO_TypeDef *stm32_gpio_ports[];
 

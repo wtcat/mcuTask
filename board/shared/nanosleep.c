@@ -14,7 +14,6 @@ struct sleep_timer {
     TX_THREAD *thread;
 };
 
-#if 1
 static void sleep_timeout(struct hrtimer *timer) {
     struct sleep_timer *stimer = rte_container_of(timer, 
         struct sleep_timer, timer);
@@ -22,6 +21,7 @@ static void sleep_timeout(struct hrtimer *timer) {
 
     (void) timer;
     TX_DISABLE
+
 #ifdef TX_NOT_INTERRUPTABLE
     /* Resume the thread!  */
     _tx_thread_system_ni_resume(&xxxxxx);
@@ -60,11 +60,6 @@ UINT tx_os_nanosleep(uint64_t time) {
     if (TX_THREAD_GET_SYSTEM_STATE() != ((ULONG) 0)) {
         TX_RESTORE
         return TX_CALLER_ERROR;
-    }
-
-    if (time == 0) {
-        TX_RESTORE
-        return TX_SUCCESS;
     }
 
     /* Determine if the preempt disable flag is non-zero.  */
@@ -107,12 +102,6 @@ UINT tx_os_nanosleep(uint64_t time) {
     /* Return status to the caller.  */
     return thread_ptr->tx_thread_suspend_status;
 }
-#else
-UINT tx_os_nanosleep(uint64_t time) {
-    ULONG ms = time / 1000000 + 1;
-    return tx_thread_sleep(TX_MSEC(ms));
-}
-#endif /* #if 0*/
 
 UINT tx_os_delay(uint64_t nano_sec) {
     return 0;

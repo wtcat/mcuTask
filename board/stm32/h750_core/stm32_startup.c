@@ -206,7 +206,7 @@ static void stm32_clock_setup(void) {
  * Console port
  */
 #define CONSOLE_PORT (USART1)
-#define CONSOLE_SPEED 2000000
+#define CONSOLE_SPEED CONSOLE_DEFAULT_SPEED
 
 static void early_puts(const char *s, size_t len) {
 	while (len > 0) {
