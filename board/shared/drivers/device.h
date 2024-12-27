@@ -5,6 +5,7 @@
 #ifndef DRIVERS_DEVICE_H_
 #define DRIVERS_DEVICE_H_
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -17,6 +18,12 @@
 extern "C"{
 #endif
 
+struct device;
+
+struct device_operations {
+    int (*control)(struct device *, unsigned int, void *);
+};
+
 /*
  * Device class definition
  */
@@ -24,6 +31,7 @@ extern "C"{
     struct _type { \
         const char *name; \
         STAILQ_ENTRY(device) link; \
+        int (*control)(struct device *, unsigned int, void *); \
         __VA_ARGS__ \
     }
 
@@ -42,6 +50,15 @@ struct device *device_find(const char *name);
 int  device_register(struct device *dev);
 int  device_unregister(struct device *dev);
 void device_foreach(bool (*iterator)(struct device *, void *), void *user);
+
+static inline int 
+device_control(struct device *dev, unsigned int cmd, void *arg) {
+    if (dev == NULL)
+        return -EINVAL;
+    if (dev->control)
+        return dev->control(dev, cmd, arg);
+    return -ENOSYS;
+}
 
 
 #ifdef __cplusplus
