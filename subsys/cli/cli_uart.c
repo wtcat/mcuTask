@@ -6,15 +6,11 @@
 #include "subsys/cli/cli.h"
 
 static void *cli_uart_open(const char *dev) {
-    struct device *udev;
-
-    if (!uart_open(dev, &udev))
-        return udev;
-    return NULL;
+    return device_find(dev);
 }
 
 static int cli_uart_close(void *dev) {
-    return uart_close(dev);
+    return 0;
 }
 
 static int cli_uart_getc(void *dev) {

@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
+#include "drivers/device.h"
+
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -42,19 +44,49 @@ struct uart_param {
     bool hwctrl;
 };
 
+DEVICE_CLASS_DEFINE(uart_device,
+    int (*configure)(struct device *dev, struct uart_param *up);
+    ssize_t (*write)(struct device *dev, const char *buf, size_t len, 
+        unsigned int options);
+    ssize_t (*read)(struct device *dev, char *buf, size_t len, 
+        unsigned int options);
+);
+
 /*
  * Device control command
  */
-#define UART_CONFIGURE  1
 #define UART_SETSPEED   2
 
-int uart_open(const char *name, struct device **pdev);
-int uart_close(struct device *dev);
-int uart_control(struct device *dev, unsigned int cmd, void *arg);
+#ifdef TX_UART_DEVICE_STUB
+int uart_configure(struct device *dev, struct uart_param *up);
 ssize_t uart_write(struct device *dev, const char *buf, size_t len, 
     unsigned int options);
 ssize_t uart_read(struct device *dev, char *buf, size_t len, 
     unsigned int options);
+
+#else /* */
+static inline int
+uart_configure(struct device *dev, struct uart_param *up) {
+    struct uart_device *udev = (struct uart_device *)dev;
+    if (udev->control)
+        return udev->configure(dev, up);
+    return -ENOSYS;
+}
+
+static inline ssize_t 
+uart_write(struct device *dev, const char *buf, size_t len, 
+    unsigned int options) {
+    struct uart_device *udev = (struct uart_device *)dev;
+    return udev->write(dev, buf, len, options);
+}
+
+static inline ssize_t 
+uart_read(struct device *dev, char *buf, size_t len, 
+    unsigned int options) {
+    struct uart_device *udev = (struct uart_device *)dev;
+    return udev->read(dev, buf, len, options);
+}
+#endif /* */
 
 #ifdef __cplusplus
 }

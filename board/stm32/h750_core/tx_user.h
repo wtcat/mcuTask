@@ -256,6 +256,9 @@
 
 #define TX_SYSTEM_PANIC() for ( ; ; )
 
+/* Device driver */
+#define TX_UART_DEVICE_STUB  /* Optimized uart driver performance */
+
 /* Task runner */
 #define TX_TASK_RUNNER_STACK_SIZE 1024
 #define TX_TASK_RUNNER_PRIO 12

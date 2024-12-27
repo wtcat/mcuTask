@@ -20,17 +20,14 @@ extern "C"{
 
 struct device;
 
-struct device_operations {
-    int (*control)(struct device *, unsigned int, void *);
-};
 
 /*
  * Device class definition
  */
 #define DEVICE_CLASS_DEFINE(_type, ...) \
     struct _type { \
-        const char *name; \
         STAILQ_ENTRY(device) link; \
+        const char *name; \
         int (*control)(struct device *, unsigned int, void *); \
         __VA_ARGS__ \
     }
