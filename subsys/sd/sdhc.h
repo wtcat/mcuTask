@@ -262,7 +262,7 @@ enum sdhc_interrupt_source {
 typedef void (*sdhc_interrupt_cb_t)(struct device *dev, int reason,
 									const void *user_data);
 
-struct sdhc_driver_api {
+DEVICE_CLASS_DEFINE(sdhc_device,
 	int (*reset)(struct device *dev);
 	int (*request)(struct device *dev, struct sdhc_command *cmd,
 				   struct sdhc_data *data);
@@ -274,11 +274,9 @@ struct sdhc_driver_api {
 	int (*enable_interrupt)(struct device *dev, sdhc_interrupt_cb_t callback,
 							int sources, void *user_data);
 	int (*disable_interrupt)(struct device *dev, int sources);
-};
-
-DEVICE_CLASS_DEFINE(sdhc_device,
-	struct sdhc_driver_api dev_ops;
 );
+
+#define to_sdhcdev(dev) (struct sdhc_device *)(dev)
 
 /**
  * @brief reset SDHC controller state
@@ -293,7 +291,7 @@ DEVICE_CLASS_DEFINE(sdhc_device,
  * @retval -EIO: reset failed
  */
 static inline int sdhc_hw_reset(struct device *dev) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->reset) 
 		return -ENOSYS;
 
@@ -315,7 +313,7 @@ static inline int sdhc_hw_reset(struct device *dev) {
  */
 static inline int sdhc_request(struct device *dev, struct sdhc_command *cmd,
 							   struct sdhc_data *data) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	rte_assert(api->request != NULL);
 	return api->request(dev, cmd, data);
 }
@@ -333,7 +331,7 @@ static inline int sdhc_request(struct device *dev, struct sdhc_command *cmd,
  * @return -EIO controller could not configure I/O settings
  */
 static inline int sdhc_set_io(struct device *dev, struct sdhc_io *io) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	rte_assert(api->set_io != NULL);
 	return api->set_io(dev, io);
 }
@@ -350,7 +348,7 @@ static inline int sdhc_set_io(struct device *dev, struct sdhc_io *io) {
  * @retval -EIO I/O error
  */
 static inline int sdhc_card_present(struct device *dev) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->get_card_present)
 		return -ENOSYS;
 	
@@ -369,7 +367,7 @@ static inline int sdhc_card_present(struct device *dev) {
  * @retval -EIO: I/O error while tuning
  */
 static inline int sdhc_execute_tuning(struct device *dev) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->execute_tuning)
 		return -ENOSYS;
 	
@@ -388,7 +386,7 @@ static inline int sdhc_execute_tuning(struct device *dev) {
  * @retval -EIO I/O error
  */
 static inline int sdhc_card_busy(struct device *dev) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->card_busy)
 		return -ENOSYS;
 
@@ -407,7 +405,7 @@ static inline int sdhc_card_busy(struct device *dev) {
  */
 static inline int sdhc_get_host_props(struct device *dev,
 									  struct sdhc_host_props *props) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->get_host_props)
 		return -ENOSYS;
 
@@ -432,7 +430,7 @@ static inline int sdhc_get_host_props(struct device *dev,
 static inline int sdhc_enable_interrupt(struct device *dev,
 										sdhc_interrupt_cb_t callback, int sources,
 										void *user_data) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->enable_interrupt)
 		return -ENOSYS;
 
@@ -452,7 +450,7 @@ static inline int sdhc_enable_interrupt(struct device *dev,
  * @retval -EIO: I/O error
  */
 static inline int sdhc_disable_interrupt(struct device *dev, int sources) {
-	const struct sdhc_driver_api *api = dev_extension(dev, struct sdhc_driver_api);
+	const struct sdhc_device *api = to_sdhcdev(dev);
 	if (!api->disable_interrupt)
 		return -ENOSYS;
 
