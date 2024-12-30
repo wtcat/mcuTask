@@ -15,16 +15,26 @@ static void pins_configure(void) {
     __HAL_RCC_GPIOE_CLK_ENABLE();
 
     /*
-     * PA9  -> USART1_TX
-     * PA10 -> USART1_RX
+     * SDMMC
+     *
+     * PC10  -> D2
+     * PC11  -> D3
+     * PD2   -> CMD
+     * PC12  -> CLK
+     * PC8   -> D0
+     * PC9   -> D1
+     * PD15  -> CD (GPIO)
      */
-    // GPIO_InitTypeDef GPIO_InitStruct = {0};
-    // GPIO_InitStruct.Pin = GPIO_PIN_9 | GPIO_PIN_10;
-    // GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    // GPIO_InitStruct.Pull = GPIO_NOPULL;
-    // GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-    // GPIO_InitStruct.Alternate = GPIO_AF7_USART1;
-    // HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF12_SDIO1;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 }
 
 static int stm32_pins_init(void) {

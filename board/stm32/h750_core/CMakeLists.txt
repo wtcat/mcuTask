@@ -60,7 +60,7 @@ add_compile_options(
     -Wno-implicit-fallthrough
 )
 
-add_executable(${PROJECT_NAME}
+set (BOARD_SOURCES
     system_stm32h7xx.c
     stm32_startup.c
     stm32_qflash.c
@@ -73,6 +73,15 @@ add_executable(${PROJECT_NAME}
     stm32_hrtimer.c
     stm32_i2c.c
     main.c
+)
+
+if (CONFIG_SUBSYS_SD)
+    list(APPEND BOARD_SOURCES stm32_sdmmc.c)
+endif()
+
+
+add_executable(${PROJECT_NAME}
+    ${BOARD_SOURCES}
 )
 
 # Add subdirectory

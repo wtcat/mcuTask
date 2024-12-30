@@ -163,8 +163,7 @@ static uint32_t i2c_valid_timing_nbr;
 static int i2c_stm32_runtime_configure(struct device *dev, uint32_t config);
 
 static uint32_t get_periph_clkrate(void) {
-	/* APB1: 120MHZ */
-	return 120000000;
+	return LL_RCC_GetI2CClockFreq(LL_RCC_I2C123_CLKSOURCE);
 }
 
 static inline uint32_t i2c_map_dt_bitrate(uint32_t bitrate) {

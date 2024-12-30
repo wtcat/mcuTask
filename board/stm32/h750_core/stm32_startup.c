@@ -7,6 +7,7 @@
 
 #include "tx_api.h"
 #include "tx_thread.h"
+#include "basework/log.h"
 
 #include "stm32h7xx_hal.h"
 
@@ -21,7 +22,6 @@ void _stm32_exception_handler(void);
 void _stm32_reset(void);
 static void stm32_clock_setup(void);
 static void early_console_init(void);
-
 
 static char _main_stack[4096] __rte_section(".dtcm") __rte_aligned(8);
 static void *_ram_vectors[VECTOR_SIZE] __rte_section(".ram_vectors");
@@ -222,6 +222,12 @@ static int early_getc(void) {
     return -1;
 }
 
+static int __rte_notrace 
+printk_printer(void *context, const char *fmt, va_list ap) {
+    (void) context;
+    return vprintk(fmt, ap);
+}
+
 static void early_console_init(void) {
 	uint32_t clkfreq;
 	uint32_t cr1;
@@ -258,4 +264,12 @@ static void early_console_init(void) {
 
 	__console_puts = early_puts;
 	__console_getc = early_getc;
+
+	static struct printer console_printer = {
+		.format = printk_printer
+	};
+	pr_log_init(&console_printer);
 }
+
+
+
