@@ -3,8 +3,9 @@
  */
 
 #define TX_USE_BOARD_PRIVATE
-#define pr_fmt(fmt) "<sdmmc>: "
+#define pr_fmt(fmt) "[sdmmc]: "fmt
 #define CONFIG_LOGLEVEL   LOGLEVEL_DEBUG
+
 #include <errno.h>
 #include <inttypes.h>
 
@@ -84,7 +85,7 @@ static int stm32_hrtimer_cmd(struct cli_process *cli, int argc,
 	return 0;
 }
 
-CLI_CMD(sdmmc, "sdmmc_dump",
+CLI_CMD(sdmmc, "sdmmc",
     "Show SDMMC register status",
     stm32_hrtimer_cmd
 );
@@ -98,6 +99,7 @@ stm32_sdmmc_isr(void *arg) {
     sd->reg->ICR = sta;
     sd->status = sta;
     tx_semaphore_ceiling_put(&sd->reqdone, 1);
+    printk("ISR sta: 0x%lx\n", sta);
 }
 
 static int __fastcode 
@@ -153,6 +155,7 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct sdhc_command *cmd,
     reg->ARG = cmd->arg;
     reg->CMD = regcmd;
 
+    printk("cmd: 0x%lx\n", reg->CMD);
     /* 
      * Waiting for transfer complete 
      */
@@ -292,14 +295,14 @@ static int _stm32_sdmmc_init(struct stm32_sdmmc *sd) {
     pr_dbg("SDMMC bus clock: %"PRIu32"\n", sd->mclk);
 
     /* Register device */
-    err = device_register((struct device *)sd);
+    err = device_register((struct device *)&sd->dev);
     if (err) {
         pr_err("failed to reigister device %d\n", err);
         goto _remove_irq;
     }
     
     /* Initialize SD card */
-    err = sd_init((struct device *)sd, &sd->card);
+    err = sd_init((struct device *)&sd->dev, &sd->card);
     if (err) {
         pr_err("failed to initialize sd %d\n", err);
         goto _remove_dev;
