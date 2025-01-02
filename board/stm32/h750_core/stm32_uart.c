@@ -477,10 +477,10 @@ uart_read(struct device *dev, char *buf, size_t len, unsigned int options) {
 
 static void __rte_maybe_unused
 console_puts(const char *s, size_t len) {
-    if (TX_THREAD_GET_SYSTEM_STATE() == 0) {
-        uart_write(__stdout_device, s, len, 0);
-        return;
-    } 
+    // if (TX_THREAD_GET_SYSTEM_STATE() == 0) {
+    //     uart_write(__stdout_device, s, len, 0);
+    //     return;
+    // } 
 
     /*
      * if we are in interrupt context, then use poll write

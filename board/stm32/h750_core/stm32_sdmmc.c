@@ -155,12 +155,11 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct sdhc_command *cmd,
     reg->ARG = cmd->arg;
     reg->CMD = regcmd;
 
-    printk("cmd: 0x%lx\n", reg->CMD);
     /* 
      * Waiting for transfer complete 
      */
     if (tx_semaphore_get(&sd->reqdone, TX_MSEC(3000))) {
-        printk("sdmmc transfer timeout\n");
+        pr_err("sdmmc transfer timeout\n");
         return -ETIME;
     }
 
@@ -188,9 +187,10 @@ stm32_sdmmc_request(struct device *dev, struct sdhc_command *cmd,
 
     err = stm32_sdmmc_sendcmd(sd, cmd, data);
     if (data != NULL) {
-        if (sd->reg->STA & SDMMC_STA_DPSMACT) {
-            //TODO;
-            printk("dpsm busy!\n");
+        int retry = 100;
+        while (--retry > 0 && (sd->reg->STA & SDMMC_STA_DPSMACT)) {
+            tx_os_nanosleep(HRTIMER_US(10));
+            pr_warn("dpsm busy!\n");
         }
     }
 
@@ -291,6 +291,7 @@ static int _stm32_sdmmc_init(struct stm32_sdmmc *sd) {
     sd->reg->MASK = 0;
     sd->reg->ICR = 0xFFFFFFFF;
     sd->mclk = LL_RCC_GetSDMMCClockFreq(LL_RCC_SDMMC_CLKSOURCE);
+    sd->dev.private_data = sd;
 
     pr_dbg("SDMMC bus clock: %"PRIu32"\n", sd->mclk);
 
@@ -308,6 +309,7 @@ static int _stm32_sdmmc_init(struct stm32_sdmmc *sd) {
         goto _remove_dev;
     }
 
+    pr_dbg("%s register success\n", sd->dev.name);
     return 0;
 
 _remove_dev:

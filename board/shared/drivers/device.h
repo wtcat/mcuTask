@@ -28,6 +28,7 @@ struct device;
     struct _type { \
         STAILQ_ENTRY(device) link; \
         const char *name; \
+        void *private_data; \
         int (*control)(struct device *, unsigned int, void *); \
         __VA_ARGS__ \
     }
