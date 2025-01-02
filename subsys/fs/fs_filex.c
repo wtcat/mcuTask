@@ -10,7 +10,28 @@
 #include "subsys/fs/fs.h"
 
 
+#define FX_OPEN_FOR_READ                       0
+#define FX_OPEN_FOR_WRITE                      1
+#define FX_OPEN_FOR_READ_FAST                  2
+
 static int filex_fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
+    FX_MEDIA *media = &fp->vfs->media;
+    UINT fxerr;
+
+    if (flags & FS_O_CREATE) {
+        fxerr = fx_file_create(media, (CHAR *)file_name);
+        if (fxerr != FX_SUCCESS)
+            return fxerr;
+    }
+
+    fs_mode_t rw_flags = flags & (FS_O_WRITE|FS_O_READ);
+    if (rw_flags) {
+        FX_FILE *fxp = fp->filep;
+        fxerr = fx_file_open(media, fxp, (CHAR *)file_name, 
+            rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
+
+    }
+
     return -ENOTSUP;
 }
 
@@ -78,7 +99,7 @@ static int filex_fs_statvfs(const char *abs_path, struct fs_statvfs *stat) {
 
 
 static struct fs_class filex_fs = {
-    .fs = {
+    .fs_ops = {
         
     }
-}
+};

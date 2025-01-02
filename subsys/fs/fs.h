@@ -275,13 +275,9 @@ enum fs_dir_entry_type {
  * used by the application.
  */
 enum {
-	/** Identifier for in-tree FatFS file system. */
-	FS_FATFS = 0,
-
-	/** Identifier for in-tree LittleFS file system. */
+	FS_EXFAT = 0,
+	FS_FATFS,
 	FS_LITTLEFS,
-
-	/** Identifier for in-tree Ext2 file system. */
 	FS_EXT2,
 
 	/** Base identifier for external file systems. */
