@@ -247,7 +247,8 @@ struct fs_operations {
 	 *
 	 * @note This operation destroys existing data on the target device.
 	 */
-	int (*mkfs)(uintptr_t dev_id, void *cfg, int flags);
+	int (*mkfs)(struct fs_class *mountp, const char *dev, void *cfg, 
+		int flags);
 };
 
 /**
@@ -275,7 +276,7 @@ enum fs_dir_entry_type {
  * used by the application.
  */
 enum {
-	FS_EXFAT = 0,
+	FS_EXFATFS = 0,
 	FS_FATFS,
 	FS_LITTLEFS,
 	FS_EXT2,
@@ -832,7 +833,7 @@ int fs_statvfs(const char *path, struct fs_statvfs *stat);
  * @retval 0 on success;
  * @retval <0 negative errno code on error.
  */
-int fs_mkfs(int fs_type, uintptr_t dev_id, void *cfg, int flags);
+int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags);
 
 /**
  * @brief Register a file system

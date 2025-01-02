@@ -41,6 +41,7 @@ DEVICE_CLASS_DEFINE(device);
 /* 
  * Device helper interface
  */
+#define dev_get_private(_dev) (_dev)->private_data
 #define dev_extension(_dev, _type) (_type *)((_dev) + 1)
 #define to_devclass(p) (struct device *)(p)
 

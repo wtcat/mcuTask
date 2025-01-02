@@ -657,7 +657,7 @@ mount_err:
 	return rc;
 }
 
-int fs_mkfs(int fs_type, uintptr_t dev_id, void *cfg, int flags) {
+int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags) {
 	int rc = -EINVAL;
 	struct fs_class *fs;
 
@@ -677,7 +677,7 @@ int fs_mkfs(int fs_type, uintptr_t dev_id, void *cfg, int flags) {
 		goto mount_err;
 	}
 
-	rc = fs->fs_ops.mkfs(dev_id, cfg, flags);
+	rc = fs->fs_ops.mkfs(dev, cfg, flags);
 	if (rc < 0) {
 		pr_err("mkfs error (%d)", rc);
 		goto mount_err;

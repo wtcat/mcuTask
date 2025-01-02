@@ -175,7 +175,8 @@ struct sysinit_item {
 #define SI_PREDRIVER_LEVEL     60
 #define SI_BUSDRIVER_LEVEL     70
 #define SI_DRIVER_LEVEL        80
-#define SI_APPLICATION_LEVEL   90
+#define SI_FILESYSTEM_LEVEL    90
+#define SI_APPLICATION_LEVEL   100
 
 #define SYSINIT(_handler, _level, _order) \
     __SYSINIT(_handler, _level, _order)
