@@ -677,7 +677,7 @@ int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags) {
 		goto mount_err;
 	}
 
-	rc = fs->fs_ops.mkfs(dev, cfg, flags);
+	rc = fs->fs_ops.mkfs(fs, dev, cfg, flags);
 	if (rc < 0) {
 		pr_err("mkfs error (%d)", rc);
 		goto mount_err;

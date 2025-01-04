@@ -219,7 +219,7 @@ static int filex_fs_mkfs(struct fs_class *fs, const char *devname,
     err = fx_media_format(&fs->media,
                     _fx_ram_driver,               // Driver entry
                     dev_get_private(dev),              // RAM disk memory pointer
-                    FX_MEDIA_BUFFER_SIZE,                 // Media buffer pointer
+                    media_buffer,                 // Media buffer pointer
                     sizeof(FX_MEDIA_BUFFER_SIZE),         // Media buffer size
                     "exfat",                // Volume Name
                     1,                            // Number of FATs

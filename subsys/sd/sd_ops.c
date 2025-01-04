@@ -758,7 +758,7 @@ int card_write_blocks(struct sd_card *card, const uint8_t *wbuf, uint32_t start_
 
 /* IO Control handler for SD MMC */
 int card_ioctl(struct sd_card *card, uint8_t cmd, void *buf) {
-#if 0
+
 	int ret;
 
 	ret = tx_mutex_get(&card->lock, TX_MSEC(CONFIG_SD_DATA_TIMEOUT));
@@ -767,14 +767,14 @@ int card_ioctl(struct sd_card *card, uint8_t cmd, void *buf) {
 		return ret;
 	}
 	switch (cmd) {
-	case DISK_IOCTL_GET_SECTOR_COUNT:
+	case BLKDEV_IOC_GET_BLKCOUNT:
 		(*(uint32_t *)buf) = card->block_count;
 		break;
-	case DISK_IOCTL_GET_SECTOR_SIZE:
-	case DISK_IOCTL_GET_ERASE_BLOCK_SZ:
+	case BLKDEV_IOC_GET_BLKSIZE:
+	case BLKDEV_IOC_GET_ERASE_BLKSIZE:
 		(*(uint32_t *)buf) = card->block_size;
 		break;
-	case DISK_IOCTL_CTRL_SYNC:
+	case BLKDEV_IOC_SYNC:
 		/* Ensure card is not busy with data write.
 		 * Note that SD stack does not support enabling caching, so
 		 * cache flush is not required here
@@ -786,6 +786,6 @@ int card_ioctl(struct sd_card *card, uint8_t cmd, void *buf) {
 	}
 	tx_mutex_put(&card->lock);
 	return ret;
-#endif
+
 	return -ENOSYS;
 }
