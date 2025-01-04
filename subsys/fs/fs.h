@@ -874,6 +874,29 @@ int fs_register(int type, struct fs_class *fs);
  */
 int fs_unregister(int type);
 
+
+/*  
+ * Null file operations implemention
+ */
+int _fs_null_open(struct fs_file *fp, const char *file_name, fs_mode_t flags);
+int _fs_null_close(struct fs_file *fp);
+ssize_t _fs_null_read(struct fs_file *fp, void *ptr, size_t size);
+ssize_t _fs_null_write(struct fs_file *fp, const void *ptr, size_t size);
+int _fs_null_seek(struct fs_file *fp, off_t offset, int whence);
+off_t _fs_null_tell(struct fs_file *fp);
+int _fs_null_truncate(struct fs_file *fp, off_t length);
+int _fs_null_sync(struct fs_file *fp);
+
+int _fs_null_opendir(struct fs_dir *dp, const char *abs_path);
+int _fs_null_readdir(struct fs_dir *dp, struct fs_dirent *entry);
+int _fs_null_closedir(struct fs_dir *dp);
+
+int _fs_null_mkdir(struct fs_class *fs, const char *abs_path);
+int _fs_null_unlink(struct fs_class *fs, const char *abs_path);
+int _fs_null_rename(struct fs_class *fs, const char *from, const char *to);
+int _fs_null_stat(struct fs_class *fs, const char *abs_path, struct fs_stat *stat);
+int _fs_null_statvfs(struct fs_class *fs, const char *abs_path, struct fs_statvfs *stat);
+
 #ifdef __cplusplus
 }
 #endif

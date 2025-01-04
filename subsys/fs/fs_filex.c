@@ -9,8 +9,12 @@
 
 #define FS_PRIVATE_EXTENSION FX_MEDIA media;
 #include "subsys/fs/fs.h"
-
 #include "drivers/blkdev.h"
+
+struct dir_private {
+    FX_LOCAL_PATH path;
+    bool first;
+};
 
 #define FX_ERR(_err)  ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
@@ -245,25 +249,36 @@ static int filex_fs_sync(struct fs_file *fp) {
 
 static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
     struct fs_class *fs = dp->vfs;
+    struct dir_private *dir;
     int err;
     
-    dp->dirp = (void *)0;
-    // TODO:  use fx_directory_local_path_set
-    err = fx_directory_default_set(&fs->media, (CHAR *)abs_path);
+    dir = kmalloc(sizeof(*dir), 0);
+    if (dir == NULL)
+        return -ENOMEM;
+
+    err = fx_directory_local_path_set(&fs->media, &dir->path, (CHAR *)abs_path);
+    if (err == FX_SUCCESS) {
+        dir->first = true;
+        dp->dirp = dir;
+        return 0;
+    }
+
+    kfree(dir);
     return FX_ERR(err);
 }
 
 static int filex_fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
     struct fs_class *fs = dp->vfs;
+    struct dir_private *dir = dp->dirp;
     ULONG size;
     UINT attr;
     UINT err;
 
-    if (dp->dirp != (void *)0) {
+    if (!dir->first) {
         err = fx_directory_next_full_entry_find(&fs->media, (CHAR *)entry->name,
             &attr, &size, NULL, NULL, NULL, NULL, NULL, NULL);
     } else {
-        dp->dirp = (void *)1;
+        dir->first = false;
         err = fx_directory_first_full_entry_find(&fs->media, (CHAR *)entry->name,
             &attr, &size, NULL, NULL, NULL, NULL, NULL, NULL);
     }
@@ -283,7 +298,14 @@ static int filex_fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
 }
 
 static int filex_fs_closedir(struct fs_dir *dp) {
-    dp->dirp = NULL;
+    struct dir_private *dir = dp->dirp;
+    if (dir) {
+        struct fs_class *fs = dp->vfs;
+        fx_directory_local_path_clear(&fs->media);
+        kfree(dir);
+        dp->dirp = NULL;
+    }
+
     return 0;
 }
 
@@ -338,7 +360,8 @@ static int filex_fs_rename(struct fs_class *fs, const char *from, const char *to
     return FX_ERR(err);
 }
 
-static int filex_fs_stat(struct fs_class *fs, const char *abs_path, struct fs_stat *stat) {
+static int filex_fs_stat(struct fs_class *fs, const char *abs_path, 
+    struct fs_stat *stat) {
     ULONG size;
     UINT err;
 

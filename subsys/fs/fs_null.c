@@ -53,22 +53,24 @@ int _fs_null_closedir(struct fs_dir *dp) {
 }
 
 /* Filesystem operations */
-int _fs_null_mkdir(const char *abs_path) {
+int _fs_null_mkdir(struct fs_class *fs, const char *abs_path) {
     return -ENOTSUP;
 }
 
-int _fs_null_unlink(const char *abs_path) {
+int _fs_null_unlink(struct fs_class *fs, const char *abs_path) {
     return -ENOTSUP;
 }
 
-int _fs_null_rename(const char *from, const char *to) {
+int _fs_null_rename(struct fs_class *fs, const char *from, const char *to) {
     return -ENOTSUP;
 }
 
-int _fs_null_stat(const char *abs_path, struct fs_dirent *entry) {
+int _fs_null_stat(struct fs_class *fs, const char *abs_path, 
+    struct fs_stat *entry) {
     return -ENOTSUP;
 }
 
-int _fs_null_statvfs(const char *abs_path, struct fs_statvfs *stat) {
+int _fs_null_statvfs(struct fs_class *fs, const char *abs_path, 
+    struct fs_statvfs *stat) {
     return -ENOTSUP;
 }
