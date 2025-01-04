@@ -9,4 +9,5 @@ target_sources(sd
     ${CMAKE_CURRENT_SOURCE_DIR}/sdio.c
     ${CMAKE_CURRENT_SOURCE_DIR}/sdmmc.c
     ${CMAKE_CURRENT_SOURCE_DIR}/mmc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/sd_blkdev.c
 )

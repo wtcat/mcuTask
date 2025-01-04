@@ -37,14 +37,6 @@ struct device;
  */
 DEVICE_CLASS_DEFINE(device);
 
-/*
- * Block device IO control command
- */
-#define BLKDEV_IOC_GET_BLKSIZE         10
-#define BLKDEV_IOC_GET_ERASE_BLKSIZE   11
-#define BLKDEV_IOC_GET_BLKCOUNT        12
-#define BLKDEV_IOC_SYNC                13
-
 /* 
  * Device helper interface
  */

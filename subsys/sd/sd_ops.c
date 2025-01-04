@@ -17,6 +17,8 @@
 #include "subsys/sd/sdhc.h"
 #include "subsys/sd/private/sd_utils.h"
 
+#include "drivers/blkdev.h"
+
 /* Read card status. Return 0 if card is inactive */
 int sdmmc_read_status(struct sd_card *card) {
 	struct sdhc_command cmd;
@@ -758,7 +760,6 @@ int card_write_blocks(struct sd_card *card, const uint8_t *wbuf, uint32_t start_
 
 /* IO Control handler for SD MMC */
 int card_ioctl(struct sd_card *card, uint8_t cmd, void *buf) {
-
 	int ret;
 
 	ret = tx_mutex_get(&card->lock, TX_MSEC(CONFIG_SD_DATA_TIMEOUT));

@@ -4,12 +4,13 @@
  */
 
 #include <errno.h>
-#include "basework/rte_cpu.h"
 #include "tx_api.h"
 #include "fx_api.h"
 
 #define FS_PRIVATE_EXTENSION FX_MEDIA media;
 #include "subsys/fs/fs.h"
+
+#include "drivers/blkdev.h"
 
 #define FX_ERR(_err)  ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
@@ -19,6 +20,134 @@
 #endif
 
 static char media_buffer[FX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
+
+static void filex_fs_driver(FX_MEDIA *media_ptr) {
+	UCHAR *buffer;
+	UINT bytes_per_sector;
+
+	/* Process the driver request specified in the media control block.  */
+	switch (media_ptr->fx_media_driver_request) {
+	case FX_DRIVER_READ: {
+        struct blkdev_req req;
+        int err;
+
+        req.op = BLKDEV_REQ_READ;
+        req.blkno = media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors;
+        req.blkcnt = media_ptr->fx_media_driver_sectors;
+        req.buffer = media_ptr->fx_media_driver_buffer;
+        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        media_ptr->fx_media_driver_status = err;
+        break;
+    }
+
+	case FX_DRIVER_WRITE: {
+        struct blkdev_req req;
+        int err;
+
+        req.op = BLKDEV_REQ_WRITE;
+        req.blkno = media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors;
+        req.blkcnt = media_ptr->fx_media_driver_sectors;
+        req.buffer = media_ptr->fx_media_driver_buffer;
+        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        media_ptr->fx_media_driver_status = err;
+        break;
+    }
+
+	case FX_DRIVER_FLUSH:
+		/* Return driver success.  */
+        device_control(media_ptr->fx_media_driver_info, BLKDEV_IOC_SYNC, NULL);
+		media_ptr->fx_media_driver_status = FX_SUCCESS;
+		break;
+
+	case FX_DRIVER_ABORT:
+		/* Return driver success.  */
+		media_ptr->fx_media_driver_status = FX_SUCCESS;
+		break;
+
+	case FX_DRIVER_INIT:
+		/* FLASH drivers are responsible for setting several fields in the
+		   media structure, as follows:
+
+				media_ptr -> fx_media_driver_free_sector_update
+				media_ptr -> fx_media_driver_write_protect
+
+		   The fx_media_driver_free_sector_update flag is used to instruct
+		   FileX to inform the driver whenever sectors are not being used.
+		   This is especially useful for FLASH managers so they don't have
+		   maintain mapping for sectors no longer in use.
+
+		   The fx_media_driver_write_protect flag can be set anytime by the
+		   driver to indicate the media is not writable.  Write attempts made
+		   when this flag is set are returned as errors.  */
+
+		/* Perform basic initialization here... since the boot record is going
+		   to be read subsequently and again for volume name requests.  */
+
+		/* Successful driver request.  */
+		media_ptr->fx_media_driver_status = FX_SUCCESS;
+		break;
+
+	case FX_DRIVER_UNINIT:
+		/* Successful driver request.  */
+		media_ptr->fx_media_driver_status = FX_SUCCESS;
+		break;
+
+	case FX_DRIVER_BOOT_READ: {
+        struct blkdev_req req;
+        int err;
+
+        req.op = BLKDEV_REQ_READ;
+        req.blkno = 0;
+        req.blkcnt = 1;
+        req.buffer = media_ptr->fx_media_driver_buffer;
+        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+		if (err == FX_SUCCESS) {
+			/* Calculate the RAM disk boot sector offset, which is at the very beginning of
+			the RAM disk. Note the RAM disk memory is pointed to by the
+			fx_media_driver_info pointer, which is supplied by the application in the
+			call to fx_media_open.  */
+			buffer = (UCHAR *)media_ptr->fx_media_driver_buffer;
+
+			/* For RAM driver, determine if the boot record is valid.  */
+			if ((buffer[0] != (UCHAR)0xEB) ||
+				((buffer[1] != (UCHAR)0x34) && (buffer[1] != (UCHAR)0x76)) ||
+				(buffer[2] != (UCHAR)0x90)) {
+				/* Invalid boot record, return an error!  */
+				media_ptr->fx_media_driver_status = FX_MEDIA_INVALID;
+				return;
+			}
+
+			/* For RAM disk only, pickup the bytes per sector.  */
+			bytes_per_sector = _fx_utility_16_unsigned_read(&buffer[FX_BYTES_SECTOR]);
+
+			/* Ensure this is less than the media memory size.  */
+			if (bytes_per_sector > media_ptr->fx_media_memory_size) {
+				media_ptr->fx_media_driver_status = FX_BUFFER_ERROR;
+				break;
+			}
+		}
+        media_ptr->fx_media_driver_status = err;
+		break;
+    }
+
+	case FX_DRIVER_BOOT_WRITE: {
+        struct blkdev_req req;
+        int err;
+
+        req.op = BLKDEV_REQ_WRITE;
+        req.blkno = 0;
+        req.blkcnt = 1;
+        req.buffer = media_ptr->fx_media_driver_buffer;
+        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        media_ptr->fx_media_driver_status = err;
+        break;
+    }
+	default: 
+		/* Invalid driver request.  */
+		media_ptr->fx_media_driver_status = FX_IO_ERROR;
+		break;
+	}
+}
 
 static int filex_fs_open(struct fs_file *fp, const char *file_name, 
     fs_mode_t flags) {
@@ -99,8 +228,7 @@ static int filex_fs_lseek(struct fs_file *fp, off_t offset, int whence) {
 
 static off_t filex_fs_tell(struct fs_file *fp) {
     FX_FILE *fxp = fp->filep;
-    UINT err;
-    return -ENOTSUP;
+    return fxp->fx_file_current_file_size;
 }
 
 static int filex_fs_truncate(struct fs_file *fp, off_t length) {
@@ -112,35 +240,51 @@ static int filex_fs_truncate(struct fs_file *fp, off_t length) {
 }
 
 static int filex_fs_sync(struct fs_file *fp) {
-    FX_FILE *fxp = fp->filep;
-    UINT err;
     return -ENOTSUP;
 }
 
-/* Directory operations */
 static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
     struct fs_class *fs = dp->vfs;
-    FX_FILE *fxp = dp->dirp;
-
-    dp->dirp = (void *)abs_path;
-    return 0;
+    int err;
+    
+    dp->dirp = (void *)0;
+    // TODO:  use fx_directory_local_path_set
+    err = fx_directory_default_set(&fs->media, (CHAR *)abs_path);
+    return FX_ERR(err);
 }
 
 static int filex_fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
-    FX_FILE *fxp = fp->filep;
+    struct fs_class *fs = dp->vfs;
+    ULONG size;
+    UINT attr;
     UINT err;
 
-    if (dp->dirp == NULL)
-        return -EINVAL;
+    if (dp->dirp != (void *)0) {
+        err = fx_directory_next_full_entry_find(&fs->media, (CHAR *)entry->name,
+            &attr, &size, NULL, NULL, NULL, NULL, NULL, NULL);
+    } else {
+        dp->dirp = (void *)1;
+        err = fx_directory_first_full_entry_find(&fs->media, (CHAR *)entry->name,
+            &attr, &size, NULL, NULL, NULL, NULL, NULL, NULL);
+    }
 
-    fx_directory_first_full_entry_find(&fs->media, (CHAR *)abs_path)
-    return -ENOTSUP;
+    if (err == FX_SUCCESS) {
+        if (!(attr & FX_DIRECTORY)) {
+            entry->type = FS_DIR_ENTRY_FILE;
+            entry->size = (size_t)size;
+        } else {
+            entry->type = FS_DIR_ENTRY_DIR;
+            entry->size = 0;
+        }
+        return 0;    
+    }
+
+    return FX_ERR(err);
 }
 
 static int filex_fs_closedir(struct fs_dir *dp) {
-    UINT err;
     dp->dirp = NULL;
-    return -ENOTSUP;
+    return 0;
 }
 
 static int filex_fs_mount(struct fs_class *fs) {
@@ -151,11 +295,9 @@ static int filex_fs_mount(struct fs_class *fs) {
     if (dev == NULL)
         return -ENODEV;
 
-    //TODO: driver handler
-    err = fx_media_open(&fs->media, (CHAR *)dev->name, NULL, 
-        dev_get_private(dev),
-        media_buffer, sizeof(media_buffer));
-    
+    err = fx_media_open(&fs->media, (CHAR *)dev->name, filex_fs_driver, 
+        dev, media_buffer, sizeof(media_buffer));
+
     return FX_ERR(err);
 }
 
@@ -196,44 +338,61 @@ static int filex_fs_rename(struct fs_class *fs, const char *from, const char *to
     return FX_ERR(err);
 }
 
-static int filex_fs_stat(struct fs_class *fs, const char *abs_path, struct fs_dirent *entry) {
+static int filex_fs_stat(struct fs_class *fs, const char *abs_path, struct fs_stat *stat) {
+    ULONG size;
     UINT err;
-    return -ENOTSUP;
+
+    err = fx_directory_information_get(&fs->media, (CHAR *)abs_path, NULL, &size,
+        NULL, NULL, NULL, NULL, NULL, NULL);
+    
+    if (err == FX_SUCCESS) {
+        *stat = (struct fs_stat){0};
+        stat->st_size = size;
+        return 0;
+    }
+
+    return _FX_ERR(err);
 }
 
 static int filex_fs_statvfs(struct fs_class *fs, const char *abs_path, 
     struct fs_statvfs *stat) {
-    UINT err;
     return -ENOTSUP;
 }
 
 static int filex_fs_mkfs(struct fs_class *fs, const char *devname, 
     void *cfg, int flags) {
     struct device *dev;
+    UINT blkcnt = 0;
+    UINT blksz = 0;
     UINT err;
 
     dev = device_find(fs->storage_dev);
     if (dev == NULL)
         return -ENODEV;
 
+    device_control(dev, BLKDEV_IOC_GET_BLKCOUNT, &blkcnt);
+    device_control(dev, BLKDEV_IOC_GET_BLKSIZE, &blksz);
+
+    if (blkcnt == 0 || blksz == 0)
+        return -EINVAL;
+
     err = fx_media_format(&fs->media,
-                    _fx_ram_driver,               // Driver entry
-                    dev_get_private(dev),              // RAM disk memory pointer
-                    media_buffer,                 // Media buffer pointer
-                    sizeof(FX_MEDIA_BUFFER_SIZE),         // Media buffer size
+                    filex_fs_driver,               // Driver entry
+                    dev_get_private(dev), // RAM disk memory pointer
+                    (UCHAR *)media_buffer,     // Media buffer pointer
+                    sizeof(media_buffer),   // Media buffer size
                     "exfat",                // Volume Name
-                    1,                            // Number of FATs
-                    32,                           // Directory Entries
-                    0,                            // Hidden sectors
-                    256,                          // Total sectors
-                    512,                          // Sector size
-                    8,                            // Sectors per cluster
+                    1,                   // Number of FATs
+                    32,               // Directory Entries
+                    0,                   // Hidden sectors
+                    blkcnt,               // Total sectors
+                    blksz,             // Sector size
+                    8,              // Sectors per cluster
                     1,                            // Heads
-                    1);                           // Sectors per track
+                    1);               // Sectors per track
 
     return FX_ERR(err);
 }
-
 
 static struct fs_class filex_fs = {
     .fs_ops = {

@@ -511,7 +511,7 @@ int fs_rename(const char *from, const char *to) {
 	return rc;
 }
 
-int fs_stat(const char *abs_path, struct fs_dirent *entry) {
+int fs_stat(const char *abs_path, struct fs_stat *stat) {
 	struct fs_class *mp;
 	int rc = -EINVAL;
 
@@ -529,7 +529,7 @@ int fs_stat(const char *abs_path, struct fs_dirent *entry) {
 	if (mp->fs_ops.stat == NULL)
 		return -ENOTSUP;
 
-	rc = mp->fs_ops.stat(mp, abs_path, entry);
+	rc = mp->fs_ops.stat(mp, abs_path, stat);
 	if (rc == -ENOENT) {
 		/* File doesn't exist, which is a valid stat response */
 	} else if (rc < 0) {
@@ -751,7 +751,6 @@ int fs_register(int type, struct fs_class *fs) {
             goto _out;
         }
     }
-
 
     fs->type = type;
     rte_list_add_tail(&fs->node, &fs_manager.list);

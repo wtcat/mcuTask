@@ -33,6 +33,7 @@ typedef uint8_t fs_mode_t;
 struct fs_class;
 struct fs_dirent;
 struct fs_statvfs;
+struct fs_stat;
 
 /**
  * @addtogroup file_system_api
@@ -224,7 +225,7 @@ struct fs_operations {
 	 * @return 0 on success, negative errno code on fail.
 	 */
 	int (*stat)(struct fs_class *mountp, const char *path,
-					struct fs_dirent *entry);
+					struct fs_stat *stat);
 	/**
 	 * Returns the total and available space on the file system volume.
 	 *
@@ -351,6 +352,15 @@ struct fs_dirent {
 	char name[MAX_FILE_NAME + 1];
 	/** Size of file (0 if directory). */
 	size_t size;
+};
+
+struct fs_stat {
+	off_t st_size;
+	struct timespec st_atim; /* Time of last access */
+	struct timespec st_mtim; /* Time of last modification */
+	struct timespec st_ctim; /* Time of last status change */
+	size_t st_blksize; /* Block size used for filesystem I/O */
+	size_t st_blocks;  /* Number of blocks allocated */
 };
 
 /**
@@ -804,7 +814,7 @@ int fs_readmount(int *index, const char **name);
  * @retval -ENOTSUP when not supported by underlying file system driver;
  * @retval <0 negative errno code on error.
  */
-int fs_stat(const char *path, struct fs_dirent *entry);
+int fs_stat(const char *path, struct fs_stat *stat);
 
 /**
  * @brief Retrieves statistics of the file system volume

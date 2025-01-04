@@ -18,6 +18,9 @@
 #include "subsys/sd/private/sd_init.h"
 #include "subsys/sd/private/sd_utils.h"
 
+#define SD_BLKDEV_INIT_SOURCE
+#include "subsys/sd/sd_blkdev.h"
+
 /* Idle all cards on bus. Can be used to clear errors on cards */
 static inline int sd_idle(struct sd_card *card) {
 	struct sdhc_command cmd;
@@ -289,6 +292,11 @@ int sd_init(struct device *sdhc_dev, struct sd_card *card) {
 	}
 	/* Card initialization succeeded. */
 	card->status = CARD_INITIALIZED;
+
+	/* Card block device initialize */
+	if (card->type != CARD_SDIO)
+		(void) sd_blkdev_init(card);
+
 	/* Unlock card mutex */
 	ret = tx_mutex_put(&card->lock);
 	if (ret) {
