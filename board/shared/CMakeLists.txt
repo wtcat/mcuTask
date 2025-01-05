@@ -8,6 +8,7 @@ target_sources(${PROJECT_NAME}
     taskrunner.c
     device.c
     sysinit.c
+    object_pool.c
 )
 
 if (NOT CONFIG_SIMULATOR)

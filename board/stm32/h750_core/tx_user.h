@@ -249,11 +249,17 @@
 // #define TX_PORT_USE_BASEPRI 
 // #define TX_PORT_BASEPRI 0x80
 
+
 /*
  * Enable tx-api extension
  */
 #define TX_THREAD_API_EXTENSION
 
+
+
+/*
+ * User general extension configuration
+ */
 #define TX_SYSTEM_PANIC() for ( ; ; )
 
 /* Device driver */
@@ -263,6 +269,7 @@
 #define TX_TASK_RUNNER_STACK_SIZE 1024
 #define TX_TASK_RUNNER_PRIO 12
 
+/* */
 #define __fastcode  __rte_section(".itcm")
 #define __fastbss   __rte_section(".fastbss")
 #define __fastdata  __rte_section(".fastdata")
@@ -272,6 +279,13 @@
 #define HRTIMER_US(n) ((n) * (240 / HR_TIMER_PRESCALER))
 #define HRTIMER_JIFFIES  *((volatile uint32_t *)0x40000024UL)
 #define HRTIMER_CYCLE_TO_US(n) ((n) / (240 / HR_TIMER_PRESCALER))
+
+/*
+ * FileX for filesystem
+ */
+#define CONFIG_FILEX_MEDIA_BUFFER_SIZE 4096
+#define CONFIG_FILEX_MAX_FILES 3
+
 
 /*
  * Board private

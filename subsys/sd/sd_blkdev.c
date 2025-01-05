@@ -2,7 +2,9 @@
  * Copyright 2024 wtcat
  */
 
+#define pr_fmt(fmt) "[sdblk]: "fmt
 #include "tx_api.h"
+#include "basework/log.h"
 
 #include "subsys/sd/sd.h"
 #include "subsys/sd/private/sd_ops.h"
@@ -52,8 +54,10 @@ static int sd_blkdev_register(struct sd_card *card) {
     bdev->request = sd_blkdev_request;
     bdev->control = sd_blkdev_control;
     err = device_register((struct device *)bdev);
-    if (!err)
+    if (!err) {
+        pr_info("%s register success\n", name);
         devno++;
+    }
     
     return err;
 }

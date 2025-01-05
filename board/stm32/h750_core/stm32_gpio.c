@@ -121,25 +121,6 @@ static void stm32_set_exti_source(int port, int pin) {
 	LL_SYSCFG_SetEXTISource(port, lines[pin]);
 }
 
-static int gpio_init_irq(void) {
-	for (size_t i = 0; i < rte_array_size(extiline_vec); i++) {
-		void (*irqfn)(void *);
-
-		irqfn = (i <= 4) ? stm32_exti_isr : stm32_mulit_exti_isr;
-		int err = request_irq(extiline_vec[i].irq, irqfn, &extiline_vec[i]);
-		if (err) {
-			printk("[err]: %s request irq(%d) failed(%d)\n", __func__,
-				   extiline_vec[i].irq, err);
-			return err;
-		}
-	}
-	for (size_t i = 0; i < rte_array_size(exti_heads); i++)
-		RTE_INIT_LIST(&exti_heads[i]);
-
-	tx_mutex_create(&mutex, "gpio_exti", TX_INHERIT);
-	return 0;
-}
-
 int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), 
 	void *arg, bool rising_edge, bool falling_edge) {
 	struct stm32_extidesc *new;
@@ -159,11 +140,14 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg),
 		return -EINVAL;
 
 	guard(os_mutex)(&mutex);
-	rte_list_foreach(pos, &exti_heads[pin]) {
-		struct stm32_extidesc *desc = rte_container_of(pos, 
-			struct stm32_extidesc, node);
-		if (desc->gpio == gpio)
-			return -EEXIST;
+
+	scoped_guard(os_irq) { 
+		rte_list_foreach(pos, &exti_heads[pin]) {
+			struct stm32_extidesc *desc = rte_container_of(pos, 
+				struct stm32_extidesc, node);
+			if (desc->gpio == gpio)
+				return -EEXIST;
+		}
 	}
 
 	new = kmalloc(sizeof(*new), GMF_KERNEL);
@@ -173,7 +157,9 @@ int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg),
 	new->fn = fn;
 	new->arg = arg;
 	new->gpio = gpio;
-	scoped_guard(os_irq) { rte_list_add_tail(&new->node, &exti_heads[pin]); }
+	scoped_guard(os_irq) { 
+		rte_list_add_tail(&new->node, &exti_heads[pin]); 
+	}
 
 	/* Configure gpio input */
 	LL_GPIO_InitTypeDef iocfg;
@@ -204,13 +190,15 @@ int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg) {
 		return -EINVAL;
 
 	guard(os_mutex)(&mutex);
-	rte_list_foreach(pos, &exti_heads[pin]) {
-		struct stm32_extidesc *desc = rte_container_of(pos, 
-			struct stm32_extidesc, node);
-		if (desc->gpio == gpio && 
-			desc->fn == fn && desc->arg == arg) {
-			target = desc;
-			goto _found;
+	scoped_guard(os_irq) { 
+		rte_list_foreach(pos, &exti_heads[pin]) {
+			struct stm32_extidesc *desc = rte_container_of(pos, 
+				struct stm32_extidesc, node);
+			if (desc->gpio == gpio && 
+				desc->fn == fn && desc->arg == arg) {
+				target = desc;
+				goto _found;
+			}
 		}
 	}
 	return -ENODEV;
@@ -219,12 +207,32 @@ _found:
 	scoped_guard(os_irq) { 
 		rte_list_del(&target->node); 
 	}
-	if (rte_list_empty(&exti_heads[pin])) {
+	if (rte_list_empty_careful(&exti_heads[pin])) {
 		stm32_exti_enable(pin, false);
 		stm32_exti_trigger(pin, false, false);
 	}
 
 	kfree(target);
+	return 0;
+}
+
+static int gpio_init_irq(void) {
+	tx_mutex_create(&mutex, "gpio_exti", TX_INHERIT);
+	for (size_t i = 0; i < rte_array_size(exti_heads); i++)
+		RTE_INIT_LIST(&exti_heads[i]);
+
+	for (size_t i = 0; i < rte_array_size(extiline_vec); i++) {
+		void (*irqfn)(void *);
+
+		irqfn = (i <= 4) ? stm32_exti_isr : stm32_mulit_exti_isr;
+		int err = request_irq(extiline_vec[i].irq, irqfn, &extiline_vec[i]);
+		if (err) {
+			printk("[err]: %s request irq(%d) failed(%d)\n", __func__,
+				   extiline_vec[i].irq, err);
+			return err;
+		}
+	}
+
 	return 0;
 }
 

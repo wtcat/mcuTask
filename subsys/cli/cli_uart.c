@@ -3,6 +3,7 @@
  */
 
 #include "tx_api.h"
+#include "drivers/uart.h"
 #include "subsys/cli/cli.h"
 
 static void *cli_uart_open(const char *dev) {

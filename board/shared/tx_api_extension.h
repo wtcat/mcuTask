@@ -72,6 +72,17 @@ DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), \
 #endif /* __linux__ */
 #endif /* TX_USE_KERNEL_API_EXTENSION */
 
+/*
+ * Simple object pool 
+ */
+struct object_pool {
+    void *free_chain;
+};
+
+void *object_allocate(struct object_pool *pool);
+void object_free(struct object_pool *pool, void *obj);
+int  object_pool_initialize(struct object_pool *pool, void *buffer, size_t size, 
+    size_t objsize);
 
 /*
  * Task Runner
@@ -175,14 +186,16 @@ struct sysinit_item {
    const char *name;
 };
 
-/* System initialize level */
+/* 
+ * System initialize level (must be <= 99)
+ */
 #define SI_EARLY_LEVEL         5
 #define SI_MEMORY_LEVEL        10
 #define SI_PREDRIVER_LEVEL     60
 #define SI_BUSDRIVER_LEVEL     70
 #define SI_DRIVER_LEVEL        80
 #define SI_FILESYSTEM_LEVEL    90
-#define SI_APPLICATION_LEVEL   100
+#define SI_APPLICATION_LEVEL   99
 
 #define SYSINIT(_handler, _level, _order) \
     __SYSINIT(_handler, _level, _order)
@@ -243,7 +256,7 @@ extern console_getc_t __console_getc;
  * Device Driver
  */
 #include "drivers/device.h"
-#include "drivers/uart.h"
+
 
 #ifdef __cplusplus
 }

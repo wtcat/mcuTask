@@ -6,10 +6,14 @@
 #include <errno.h>
 #include "tx_api.h"
 #include "fx_api.h"
-
-#define FS_PRIVATE_EXTENSION FX_MEDIA media;
-#include "subsys/fs/fs.h"
 #include "drivers/blkdev.h"
+
+#define FS_PRIVATE_EXTENSION \
+    FX_MEDIA media; \
+    struct object_pool pool;
+    
+#include "subsys/fs/fs.h"
+
 
 struct dir_private {
     FX_LOCAL_PATH path;
@@ -19,11 +23,15 @@ struct dir_private {
 #define FX_ERR(_err)  ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
 
-#ifndef FX_MEDIA_BUFFER_SIZE
-#define FX_MEDIA_BUFFER_SIZE 512
+#ifndef CONFIG_FILEX_MEDIA_BUFFER_SIZE
+#define CONFIG_FILEX_MEDIA_BUFFER_SIZE 4096
+#endif
+#ifndef CONFIG_FILEX_MAX_FILES
+#define CONFIG_FILEX_MAX_FILES 1
 #endif
 
-static char media_buffer[FX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
+static char media_buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
+static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
 
 static void filex_fs_driver(FX_MEDIA *media_ptr) {
 	UCHAR *buffer;
@@ -155,14 +163,14 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
 
 static int filex_fs_open(struct fs_file *fp, const char *file_name, 
     fs_mode_t flags) {
-    FX_MEDIA *media = &fp->vfs->media;
+    struct fs_class *fs = fp->vfs;
     bool created = false;
-    UINT fxerr;
+    UINT err;
 
     if (flags & FS_O_CREATE) {
-        fxerr = fx_file_create(media, (CHAR *)file_name);
-        if (fxerr != FX_SUCCESS)
-            return FX_ERR(fxerr);
+        err = fx_file_create(&fs->media, (CHAR *)file_name);
+        if (err != FX_SUCCESS)
+            return FX_ERR(err);
         created = true;
     }
 
@@ -170,11 +178,20 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
     if (!rw_flags && !created)
         return -EINVAL;
 
-    FX_FILE *fxp = fp->filep;
-    fxerr = fx_file_open(media, fxp, (CHAR *)file_name, 
-        rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
+    FX_FILE *fxp = object_allocate(&fs->pool);
+    if (fxp) {
+        err = fx_file_open(&fs->media, fxp, (CHAR *)file_name, 
+            rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
+        if (err == FX_SUCCESS) {
+            fp->filep = fxp;
+            return 0;
+        }
 
-    return FX_ERR(fxerr);
+        object_free(&fs->pool, fxp);
+        return _FX_ERR(err);
+    }
+
+    return -ENOMEM;
 }
 
 static int filex_fs_close(struct fs_file *fp) {
@@ -182,7 +199,11 @@ static int filex_fs_close(struct fs_file *fp) {
     UINT err;
 
     err = fx_file_close(fxp);
-    return FX_ERR(err);
+    if (err == FX_SUCCESS) {
+        object_free(&fp->vfs->pool, fp->filep);
+        return 0;
+    }
+    return _FX_ERR(err);
 }
 
 static ssize_t filex_fs_read(struct fs_file *fp, void *ptr, size_t size) {
@@ -225,6 +246,8 @@ static int filex_fs_lseek(struct fs_file *fp, off_t offset, int whence) {
     case FS_SEEK_END:
         err = fx_file_relative_seek(fxp, offset, FX_SEEK_END);
         break;
+    default:
+        return -EINVAL;
     }
 
     return FX_ERR(err);
@@ -443,6 +466,9 @@ static struct fs_class filex_fs = {
 
 static int fs_filex_init(void) {
     fx_system_initialize();
+
+    object_pool_initialize(&filex_fs.pool, filex_fds, 
+        sizeof(filex_fds), sizeof(filex_fds[0]));
     return fs_register(FS_EXFATFS, &filex_fs);
 }
 
