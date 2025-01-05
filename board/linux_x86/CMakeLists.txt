@@ -54,23 +54,27 @@ include_dirs(
     ${CMAKE_CURRENT_SOURCE_DIR}/port
 )
 
-set(${CMAKE_C_FLAGS} "${CMAKE_C_FLAGS} -std=gnu17")
-set(${CMAKE_CXX_FLAGS} "${CMAKE_CXX_FLAGS} -std=c++20")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu17 -Wno-pointer-to-int-cast -Wno-int-to-pointer-cast")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fno-rtti -fno-exceptions")
 
 add_compile_options(
     -DCONFIG_C11_MEM_MODEL=1
+    -DTX_LINUX_DEBUG_ENABLE
 
+    -Wall
+    -Wextra
+    -fdata-sections 
+    -ffunction-sections
     -Wno-unused-parameter
     -Wno-implicit-fallthrough
-    -Wno-pointer-to-int-cast
-    -Wno-int-to-pointer-cast
-    -O0 -g
+    -O0 
+    -g
 )
+
 
 set (BOARD_SOURCES
     main.c
 )
-
 
 add_executable(${PROJECT_NAME}
     ${BOARD_SOURCES}
@@ -82,6 +86,12 @@ add_subdirectory(${WKSAPCE_PATH}/basework basework)
 add_subdirectory(${WKSAPCE_PATH}/subsys subsys)
 add_subdirectory(${WKSAPCE_PATH}/board/shared shared)
 
+# Linker options
+target_link_options(${PROJECT_NAME}
+    PRIVATE
+    -Wl,-Map=${CMAKE_BINARY_DIR}/mcutask.map
+    -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld
+)
 
 # Link target
 collect_link_libraries(libs ${PROJECT_NAME})
