@@ -6,7 +6,6 @@
 #define TX_API_EXTENSION_H_
 
 #include <stdarg.h>
-#include <sys/_intsup.h>
 #include <sys/types.h>
 
 #include "basework/compiler_attributes.h"
@@ -62,8 +61,15 @@ DEFINE_GUARD(os_mutex, TX_MUTEX *, _tx_mutex_get(_T, 0xFFFFFFFFUL), _tx_mutex_pu
 DEFINE_GUARD(os_mutex, TX_MUTEX *, _txe_mutex_get(_T, 0xFFFFFFFFUL), _txe_mutex_put(_T))
 #endif /* TX_DISABLE_ERROR_CHECKING */
 
+
+#if defined(__linux__)
+DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = _tx_thread_interrupt_disable(), \
+    _tx_thread_interrupt_restore((_T)->key), unsigned int key)
+
+#else
 DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), \
-    __restore_interrupt((_T)->key), unsigned int key)	
+    __restore_interrupt((_T)->key), unsigned int key)
+#endif /* __linux__ */
 #endif /* TX_USE_KERNEL_API_EXTENSION */
 
 

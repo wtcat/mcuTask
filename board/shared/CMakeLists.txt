@@ -8,11 +8,17 @@ target_sources(${PROJECT_NAME}
     taskrunner.c
     device.c
     sysinit.c
-    cstub.c
-    irq.c
-    nanosleep.c
-    init_array.c
 )
+
+if (CROSS_COMPILE)
+    target_sources(${PROJECT_NAME}
+        PRIVATE
+        init_array.c
+        cstub.c
+        irq.c
+        nanosleep.c
+    )
+endif()
 
 if (CONFIG_KMALLOC)
 target_sources(${PROJECT_NAME}
