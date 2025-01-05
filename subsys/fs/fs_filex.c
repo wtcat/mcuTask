@@ -20,6 +20,10 @@ struct dir_private {
     bool first;
 };
 
+#ifndef __ELASTERROR
+#define __ELASTERROR (2000)
+#endif
+
 #define FX_ERR(_err)  ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
 
