@@ -5,11 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb",
+            "type": "by-gdb",
             "request": "launch",
             "name": "Debug",
             "program": "${workspaceFolder}/board/linux_x86/build/mcutask",
-            "args": [""],
             "cwd": "${workspaceFolder}/board/linux_x86/build"
         }
     ]

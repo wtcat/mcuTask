@@ -24,9 +24,10 @@ int main(int argc, char *argv[]) {
 }
 
 static void main_thread(void *arg) {
-    TX_THREAD *pid = arg;
+    TX_THREAD *pid = &main_pid;
     UINT old, new;
 
+    (void) arg;
     /*
      * Do system and driver initialize
      */
