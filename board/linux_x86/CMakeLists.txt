@@ -18,6 +18,8 @@ if (POLICY CMP0076)
     cmake_policy(SET CMP0076 NEW)
 endif(POLICY CMP0076)
 
+set(CONFIG_SIMULATOR 1)
+
 # Configure options
 include(${WKSAPCE_PATH}/cmake/options.cmake)
 # set(CONFIG_NETX   1)

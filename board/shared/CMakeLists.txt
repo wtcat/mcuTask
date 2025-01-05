@@ -10,14 +10,14 @@ target_sources(${PROJECT_NAME}
     sysinit.c
 )
 
-if (CROSS_COMPILE)
-    target_sources(${PROJECT_NAME}
-        PRIVATE
-        init_array.c
-        cstub.c
-        irq.c
-        nanosleep.c
-    )
+if (NOT CONFIG_SIMULATOR)
+target_sources(${PROJECT_NAME}
+    PRIVATE
+    init_array.c
+    cstub.c
+    irq.c
+    nanosleep.c
+)
 endif()
 
 if (CONFIG_KMALLOC)
