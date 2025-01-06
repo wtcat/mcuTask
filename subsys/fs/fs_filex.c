@@ -416,7 +416,7 @@ static int filex_fs_mkfs(struct fs_class *fs, const char *devname,
     UINT blksz = 0;
     UINT err;
 
-    dev = device_find(fs->storage_dev);
+    dev = device_find(devname);
     if (dev == NULL)
         return -ENODEV;
 

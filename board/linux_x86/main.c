@@ -3,6 +3,7 @@
  */
 #include <stdio.h>
 #include "tx_api.h"
+#include "basework/log.h"
 
 #include "subsys/fs/fs.h"
 
@@ -18,12 +19,22 @@ static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)];
 
 static void file_test(void);
 
+static int __rte_notrace 
+printk_printer(void *context, const char *fmt, va_list ap) {
+    (void) context;
+    return vprintf(fmt, ap);
+}
+
 static void stdio_puts(const char *s, size_t len) {
     fwrite(s, len, 1, stdout);
 }
 
 int main(int argc, char *argv[]) {
-
+	static struct printer console_printer = {
+		.format = printk_printer
+	};
+    
+	pr_log_init(&console_printer);
     __console_puts = stdio_puts;
     /* Enter the ThreadX kernel.  */
     tx_kernel_enter();

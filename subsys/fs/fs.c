@@ -31,15 +31,6 @@ static struct fs_class *fs_type_registered_get(int type) {
     return NULL;
 }
 
-static struct fs_class *fs_type_mounted_get(int type) {
-    struct fs_class *iter;
-    rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
-        if (iter->type == type)
-            return iter;
-    }
-    return NULL;
-}
-
 static struct fs_class *fs_mntp_mounted_get(const char *mnt) {
     struct fs_class *iter;
     rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
@@ -664,7 +655,7 @@ int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags) {
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
 	/* Get file system information */
-	fs = fs_type_mounted_get(fs_type);
+	fs = fs_type_registered_get(fs_type);
 	if (fs == NULL) {
 		pr_err("fs type %d not registered!!", fs_type);
 		rc = -ENOENT;
