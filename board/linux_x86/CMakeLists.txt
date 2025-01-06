@@ -77,6 +77,7 @@ add_compile_options(
 
 set (BOARD_SOURCES
     main.c
+    ram_blkdev.c
 )
 
 add_executable(${PROJECT_NAME}

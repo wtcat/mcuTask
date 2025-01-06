@@ -5,7 +5,6 @@ include_dirs(.)
 target_sources(${PROJECT_NAME}
     PRIVATE
     platform.c
-    taskrunner.c
     device.c
     sysinit.c
     object_pool.c
@@ -14,6 +13,7 @@ target_sources(${PROJECT_NAME}
 if (NOT CONFIG_SIMULATOR)
 target_sources(${PROJECT_NAME}
     PRIVATE
+    taskrunner.c
     init_array.c
     cstub.c
     irq.c
