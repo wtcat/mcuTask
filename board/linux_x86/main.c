@@ -73,29 +73,45 @@ static void file_test(void) {
     if (err)
         return;
 
-    err = fs_mount("/", "ramblk", FS_EXFATFS, 0, NULL);
+    err = fs_mount("/home", "ramblk", FS_EXFATFS, 0, NULL);
     if (err)
         return;
 
-    struct fs_file fd = {0};
-    err = fs_open(&fd, "/hello.txt", FS_O_CREATE | FS_O_WRITE);
+    err = fs_mkdir("/home/a");
     if (err)
         goto _unmount;
 
+    err = fs_mkdir("/home/b");
+    if (err)
+        goto _unmount;
+
+    struct fs_file fd = {0};
+    err = fs_open(&fd, "/home/a/hello.txt", FS_O_CREATE | FS_O_WRITE);
+    if (err)
+        goto _unmount;
     fs_write(&fd, "hello world", 11);
     fs_close(&fd);
 
     struct fs_file rfd = {0};
     char buffer[12] = {0};
-
-    err = fs_open(&rfd, "/hello.txt", FS_O_READ);
+    err = fs_open(&rfd, "/home/a/hello.txt", FS_O_READ);
     if (err)
         goto _unmount;
-
     fs_read(&rfd, buffer, 11);
     fs_close(&rfd);
 
+    struct fs_dir dir = {0};
+    err = fs_opendir(&dir, "/home/");
+    if (err)
+        goto _unmount;
+    
+    struct fs_dirent entry;
+    while ((err = fs_readdir(&dir, &entry)) == 0) {
+
+    }
+    fs_closedir(&dir);
+
 _unmount:
-    fs_unmount("/");
+    fs_unmount("/home");
     return;
 }

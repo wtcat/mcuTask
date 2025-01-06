@@ -57,17 +57,15 @@ static int fs_get_mnt_point(struct fs_class **mnt_pntp, const char *name,
 		 * shorter than longest_match match or if path
 		 * name is shorter than the mount point name.
 		 */
-		if ((len < longest_match) || (len > name_len)) {
+		if ((len < longest_match) || (len > name_len))
 			continue;
-		}
 
 		/*
 		 * Move to next node if name does not have a directory
 		 * separator where mount point name ends.
 		 */
-		if ((len > 1) && (name[len] != '/') && (name[len] != '\0')) {
+		if ((len > 1) && (name[len] != '/') && (name[len] != '\0'))
 			continue;
-		}
 
 		/* Check for mount point match */
 		if (strncmp(name, itr->mnt_point, len) == 0) {
@@ -91,7 +89,7 @@ static int fs_get_mnt_point(struct fs_class **mnt_pntp, const char *name,
 
 /* File operations */
 int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	int rc = -EINVAL;
 	bool truncate_file = false;
 
@@ -100,21 +98,18 @@ int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
 		return -EINVAL;
 	}
 
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBUSY;
-
-	rc = fs_get_mnt_point(&mp, file_name, NULL);
+	rc = fs_get_mnt_point(&fs, file_name, NULL);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (((mp->flags & FS_MOUNT_FLAG_READ_ONLY) != 0) &&
+	if (((fs->flags & FS_MOUNT_FLAG_READ_ONLY) != 0) &&
 		(flags & FS_O_CREATE || flags & FS_O_WRITE)) {
 		return -EROFS;
 	}
 
-	if (mp->fs_ops.open == NULL)
+	if (fs->fs_ops.open == NULL)
 		return -ENOTSUP;
 
 	if ((flags & FS_O_TRUNC) != 0) {
@@ -123,15 +118,17 @@ int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
 			pr_err("file should be opened for write to truncate!!");
 			return -EACCES;
 		}
-		if (mp->fs_ops.truncate == NULL) {
+
+		if (fs->fs_ops.truncate == NULL) {
 			pr_err("file truncation not supported!!");
 			return -ENOTSUP;
 		}
+
 		truncate_file = true;
 	}
 
-	fp->vfs = mp;
-	rc = mp->fs_ops.open(fp, file_name, flags);
+	fp->vfs = fs;
+	rc = fs->fs_ops.open(fp, file_name, flags);
 	if (rc < 0) {
 		pr_err("file open error (%d)", rc);
 		fp->vfs = NULL;
@@ -143,7 +140,7 @@ int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
 
 	if (truncate_file) {
 		/* Truncate the opened file to 0 length */
-		rc = mp->fs_ops.truncate(fp, 0);
+		rc = fs->fs_ops.truncate(fp, 0);
 		if (rc < 0) {
 			pr_err("file truncation failed (%d)", rc);
 			fp->vfs = NULL;

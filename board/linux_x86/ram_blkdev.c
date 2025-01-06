@@ -34,10 +34,12 @@ static int
 ram_blkdev_control(struct device *dev, unsigned int cmd, void *arg) {
     switch (cmd) {
     case BLKDEV_IOC_GET_BLKSIZE:
-        return CONFIG_RAMBLK_SIZE;
+        *(UINT *)arg = CONFIG_RAMBLK_SIZE;
+        return 0;
 
     case BLKDEV_IOC_GET_BLKCOUNT:
-        return CONFIG_RAMBLK_MEMORY_SIZE / CONFIG_RAMBLK_SIZE;
+        *(UINT *)arg = CONFIG_RAMBLK_MEMORY_SIZE / CONFIG_RAMBLK_SIZE;
+        return 0;
 
     default:
         return -EINVAL;

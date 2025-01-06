@@ -331,10 +331,10 @@ struct fs_class {
 	struct fs_operations fs_ops;
 
 	/** Pointer to file system specific data */
-	union {
-		void *fs_data;
-		FS_PRIVATE_EXTENSION
-	};
+	void *fs_data;
+
+	/** File system extension */
+	FS_PRIVATE_EXTENSION
 };
 
 /**

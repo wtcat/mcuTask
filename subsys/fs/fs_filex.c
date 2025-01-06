@@ -24,8 +24,10 @@ struct dir_private {
 #define __ELASTERROR (2000)
 #endif
 
-#define FX_ERR(_err)  ((_err)? _FX_ERR(_err): 0)
+#define FX_PATH(_name) ((CHAR *)(_name) + fs->mountp_len)
+#define FX_ERR(_err)   ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
+
 
 #ifndef CONFIG_FILEX_MEDIA_BUFFER_SIZE
 #define CONFIG_FILEX_MEDIA_BUFFER_SIZE 4096
@@ -172,7 +174,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
     UINT err;
 
     if (flags & FS_O_CREATE) {
-        err = fx_file_create(&fs->media, (CHAR *)file_name);
+        err = fx_file_create(&fs->media, FX_PATH(file_name));
         if (err != FX_SUCCESS)
             return FX_ERR(err);
         created = true;
@@ -184,7 +186,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
 
     FX_FILE *fxp = object_allocate(&fs->pool);
     if (fxp) {
-        err = fx_file_open(&fs->media, fxp, (CHAR *)file_name, 
+        err = fx_file_open(&fs->media, fxp, FX_PATH(file_name), 
             rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
         if (err == FX_SUCCESS) {
             fp->filep = fxp;
@@ -283,7 +285,7 @@ static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
     if (dir == NULL)
         return -ENOMEM;
 
-    err = fx_directory_local_path_set(&fs->media, &dir->path, (CHAR *)abs_path);
+    err = fx_directory_local_path_set(&fs->media, &dir->path, FX_PATH(abs_path));
     if (err == FX_SUCCESS) {
         dir->first = true;
         dp->dirp = dir;
@@ -361,29 +363,29 @@ static int filex_fs_unmount(struct fs_class *fs) {
 static int filex_fs_mkdir(struct fs_class *fs, const char *abs_path) {
     UINT err;
 
-    err = fx_directory_create(&fs->media, (CHAR *)abs_path);
+    err = fx_directory_create(&fs->media, FX_PATH(abs_path));
     return FX_ERR(err);
 }
 
 static int filex_fs_unlink(struct fs_class *fs, const char *abs_path) {
     UINT attr, err;
 
-    err = fx_file_attributes_read(&fs->media, (CHAR *)abs_path, &attr);
+    err = fx_file_attributes_read(&fs->media, FX_PATH(abs_path), &attr);
     if (err == FX_SUCCESS)
-        err = fx_file_delete(&fs->media, (CHAR *)abs_path);
+        err = fx_file_delete(&fs->media, FX_PATH(abs_path));
     else if (err == FX_NOT_A_FILE)
-        err = fx_directory_delete(&fs->media, (CHAR *)abs_path);
+        err = fx_directory_delete(&fs->media, FX_PATH(abs_path));
     return FX_ERR(err);
 }
 
 static int filex_fs_rename(struct fs_class *fs, const char *from, const char *to) {
     UINT attr, err;
 
-    err = fx_file_attributes_read(&fs->media, (CHAR *)from, &attr);
+    err = fx_file_attributes_read(&fs->media, FX_PATH(from), &attr);
     if (err == FX_SUCCESS)
-        err = fx_file_rename(&fs->media, (CHAR *)from, (CHAR *)to);
+        err = fx_file_rename(&fs->media, FX_PATH(from), FX_PATH(to));
     else if (err == FX_NOT_A_FILE)
-        err = fx_directory_rename(&fs->media, (CHAR *)from, (CHAR *)to);
+        err = fx_directory_rename(&fs->media, FX_PATH(from), FX_PATH(to));
     return FX_ERR(err);
 }
 
@@ -392,7 +394,7 @@ static int filex_fs_stat(struct fs_class *fs, const char *abs_path,
     ULONG size;
     UINT err;
 
-    err = fx_directory_information_get(&fs->media, (CHAR *)abs_path, NULL, &size,
+    err = fx_directory_information_get(&fs->media, FX_PATH(abs_path), NULL, &size,
         NULL, NULL, NULL, NULL, NULL, NULL);
     
     if (err == FX_SUCCESS) {
@@ -428,7 +430,7 @@ static int filex_fs_mkfs(struct fs_class *fs, const char *devname,
 
     err = fx_media_format(&fs->media,
                     filex_fs_driver,               // Driver entry
-                    dev_get_private(dev), // RAM disk memory pointer
+                    dev, // RAM disk memory pointer
                     (UCHAR *)media_buffer,     // Media buffer pointer
                     sizeof(media_buffer),   // Media buffer size
                     "exfat",                // Volume Name
