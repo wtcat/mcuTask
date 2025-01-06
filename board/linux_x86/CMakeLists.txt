@@ -62,6 +62,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fno-rtti -fno-exceptions")
 add_compile_options(
     -DCONFIG_C11_MEM_MODEL=1
     -DCONFIG_SIMULATOR=1
+    -DCONFIG_HEADER_FILE="basework_config.h"
 
     -Wall
     -Wextra
