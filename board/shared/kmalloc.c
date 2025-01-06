@@ -5,7 +5,11 @@
 #include "tx_api.h"
 
 extern char _kernel_byte_pool_start[];
+#ifndef CONFIG_SIMULATOR
 extern char _kernel_byte_pool_size[];
+#else
+extern UINT _kernel_byte_pool_size;
+#endif /* CONFIG_SIMULATOR */
 
 static TX_BYTE_POOL kernel_byte_pool __fastdata;
 
