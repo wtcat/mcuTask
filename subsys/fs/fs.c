@@ -4,44 +4,45 @@
  * Virtual Filesystem (borrowed from zephyr)
  */
 
-#define pr_fmt(fmt) "[fs]: "fmt
+#define pr_fmt(fmt) "[fs]: " fmt
 #include <errno.h>
 #include <string.h>
 
 #include "tx_api.h"
 #include "subsys/fs/fs.h"
+
 #include "basework/container/list.h"
 #include "basework/log.h"
 
 
 struct fs_manager {
-    struct rte_list list;
-    struct rte_list mnt_list;
-    TX_MUTEX mtx;
+	struct rte_list list;
+	struct rte_list mnt_list;
+	TX_MUTEX mtx;
 };
 
 struct fs_manager fs_manager;
 
 static struct fs_class *fs_type_registered_get(int type) {
-    struct fs_class *iter;
-    rte_list_foreach_entry(iter, &fs_manager.list, node) {
-        if (iter->type == type)
-            return iter;
-    }
-    return NULL;
+	struct fs_class *iter;
+	rte_list_foreach_entry(iter, &fs_manager.list, node) {
+		if (iter->type == type)
+			return iter;
+	}
+	return NULL;
 }
 
 static struct fs_class *fs_mntp_mounted_get(const char *mnt) {
-    struct fs_class *iter;
-    rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
-        if (!strcmp(mnt, iter->mnt_point))
-            return iter;
-    }
-    return NULL;
+	struct fs_class *iter;
+	rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
+		if (!strcmp(mnt, iter->mnt_point))
+			return iter;
+	}
+	return NULL;
 }
 
 static int fs_get_mnt_point(struct fs_class **mnt_pntp, const char *name,
-	size_t *match_len) {
+							size_t *match_len) {
 	struct fs_class *mnt_p = NULL, *itr;
 	size_t longest_match = 0;
 	size_t len, name_len = strlen(name);
@@ -109,9 +110,6 @@ int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
 		return -EROFS;
 	}
 
-	if (fs->fs_ops.open == NULL)
-		return -ENOTSUP;
-
 	if ((flags & FS_O_TRUNC) != 0) {
 		if ((flags & FS_O_WRITE) == 0) {
 			/** Truncate not allowed when file is not opened for write */
@@ -155,10 +153,6 @@ int fs_close(struct fs_file *fp) {
 	if (rte_unlikely(fp->vfs == NULL))
 		return 0;
 
-	if (fp->vfs->fs_ops.close == NULL) {
-		return -ENOTSUP;
-	}
-
 	int rc = fp->vfs->fs_ops.close(fp);
 	if (rc < 0) {
 		pr_err("file close error (%d)", rc);
@@ -166,7 +160,6 @@ int fs_close(struct fs_file *fp) {
 	}
 
 	fp->vfs = NULL;
-
 	return rc;
 }
 
@@ -175,9 +168,8 @@ ssize_t fs_read(struct fs_file *fp, void *ptr, size_t size) {
 		return -EBADF;
 
 	int rc = fp->vfs->fs_ops.read(fp, ptr, size);
-	if (rc < 0) {
+	if (rc < 0)
 		pr_err("file read error (%d)", rc);
-	}
 
 	return rc;
 }
@@ -187,9 +179,8 @@ ssize_t fs_write(struct fs_file *fp, const void *ptr, size_t size) {
 		return -EBADF;
 
 	int rc = fp->vfs->fs_ops.write(fp, ptr, size);
-	if (rc < 0) {
+	if (rc < 0)
 		pr_err("file write error (%d)", rc);
-	}
 
 	return rc;
 }
@@ -198,13 +189,9 @@ int fs_seek(struct fs_file *fp, off_t offset, int whence) {
 	if (rte_unlikely(fp->vfs == NULL))
 		return -EBADF;
 
-	if (rte_unlikely(fp->vfs->fs_ops.lseek == NULL))
-		return -ENOTSUP;
-
 	int rc = fp->vfs->fs_ops.lseek(fp, offset, whence);
-	if (rc < 0) {
+	if (rc < 0)
 		pr_err("file seek error (%d)", rc);
-	}
 
 	return rc;
 }
@@ -213,13 +200,9 @@ off_t fs_tell(struct fs_file *fp) {
 	if (rte_unlikely(fp->vfs == NULL))
 		return -EBADF;
 
-	if (fp->vfs->fs_ops.tell == NULL)
-		return -ENOTSUP;
-
 	int rc = fp->vfs->fs_ops.tell(fp);
-	if (rc < 0) {
+	if (rc < 0)
 		pr_err("file tell error (%d)", rc);
-	}
 
 	return rc;
 }
@@ -228,13 +211,9 @@ int fs_truncate(struct fs_file *fp, off_t length) {
 	if (rte_unlikely(fp->vfs == NULL))
 		return -EBADF;
 
-	if (fp->vfs->fs_ops.truncate == NULL)
-		return -ENOTSUP;
-
 	int rc = fp->vfs->fs_ops.truncate(fp, length);
-	if (rc < 0) {
+	if (rc < 0)
 		pr_err("file truncate error (%d)", rc);
-	}
 
 	return rc;
 }
@@ -243,20 +222,16 @@ int fs_sync(struct fs_file *fp) {
 	if (rte_unlikely(fp->vfs == NULL))
 		return -EBADF;
 
-	if (fp->vfs->fs_ops.sync == NULL)
-		return -ENOTSUP;
-
 	int rc = fp->vfs->fs_ops.sync(fp);
-	if (rc < 0) {
+	if (rc < 0)
 		pr_err("file sync error (%d)", rc);
-	}
 
 	return rc;
 }
 
 /* Directory operations */
 int fs_opendir(struct fs_dir *dp, const char *abs_path) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	int rc = -EINVAL;
 
 	if ((abs_path == NULL) || (strlen(abs_path) < 1) || (abs_path[0] != '/')) {
@@ -272,26 +247,23 @@ int fs_opendir(struct fs_dir *dp, const char *abs_path) {
 		tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
 		dp->vfs = NULL;
-        if (rte_list_empty(&fs_manager.mnt_list))
-            dp->dirp = NULL;
-        else
-            dp->dirp = fs_manager.mnt_list.next;
+		if (rte_list_empty(&fs_manager.mnt_list))
+			dp->dirp = NULL;
+		else
+			dp->dirp = fs_manager.mnt_list.next;
 
 		tx_mutex_put(&fs_manager.mtx);
 
 		return 0;
 	}
 
-	rc = fs_get_mnt_point(&mp, abs_path, NULL);
+	rc = fs_get_mnt_point(&fs, abs_path, NULL);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (mp->fs_ops.opendir == NULL)
-		return -ENOTSUP;
-
-	dp->vfs = mp;
+	dp->vfs = fs;
 	rc = dp->vfs->fs_ops.opendir(dp, abs_path);
 	if (rc < 0) {
 		dp->vfs = NULL;
@@ -307,27 +279,23 @@ int fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
 		/* Delegate to mounted filesystem */
 		int rc = -EINVAL;
 
-		if (dp->vfs->fs_ops.readdir == NULL)
-			return -ENOTSUP;
-
 		/* Loop until error or not special directory */
 		while (true) {
 			rc = dp->vfs->fs_ops.readdir(dp, entry);
-			if (rc < 0) 
+			if (rc < 0)
 				break;
-			
-			if (entry->name[0] == 0) 
+
+			if (entry->name[0] == 0)
 				break;
-			
-			if (entry->type != FS_DIR_ENTRY_DIR) 
+
+			if (entry->type != FS_DIR_ENTRY_DIR)
 				break;
-			
-			if ((strcmp(entry->name, ".") != 0) && (strcmp(entry->name, "..") != 0)) 
+
+			if ((strcmp(entry->name, ".") != 0) && (strcmp(entry->name, "..") != 0))
 				break;
 		}
-		if (rc < 0) {
+		if (rc < 0)
 			pr_err("directory read error (%d)", rc);
-		}
 
 		return rc;
 	}
@@ -360,9 +328,9 @@ int fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
 			entry->size = 0;
 
 			/* Save pointer to the next one, for later */
-            next = node->next;
-            if (next == &fs_manager.mnt_list)
-			    next = NULL;
+			next = node->next;
+			if (next == &fs_manager.mnt_list)
+				next = NULL;
 			break;
 		}
 	}
@@ -389,9 +357,6 @@ int fs_closedir(struct fs_dir *dp) {
 		return 0;
 	}
 
-	if (dp->vfs->fs_ops.closedir == NULL)
-		return -ENOTSUP;
-
 	rc = dp->vfs->fs_ops.closedir(dp);
 	if (rc < 0) {
 		pr_err("directory close error (%d)", rc);
@@ -405,7 +370,7 @@ int fs_closedir(struct fs_dir *dp) {
 
 /* Filesystem operations */
 int fs_mkdir(const char *abs_path) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	int rc = -EINVAL;
 
 	if ((abs_path == NULL) || (strlen(abs_path) <= 1) || (abs_path[0] != '/')) {
@@ -413,28 +378,24 @@ int fs_mkdir(const char *abs_path) {
 		return -EINVAL;
 	}
 
-	rc = fs_get_mnt_point(&mp, abs_path, NULL);
+	rc = fs_get_mnt_point(&fs, abs_path, NULL);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (mp->flags & FS_MOUNT_FLAG_READ_ONLY)
+	if (fs->flags & FS_MOUNT_FLAG_READ_ONLY)
 		return -EROFS;
 
-	if (mp->fs_ops.mkdir == NULL)
-		return -ENOTSUP;
-
-	rc = mp->fs_ops.mkdir(mp, abs_path);
-	if (rc < 0) {
+	rc = fs->fs_ops.mkdir(fs, abs_path);
+	if (rc < 0)
 		pr_err("failed to create directory (%d)", rc);
-	}
 
 	return rc;
 }
 
 int fs_unlink(const char *abs_path) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	int rc = -EINVAL;
 
 	if ((abs_path == NULL) || (strlen(abs_path) <= 1) || (abs_path[0] != '/')) {
@@ -442,28 +403,24 @@ int fs_unlink(const char *abs_path) {
 		return -EINVAL;
 	}
 
-	rc = fs_get_mnt_point(&mp, abs_path, NULL);
+	rc = fs_get_mnt_point(&fs, abs_path, NULL);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (mp->flags & FS_MOUNT_FLAG_READ_ONLY)
+	if (fs->flags & FS_MOUNT_FLAG_READ_ONLY)
 		return -EROFS;
 
-	if (mp->fs_ops.unlink == NULL)
-		return -ENOTSUP;
-
-	rc = mp->fs_ops.unlink(mp, abs_path);
-	if (rc < 0) {
+	rc = fs->fs_ops.unlink(fs, abs_path);
+	if (rc < 0)
 		pr_err("failed to unlink path (%d)", rc);
-	}
 
 	return rc;
 }
 
 int fs_rename(const char *from, const char *to) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	size_t match_len;
 	int rc = -EINVAL;
 
@@ -473,13 +430,13 @@ int fs_rename(const char *from, const char *to) {
 		return -EINVAL;
 	}
 
-	rc = fs_get_mnt_point(&mp, from, &match_len);
+	rc = fs_get_mnt_point(&fs, from, &match_len);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (mp->flags & FS_MOUNT_FLAG_READ_ONLY)
+	if (fs->flags & FS_MOUNT_FLAG_READ_ONLY)
 		return -EROFS;
 
 	/* Make sure both files are mounted on the same path */
@@ -488,19 +445,15 @@ int fs_rename(const char *from, const char *to) {
 		return -EINVAL;
 	}
 
-	if (mp->fs_ops.rename == NULL)
-		return -ENOTSUP;
-
-	rc = mp->fs_ops.rename(mp, from, to);
-	if (rc < 0) {
+	rc = fs->fs_ops.rename(fs, from, to);
+	if (rc < 0)
 		pr_err("failed to rename file or dir (%d)", rc);
-	}
 
 	return rc;
 }
 
 int fs_stat(const char *abs_path, struct fs_stat *stat) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	int rc = -EINVAL;
 
 	if ((abs_path == NULL) || (strlen(abs_path) <= 1) || (abs_path[0] != '/')) {
@@ -508,16 +461,13 @@ int fs_stat(const char *abs_path, struct fs_stat *stat) {
 		return -EINVAL;
 	}
 
-	rc = fs_get_mnt_point(&mp, abs_path, NULL);
+	rc = fs_get_mnt_point(&fs, abs_path, NULL);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (mp->fs_ops.stat == NULL)
-		return -ENOTSUP;
-
-	rc = mp->fs_ops.stat(mp, abs_path, stat);
+	rc = fs->fs_ops.stat(fs, abs_path, stat);
 	if (rc == -ENOENT) {
 		/* File doesn't exist, which is a valid stat response */
 	} else if (rc < 0) {
@@ -527,7 +477,7 @@ int fs_stat(const char *abs_path, struct fs_stat *stat) {
 }
 
 int fs_statvfs(const char *abs_path, struct fs_statvfs *stat) {
-	struct fs_class *mp;
+	struct fs_class *fs;
 	int rc;
 
 	if ((abs_path == NULL) || (strlen(abs_path) <= 1) || (abs_path[0] != '/')) {
@@ -535,16 +485,13 @@ int fs_statvfs(const char *abs_path, struct fs_statvfs *stat) {
 		return -EINVAL;
 	}
 
-	rc = fs_get_mnt_point(&mp, abs_path, NULL);
+	rc = fs_get_mnt_point(&fs, abs_path, NULL);
 	if (rc < 0) {
 		pr_err("mount point not found!!");
 		return rc;
 	}
 
-	if (mp->fs_ops.statvfs == NULL)
-		return -ENOTSUP;
-
-	rc = mp->fs_ops.statvfs(mp, abs_path, stat);
+	rc = fs->fs_ops.statvfs(fs, abs_path, stat);
 	if (rc < 0) {
 		pr_err("failed get file or dir stat (%d)", rc);
 	}
@@ -552,8 +499,8 @@ int fs_statvfs(const char *abs_path, struct fs_statvfs *stat) {
 	return rc;
 }
 
-int fs_mount(const char *mnt, void *storage_dev, int type, 
-    unsigned int options, void *fs_data) {
+int fs_mount(const char *mnt, void *storage_dev, int type, unsigned int options,
+			 void *fs_data) {
 	struct fs_class *itr, *fs;
 	struct rte_list *node;
 	int rc = -EINVAL;
@@ -583,11 +530,11 @@ int fs_mount(const char *mnt, void *storage_dev, int type,
 		goto mount_err;
 	}
 
-    if (fs->mnt_point != NULL) {
+	if (fs->mnt_point != NULL) {
 		pr_err("file system already mounted!!");
 		rc = -EBUSY;
-        goto mount_err;
-    }
+		goto mount_err;
+	}
 
 	/* Check if mount point already exists */
 	rte_list_foreach(node, &fs_manager.mnt_list) {
@@ -609,26 +556,16 @@ int fs_mount(const char *mnt, void *storage_dev, int type,
 		}
 	}
 
-	if (fs->fs_ops.mount == NULL) {
-		pr_err("fs type %d does not support mounting", type);
-		rc = -ENOTSUP;
-		goto mount_err;
-	}
-
-	if (fs->fs_ops.unmount == NULL) {
-		pr_warn("mount path %s is not unmountable", mnt);
-	}
-
-    fs->mnt_point = mnt;
-    fs->storage_dev = storage_dev;
-    fs->flags = (uint8_t)options;
-    fs->fs_data = fs_data;
+	fs->mnt_point = mnt;
+	fs->storage_dev = storage_dev;
+	fs->flags = (uint8_t)options;
+	fs->fs_data = fs_data;
 	rc = fs->fs_ops.mount(fs);
 	if (rc < 0) {
-        fs->mnt_point = NULL;
-        fs->storage_dev = NULL;
-        fs->flags = 0;
-        fs->fs_data = NULL;
+		fs->mnt_point = NULL;
+		fs->storage_dev = NULL;
+		fs->flags = 0;
+		fs->fs_data = NULL;
 		pr_err("fs mount error (%d)", rc);
 		goto mount_err;
 	}
@@ -636,8 +573,8 @@ int fs_mount(const char *mnt, void *storage_dev, int type,
 	/* Update mount point data and append it to the list */
 	fs->mountp_len = len;
 
-    rte_list_del(&fs->node);
-    rte_list_add_tail(&fs->node, &fs_manager.mnt_list);
+	rte_list_del(&fs->node);
+	rte_list_add_tail(&fs->node, &fs_manager.mnt_list);
 	pr_dbg("fs mounted at %s", fs->mnt_point);
 
 mount_err:
@@ -656,12 +593,6 @@ int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags) {
 	if (fs == NULL) {
 		pr_err("fs type %d not registered!!", fs_type);
 		rc = -ENOENT;
-		goto mount_err;
-	}
-
-	if (fs->fs_ops.mkfs == NULL) {
-		pr_err("fs type %d does not support mkfs", fs_type);
-		rc = -ENOTSUP;
 		goto mount_err;
 	}
 
@@ -684,15 +615,9 @@ int fs_unmount(const char *mnt_point) {
 
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
-    struct fs_class *fs = fs_mntp_mounted_get(mnt_point);
+	struct fs_class *fs = fs_mntp_mounted_get(mnt_point);
 	if (fs == NULL) {
-		pr_err("fs not mounted (mp == %p)", fs);
-		goto unmount_err;
-	}
-
-	if (fs->fs_ops.unmount == NULL) {
-		pr_err("fs unmount not supported!!");
-		rc = -ENOTSUP;
+		pr_err("fs not mounted (fs == %p)", fs);
 		goto unmount_err;
 	}
 
@@ -715,55 +640,61 @@ unmount_err:
 
 /* Register File system */
 int fs_register(int type, struct fs_class *fs) {
-    struct fs_class *iter;
+	struct fs_class *iter;
 	int rc = 0;
 
-    if (fs == NULL)
-        return -EINVAL;
+	if (fs == NULL)
+		return -EINVAL;
 
-    /* The filesystem must be support read operation */
-    if (fs->fs_ops.read == NULL)
-        return -EINVAL;
+	/* Check filesystem operations */
+	void **p_ops = (void **)&fs->fs_ops;
+	size_t n_ops = sizeof(fs->fs_ops) / sizeof(void *);
+	size_t n = 0;
+	while (n < n_ops) {
+		if (p_ops[n] == NULL)
+			return -EINVAL;
+		n++;
+	}
 
-    tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
+	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
-    rte_list_foreach_entry(iter, &fs_manager.list, node) {
-        if (iter->type == type) {
-            rc = -EALREADY;
-            goto _out;
-        }
-    }
-    rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
-        if (iter->type == type) {
-            rc = -EALREADY;
-            goto _out;
-        }
-    }
+	rte_list_foreach_entry(iter, &fs_manager.list, node) {
+		if (iter->type == type) {
+			rc = -EALREADY;
+			goto _out;
+		}
+	}
+	rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
+		if (iter->type == type) {
+			rc = -EALREADY;
+			goto _out;
+		}
+	}
 
-    fs->type = type;
-    rte_list_add_tail(&fs->node, &fs_manager.list);
+	fs->type = type;
+	rte_list_add_tail(&fs->node, &fs_manager.list);
 	pr_dbg("fs register %d: %d", type, rc);
 
 _out:
-    tx_mutex_put(&fs_manager.mtx);
+	tx_mutex_put(&fs_manager.mtx);
 	return rc;
 }
 
 /* Unregister File system */
 int fs_unregister(int type) {
-    struct fs_class *iter;
+	struct fs_class *iter;
 	int rc = 0;
 
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
-    rte_list_foreach_entry(iter, &fs_manager.list, node) {
-        if (iter->type == type) {
-            rc = fs_unmount(iter->mnt_point);
-            if (!rc)
-                rte_list_del(&iter->node);
-            break;
-        }
-    }
+	rte_list_foreach_entry(iter, &fs_manager.list, node) {
+		if (iter->type == type) {
+			rc = fs_unmount(iter->mnt_point);
+			if (!rc)
+				rte_list_del(&iter->node);
+			break;
+		}
+	}
 
 	tx_mutex_put(&fs_manager.mtx);
 
@@ -772,10 +703,10 @@ int fs_unregister(int type) {
 }
 
 static int fs_init(void) {
-    RTE_INIT_LIST(&fs_manager.list);
-    RTE_INIT_LIST(&fs_manager.mnt_list);
-    tx_mutex_create(&fs_manager.mtx, "fs", TX_INHERIT);
-    return 0;
+	RTE_INIT_LIST(&fs_manager.list);
+	RTE_INIT_LIST(&fs_manager.mnt_list);
+	tx_mutex_create(&fs_manager.mtx, "fs", TX_INHERIT);
+	return 0;
 }
 
 SYSINIT(fs_init, SI_PREDRIVER_LEVEL, 10);

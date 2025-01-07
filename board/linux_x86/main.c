@@ -97,8 +97,16 @@ static void file_test(void) {
     err = fs_open(&rfd, "/home/a/hello.txt", FS_O_READ);
     if (err)
         goto _unmount;
-    fs_read(&rfd, buffer, 11);
+
+    fs_seek(&rfd, 0, FS_SEEK_END);
+    size_t fsize = fs_tell(&rfd);
+    pr_out("file size: %d\n", fsize);
+    fs_seek(&rfd, 0, FS_SEEK_SET);
+    
+    fs_read(&rfd, buffer, fsize);
     fs_close(&rfd);
+    if (strcmp(buffer, "hello world"))
+        pr_out("failed to read file\n");
 
     struct fs_dir dir = {0};
     err = fs_opendir(&dir, "/home/");
@@ -107,7 +115,7 @@ static void file_test(void) {
     
     struct fs_dirent entry;
     while ((err = fs_readdir(&dir, &entry)) == 0) {
-
+        pr_out("dir: %s size: %d\n", entry.name, entry.size);
     }
     fs_closedir(&dir);
 
