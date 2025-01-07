@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	static struct printer console_printer = {
 		.format = printk_printer
 	};
-    
+
 	pr_log_init(&console_printer);
     __console_puts = stdio_puts;
     /* Enter the ThreadX kernel.  */
@@ -123,6 +123,31 @@ static void file_test(void) {
         pr_out("dir: %s size: %d\n", entry.name, entry.size);
     }
     fs_closedir(&dir);
+
+
+    fs_rename("/home/a", "/home/f");
+    fs_rename("/home/b", "/home/e");
+    err = fs_opendir(&dir, "/home/");
+    if (err)
+        goto _unmount;
+    
+    while ((err = fs_readdir(&dir, &entry)) == 0) {
+        pr_out("new-dir: %s size: %d\n", entry.name, entry.size);
+    }
+    fs_closedir(&dir);
+
+    err = fs_unlink("/home/f/hello.txt");
+    if (err)
+        goto _unmount;
+
+    err = fs_unlink("/home/f");
+    if (err)
+        goto _unmount;
+
+    err = fs_stat("/home/f", &stat);
+    if (err == 0) {
+        pr_out("failed to unlink directory\n");
+    }
 
 _unmount:
     fs_unmount("/home");
