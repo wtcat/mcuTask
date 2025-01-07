@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0.0...3.8.0 FATAL_ERROR)
 
 # Setup toolchain
 set(WKSAPCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../..)
@@ -34,17 +34,16 @@ set(CONFIG_CJSON 1)
 
 # Add configure files
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
-
 if (CONFIG_FILEX)
     set(FILEX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
     set(FX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/fx_user.h)
 endif()
 if (CONFIG_NETX)
-    set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/)
+    set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
     set(NX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/nx_user.h)
 endif()
 if (CONFIG_USBX)
-    set(USBX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/)
+    set(USBX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
     set(UX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/ux_user.h)
 endif()
 
