@@ -1,17 +1,17 @@
 target_sources(${PROJECT_NAME} PRIVATE
     # {{BEGIN_TARGET_SOURCES}}
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_activate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_configure.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_deactivate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_endpoints_get.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_entry.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_interrupt_notification.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_read.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_reception_callback.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_setup.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_transmission_callback.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_write.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_activate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_configure.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_deactivate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_endpoints_get.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_entry.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_interrupt_notification.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_read.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_reception_callback.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_setup.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_transmission_callback.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_audio_activate.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_audio_alternate_setting_locate.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_audio_configure.c
@@ -59,16 +59,16 @@ target_sources(${PROJECT_NAME} PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_acm_transmission_callback.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_acm_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_acm_write_with_callback.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_activate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_deactivate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_endpoints_get.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_entry.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_interrupt_notification.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_mac_address_get.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_transmission_callback.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_transmit_queue_clean.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_write.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_activate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_deactivate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_endpoints_get.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_entry.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_interrupt_notification.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_mac_address_get.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_transmission_callback.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_transmit_queue_clean.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_gser_activate.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_gser_command.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_gser_configure.c
@@ -291,6 +291,33 @@ target_sources(${PROJECT_NAME} PRIVATE
 
     # {{END_TARGET_SOURCES}}
 )
+
+if (CONFIG_NETX)
+	target_sources(${PROJECT_NAME} PRIVATE
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_activate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_configure.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_deactivate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_endpoints_get.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_entry.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_interrupt_notification.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_read.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_reception_callback.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_setup.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_transmission_callback.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_asix_write.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_activate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_deactivate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_endpoints_get.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_entry.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_interrupt_notification.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_mac_address_get.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_transmission_callback.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_transmit_queue_clean.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_host_class_cdc_ecm_write.c
+	)
+endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc

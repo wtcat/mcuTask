@@ -70,17 +70,17 @@ target_sources(${PROJECT_NAME} PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_acm_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_acm_write_run.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_acm_write_with_callback.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_activate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_bulkin_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_bulkout_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_change.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_control_request.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_deactivate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_entry.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_initialize.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_interrupt_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_uninitialize.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_write.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_activate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_bulkin_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_bulkout_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_change.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_control_request.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_deactivate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_entry.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_initialize.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_interrupt_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_uninitialize.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_dfu_activate.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_dfu_control_request.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_dfu_deactivate.c
@@ -157,20 +157,20 @@ target_sources(${PROJECT_NAME} PRIVATE
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_printer_uninitialize.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_printer_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_printer_write_run.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_activate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_bulkin_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_bulkout_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_control_request.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_deactivate.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_entry.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_initialize.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_interrupt_thread.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_initialize.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_keep_alive.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_query.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_reset.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_set.c
-	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_write.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_activate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_bulkin_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_bulkout_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_control_request.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_deactivate.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_entry.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_initialize.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_interrupt_thread.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_initialize.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_keep_alive.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_query.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_reset.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_set.c
+	# ${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_write.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_storage_activate.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_storage_control_request.c
 	${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_storage_csw_send.c
@@ -225,6 +225,37 @@ target_sources(${PROJECT_NAME} PRIVATE
 
     # {{END_TARGET_SOURCES}}
 )
+
+if (CONFIG_NETX)
+	target_sources(${PROJECT_NAME} PRIVATE
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_activate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_bulkin_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_bulkout_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_change.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_control_request.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_deactivate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_entry.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_initialize.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_interrupt_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_uninitialize.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_cdc_ecm_write.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_activate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_bulkin_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_bulkout_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_control_request.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_deactivate.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_entry.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_initialize.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_interrupt_thread.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_initialize.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_keep_alive.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_query.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_reset.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_msg_set.c
+		${CMAKE_CURRENT_LIST_DIR}/src/ux_device_class_rndis_write.c
+	)
+endif()
+
 
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/inc
