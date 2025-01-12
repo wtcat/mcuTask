@@ -483,6 +483,8 @@ HAL_StatusTypeDef HAL_HCD_HC_SubmitRequest(HCD_HandleTypeDef *hhcd,
   */
 void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
 {
+#undef __HAL_HCD_GET_FLAG
+#define __HAL_HCD_GET_FLAG(_hhcd, _mask) ((_hhcd)->Pending & (_mask))
   USB_OTG_GlobalTypeDef *USBx = hhcd->Instance;
   uint32_t USBx_BASE = (uint32_t)USBx;
   uint32_t i;
@@ -491,6 +493,7 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
   /* Ensure that we are in device mode */
   if (USB_GetMode(hhcd->Instance) == USB_OTG_MODE_HOST)
   {
+#if 0
     /* Avoid spurious interrupt */
     if (__HAL_HCD_IS_INVALID_INTERRUPT(hhcd))
     {
@@ -520,11 +523,11 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
       /* Incorrect mode, acknowledge the interrupt */
       __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_MMIS);
     }
-
+#endif
     /* Handle Host Disconnect Interrupts */
     if (__HAL_HCD_GET_FLAG(hhcd, USB_OTG_GINTSTS_DISCINT))
     {
-      __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_DISCINT);
+      // __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_DISCINT);
 
       if ((USBx_HPRT0 & USB_OTG_HPRT_PCSTS) == 0U)
       {
@@ -562,7 +565,7 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
       HAL_HCD_SOF_Callback(hhcd);
 #endif /* USE_HAL_HCD_REGISTER_CALLBACKS */
 
-      __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_SOF);
+      // __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_SOF);
     }
 
     /* Handle Rx Queue Level Interrupts */
@@ -593,7 +596,7 @@ void HAL_HCD_IRQHandler(HCD_HandleTypeDef *hhcd)
           }
         }
       }
-      __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_HCINT);
+      // __HAL_HCD_CLEAR_FLAG(hhcd, USB_OTG_GINTSTS_HCINT);
     }
   }
 }

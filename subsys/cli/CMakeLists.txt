@@ -15,3 +15,10 @@ target_sources(cli
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/cli_mem.c
 )
+
+if (CONFIG_SUBSYS_FS)
+target_sources(cli
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/cli_mkfs.c
+)
+endif()

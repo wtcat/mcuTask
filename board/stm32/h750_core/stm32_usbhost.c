@@ -1,14 +1,28 @@
 /*
  * Copyright 2024 wtcat
  */
-#define UX_SOURCE_CODE
+ 
+#define TX_USE_BOARD_PRIVATE
 
+#define pr_fmt(fmt) "[stm32_usb]: "fmt
+#include <errno.h>
+#include "tx_api.h"
+
+#define UX_SOURCE_CODE
 #include "ux_api.h"
 #include "ux_host_stack.h"
+#include "ux_host_class_storage.h"
+#include "ux_host_class_cdc_acm.h"
+#include "ux_utility.h"
 
-#include "stm32h7xx_hal_pcd.h"
+#include "basework/log.h"
 
+#include "stm32h7xx_hal_hcd.h"
+
+#define UX_MEMORY_SIZE (28 * 1024) 
+#define _UX_ERR(_err) -(__ELASTERROR + (int)(_err))
 #define STATIC_UINT static UINT
+
 
 /* Define STM32 HCD generic definitions.  */
 #define UX_HCD_STM32_CONTROLLER 6U
@@ -54,8 +68,8 @@ typedef struct UX_HCD_STM32_STRUCT {
 	struct UX_HCD_STM32_ED_STRUCT *ux_hcd_stm32_ed_list;
 	struct UX_HCD_STM32_ED_STRUCT *ux_hcd_stm32_channels_ed[UX_HCD_STM32_MAX_NB_CHANNELS];
 	ULONG ux_hcd_stm32_nb_channels;
-	UINT ux_hcd_stm32_queue_empty;
-	UINT ux_hcd_stm32_periodic_scheduler_active;
+	UINT  ux_hcd_stm32_queue_empty;
+	UINT  ux_hcd_stm32_periodic_scheduler_active;
 	ULONG ux_hcd_stm32_controller_flag;
 	HCD_HandleTypeDef *hcd_handle;
 	struct UX_HCD_STM32_ED_STRUCT *ux_hcd_stm32_periodic_ed_head;
@@ -71,22 +85,25 @@ typedef struct UX_HCD_STM32_ED_STRUCT {
 	UCHAR *ux_stm32_ed_data;
 	USHORT ux_stm32_ed_saved_length;
 	USHORT ux_stm32_ed_saved_actual_length;
-	ULONG ux_stm32_ed_packet_length;
-	ULONG ux_stm32_ed_interval_mask;
-	ULONG ux_stm32_ed_interval_position;
-	ULONG ux_stm32_ed_current_ss_frame;
-	UCHAR ux_stm32_ed_status;
-	UCHAR ux_stm32_ed_channel;
-	UCHAR ux_stm32_ed_dir;
-	UCHAR ux_stm32_ed_speed;
-	UCHAR ux_stm32_ed_type;
-	UCHAR ux_stm32_ed_sch_mode;
-	UCHAR reserved[2];
+	ULONG  ux_stm32_ed_packet_length;
+	ULONG  ux_stm32_ed_interval_mask;
+	ULONG  ux_stm32_ed_interval_position;
+	ULONG  ux_stm32_ed_current_ss_frame;
+	UCHAR  ux_stm32_ed_status;
+	UCHAR  ux_stm32_ed_channel;
+	UCHAR  ux_stm32_ed_dir;
+	UCHAR  ux_stm32_ed_speed;
+	UCHAR  ux_stm32_ed_type;
+	UCHAR  ux_stm32_ed_sch_mode;
+	UCHAR  reserved[2];
 } UX_HCD_STM32_ED;
 
 #define USBH_PID_SETUP 0U
 #define USBH_PID_DATA 1U
 
+STATIC_UINT _ux_hcd_stm32_request_trans_prepare(UX_HCD_STM32 *hcd_stm32, UX_HCD_STM32_ED *ed,
+										 UX_TRANSFER *transfer);
+static VOID _ux_hcd_stm32_request_trans_finish(UX_HCD_STM32 *hcd_stm32, UX_HCD_STM32_ED *ed);
 
 
 void HAL_HCD_Connect_Callback(HCD_HandleTypeDef *hhcd) {
@@ -391,6 +408,144 @@ void HAL_HCD_SOF_Callback(HCD_HandleTypeDef *hhcd) {
 	}
 }
 
+static VOID _ux_hcd_stm32_error_callback(UINT system_level, UINT system_context, 
+	UINT error_code) {
+	/* USER CODE BEGIN ux_host_error_callback0 */
+	UX_PARAMETER_NOT_USED(system_level);
+	UX_PARAMETER_NOT_USED(system_context);
+	/* USER CODE END ux_host_error_callback0 */
+
+	pr_err("usb host error(%u)\n", error_code);
+
+	switch (error_code) {
+	case UX_DEVICE_ENUMERATION_FAILURE:
+		break;
+
+	case  UX_NO_DEVICE_CONNECTED:
+		break;
+
+	default:
+		break;
+	}
+}
+
+STATIC_UINT _ux_hcd_stm32_event_callback(ULONG event, UX_HOST_CLASS *current_class, 
+	VOID *current_instance) {
+	UINT status = UX_SUCCESS;
+
+	/* USER CODE BEGIN ux_host_event_callback0 */
+	UX_PARAMETER_NOT_USED(current_class);
+	UX_PARAMETER_NOT_USED(current_instance);
+	/* USER CODE END ux_host_event_callback0 */
+
+	pr_info("usb host event(%d)\n", event);
+
+	switch (event) {
+	case UX_DEVICE_INSERTION:
+		break;
+
+	case UX_DEVICE_REMOVAL:
+		break;
+
+#if defined (UX_HOST_CLASS_STORAGE_NO_FILEX)
+	case UX_STORAGE_MEDIA_INSERTION:
+		break;
+
+	case UX_STORAGE_MEDIA_REMOVAL:
+		break;
+#endif
+
+	case UX_DEVICE_CONNECTION:
+		break;
+
+	case UX_DEVICE_DISCONNECTION:
+		break;
+
+	default:
+		break;
+	}
+
+	return status;
+}
+
+STATIC_UINT _ux_hcd_stm32_least_traffic_list_get(UX_HCD_STM32 *hcd_stm32) {
+	UX_HCD_STM32_ED *ed;
+	UINT list_index;
+	ULONG min_bandwidth_used;
+	ULONG bandwidth_used;
+	UINT min_bandwidth_slot;
+
+	/* Set the min bandwidth used to a arbitrary maximum value.  */
+	min_bandwidth_used = 0xffffffff;
+
+	/* The first ED is the list candidate for now.  */
+	min_bandwidth_slot = 0;
+
+	/* All list will be scanned.  */
+	for (list_index = 0; list_index < 32; list_index++) {
+		/* Reset the bandwidth for this list.  */
+		bandwidth_used = 0;
+
+		/* Get the ED of the beginning of the list we parse now.  */
+		ed = hcd_stm32->ux_hcd_stm32_periodic_ed_head;
+
+		/* Parse the eds in the list.  */
+		while (ed != UX_NULL) {
+			if ((list_index & ed->ux_stm32_ed_interval_mask) ==
+				ed->ux_stm32_ed_interval_position) {
+				/* Add to the bandwidth used the max packet size pointed by this ED.  */
+				bandwidth_used +=
+					(ULONG)
+						ed->ux_stm32_ed_endpoint->ux_endpoint_descriptor.wMaxPacketSize;
+			}
+
+			/* Move to next ED.  */
+			ed = ed->ux_stm32_ed_next_ed;
+		}
+
+		/* We have processed a list, check the bandwidth used by this list.
+		   If this bandwidth is the minimum, we memorize the ED.  */
+		if (bandwidth_used < min_bandwidth_used) {
+			/* We have found a better list with a lower used bandwidth, memorize the
+			   bandwidth for this list.  */
+			min_bandwidth_used = bandwidth_used;
+
+			/* Memorize the begin ED for this list.  */
+			min_bandwidth_slot = list_index;
+		}
+	}
+
+	/* Return the ED list with the lowest bandwidth.  */
+	return (min_bandwidth_slot);
+}
+
+static VOID _ux_hcd_stm32_request_trans_finish(UX_HCD_STM32 *hcd_stm32, UX_HCD_STM32_ED *ed) {
+	UX_TRANSFER *transfer = ed->ux_stm32_ed_transfer_request;
+
+	/* If there is no transfer, it's OK.  */
+	if (transfer == UX_NULL)
+		return;
+
+	/* If there is no data, it's OK.  */
+	if (ed->ux_stm32_ed_data == UX_NULL)
+		return;
+
+	/* If the data is aligned, it's OK.  */
+	if (ed->ux_stm32_ed_data == transfer->ux_transfer_request_data_pointer)
+		return;
+
+	/* If the data is IN, copy it.  */
+	if (ed->ux_stm32_ed_dir) {
+		_ux_utility_memory_copy(transfer->ux_transfer_request_data_pointer,
+								ed->ux_stm32_ed_data,
+								transfer->ux_transfer_request_actual_length);
+	}
+
+	/* Free the aligned memory.  */
+	_ux_utility_memory_free(ed->ux_stm32_ed_data);
+	ed->ux_stm32_ed_data = UX_NULL;
+}
+
 STATIC_UINT _ux_hcd_stm32_request_trans_prepare(UX_HCD_STM32 *hcd_stm32, UX_HCD_STM32_ED *ed,
 										 UX_TRANSFER *transfer) {
 	/* Save transfer data pointer.  */
@@ -619,33 +774,6 @@ static inline VOID _ux_hcd_stm32_request_control_status(UX_HCD_STM32 *hcd_stm32,
 	/* Submit the request for status phase.  */
 	HAL_HCD_HC_SubmitRequest(hcd_stm32->hcd_handle, ed->ux_stm32_ed_channel,
 							 ed->ux_stm32_ed_dir, EP_TYPE_CTRL, USBH_PID_DATA, 0, 0, 0);
-}
-
-static VOID _ux_hcd_stm32_request_trans_finish(UX_HCD_STM32 *hcd_stm32, UX_HCD_STM32_ED *ed) {
-	UX_TRANSFER *transfer = ed->ux_stm32_ed_transfer_request;
-
-	/* If there is no transfer, it's OK.  */
-	if (transfer == UX_NULL)
-		return;
-
-	/* If there is no data, it's OK.  */
-	if (ed->ux_stm32_ed_data == UX_NULL)
-		return;
-
-	/* If the data is aligned, it's OK.  */
-	if (ed->ux_stm32_ed_data == transfer->ux_transfer_request_data_pointer)
-		return;
-
-	/* If the data is IN, copy it.  */
-	if (ed->ux_stm32_ed_dir) {
-		_ux_utility_memory_copy(transfer->ux_transfer_request_data_pointer,
-								ed->ux_stm32_ed_data,
-								transfer->ux_transfer_request_actual_length);
-	}
-
-	/* Free the aligned memory.  */
-	_ux_utility_memory_free(ed->ux_stm32_ed_data);
-	ed->ux_stm32_ed_data = UX_NULL;
 }
 
 STATIC_UINT _ux_hcd_stm32_controller_disable(UX_HCD_STM32 *hcd_stm32) {
@@ -987,57 +1115,6 @@ STATIC_UINT _ux_hcd_stm32_frame_number_get(UX_HCD_STM32 *hcd_stm32, ULONG *frame
 	*frame_number = (ULONG)HAL_HCD_GetCurrentFrame(hcd_stm32->hcd_handle);
 
 	return (UX_SUCCESS);
-}
-
-STATIC_UINT _ux_hcd_stm32_least_traffic_list_get(UX_HCD_STM32 *hcd_stm32) {
-	UX_HCD_STM32_ED *ed;
-	UINT list_index;
-	ULONG min_bandwidth_used;
-	ULONG bandwidth_used;
-	UINT min_bandwidth_slot;
-
-	/* Set the min bandwidth used to a arbitrary maximum value.  */
-	min_bandwidth_used = 0xffffffff;
-
-	/* The first ED is the list candidate for now.  */
-	min_bandwidth_slot = 0;
-
-	/* All list will be scanned.  */
-	for (list_index = 0; list_index < 32; list_index++) {
-		/* Reset the bandwidth for this list.  */
-		bandwidth_used = 0;
-
-		/* Get the ED of the beginning of the list we parse now.  */
-		ed = hcd_stm32->ux_hcd_stm32_periodic_ed_head;
-
-		/* Parse the eds in the list.  */
-		while (ed != UX_NULL) {
-			if ((list_index & ed->ux_stm32_ed_interval_mask) ==
-				ed->ux_stm32_ed_interval_position) {
-				/* Add to the bandwidth used the max packet size pointed by this ED.  */
-				bandwidth_used +=
-					(ULONG)
-						ed->ux_stm32_ed_endpoint->ux_endpoint_descriptor.wMaxPacketSize;
-			}
-
-			/* Move to next ED.  */
-			ed = ed->ux_stm32_ed_next_ed;
-		}
-
-		/* We have processed a list, check the bandwidth used by this list.
-		   If this bandwidth is the minimum, we memorize the ED.  */
-		if (bandwidth_used < min_bandwidth_used) {
-			/* We have found a better list with a lower used bandwidth, memorize the
-			   bandwidth for this list.  */
-			min_bandwidth_used = bandwidth_used;
-
-			/* Memorize the begin ED for this list.  */
-			min_bandwidth_slot = list_index;
-		}
-	}
-
-	/* Return the ED list with the lowest bandwidth.  */
-	return (min_bandwidth_slot);
 }
 
 STATIC_UINT _ux_hcd_stm32_periodic_schedule(UX_HCD_STM32 *hcd_stm32) {
@@ -1908,16 +1985,15 @@ STATIC_UINT _ux_hcd_stm32_transfer_abort(UX_HCD_STM32 *hcd_stm32,
 	return (UX_SUCCESS);
 }
 
-static VOID _ux_hcd_stm32_interrupt_handler(VOID *arg) {
+static VOID _ux_hcd_stm32_interrupt_handler(VOID) {
 	UINT hcd_index = 0;
 	UX_HCD *hcd;
 	UX_HCD_STM32 *hcd_stm32;
 
-    (VOID) arg;
 	/* We need to parse the controller driver table to find all controllers that
 	  are registered as STM32.  */
 #if UX_MAX_HCD > 1
-	for (hcd_index < _ux_system_host->ux_system_host_registered_hcd; hcd_index++) {
+	for (; hcd_index < _ux_system_host->ux_system_host_registered_hcd; hcd_index++) {
 #endif
 		/* Check type of controller.  */
 		if (_ux_system_host->ux_system_host_hcd_array[hcd_index].ux_hcd_controller_type ==
@@ -1932,83 +2008,6 @@ static VOID _ux_hcd_stm32_interrupt_handler(VOID *arg) {
 #if UX_MAX_HCD > 1
 	}
 #endif
-}
-
-STATIC_UINT _ux_hcd_stm32_initialize(UX_HCD *hcd) {
-	UX_HCD_STM32 *hcd_stm32;
-
-	/* The controller initialized here is of STM32 type.  */
-	hcd->ux_hcd_controller_type = UX_HCD_STM32_CONTROLLER;
-
-	/* Initialize the max bandwidth for periodic endpoints. On STM32, the spec says
-	   no more than 90% to be allocated for periodic.  */
-#if UX_MAX_DEVICES > 1
-	hcd->ux_hcd_available_bandwidth = UX_HCD_STM32_AVAILABLE_BANDWIDTH;
-#endif
-
-	/* Allocate memory for this STM32 HCD instance.  */
-	hcd_stm32 =
-		_ux_utility_memory_allocate(UX_NO_ALIGN, UX_REGULAR_MEMORY, sizeof(UX_HCD_STM32));
-	if (hcd_stm32 == UX_NULL)
-		return (UX_MEMORY_INSUFFICIENT);
-
-	/* Set the pointer to the STM32 HCD.  */
-	hcd->ux_hcd_controller_hardware = (VOID *)hcd_stm32;
-
-	/* Set the generic HCD owner for the STM32 HCD.  */
-	hcd_stm32->ux_hcd_stm32_hcd_owner = hcd;
-
-	/* Initialize the function collector for this HCD.  */
-	hcd->ux_hcd_entry_function = _ux_hcd_stm32_entry;
-
-	/* Set the state of the controller to HALTED first.  */
-	hcd->ux_hcd_status = UX_HCD_STATUS_HALTED;
-
-	/* Initialize the number of channels.  */
-	hcd_stm32->ux_hcd_stm32_nb_channels = UX_HCD_STM32_MAX_NB_CHANNELS;
-
-	/* Check if the parameter is null.  */
-	if (hcd->ux_hcd_irq == 0) {
-		_ux_utility_memory_free(hcd_stm32);
-		return (UX_ERROR);
-	}
-
-	/* Get HCD handle from parameter.  */
-	hcd_stm32->hcd_handle = (HCD_HandleTypeDef *)hcd->ux_hcd_irq;
-	hcd_stm32->hcd_handle->pData = hcd;
-
-	/* Allocate the list of eds.   */
-	hcd_stm32->ux_hcd_stm32_ed_list = _ux_utility_memory_allocate(
-		UX_NO_ALIGN, UX_REGULAR_MEMORY,
-		sizeof(UX_HCD_STM32_ED) * _ux_system_host->ux_system_host_max_ed);
-	if (hcd_stm32->ux_hcd_stm32_ed_list == UX_NULL) {
-		_ux_utility_memory_free(hcd_stm32);
-		return (UX_MEMORY_INSUFFICIENT);
-	}
-
-	/* Since we know this is a high-speed controller, we can hardwire the version.  */
-#if UX_MAX_DEVICES > 1
-	hcd->ux_hcd_version = 0x200;
-#endif
-
-	/* The number of ports on the controller is fixed to 1. The number of ports needs to
-	   be reflected both for the generic HCD container and the local stm32 container.  */
-	hcd->ux_hcd_nb_root_hubs = UX_HCD_STM32_NB_ROOT_PORTS;
-
-	/* The root port must now be powered to pick up device insertion.  */
-	_ux_hcd_stm32_power_on_port(hcd_stm32, 0);
-
-	/* The asynchronous queues are empty for now.  */
-	hcd_stm32->ux_hcd_stm32_queue_empty = UX_TRUE;
-
-	/* The periodic scheduler is not active.  */
-	hcd_stm32->ux_hcd_stm32_periodic_scheduler_active = 0;
-
-	/* Set the host controller into the operational state.  */
-	hcd->ux_hcd_status = UX_HCD_STATUS_OPERATIONAL;
-
-	/* Return successful completion.  */
-	return (UX_SUCCESS);
 }
 
 STATIC_UINT _ux_hcd_stm32_entry(UX_HCD *hcd, UINT function, VOID *parameter) {
@@ -2133,3 +2132,198 @@ STATIC_UINT _ux_hcd_stm32_entry(UX_HCD *hcd, UINT function, VOID *parameter) {
 	/* Return completion status.  */
 	return (status);
 }
+
+STATIC_UINT _ux_hcd_stm32_initialize(UX_HCD *hcd) {
+	UX_HCD_STM32 *hcd_stm32;
+
+	/* The controller initialized here is of STM32 type.  */
+	hcd->ux_hcd_controller_type = UX_HCD_STM32_CONTROLLER;
+
+	/* Initialize the max bandwidth for periodic endpoints. On STM32, the spec says
+	   no more than 90% to be allocated for periodic.  */
+#if UX_MAX_DEVICES > 1
+	hcd->ux_hcd_available_bandwidth = UX_HCD_STM32_AVAILABLE_BANDWIDTH;
+#endif
+
+	/* Allocate memory for this STM32 HCD instance.  */
+	hcd_stm32 = _ux_utility_memory_allocate(UX_NO_ALIGN, UX_REGULAR_MEMORY, 
+        sizeof(UX_HCD_STM32));
+	if (hcd_stm32 == UX_NULL)
+		return (UX_MEMORY_INSUFFICIENT);
+
+	/* Set the pointer to the STM32 HCD.  */
+	hcd->ux_hcd_controller_hardware = (VOID *)hcd_stm32;
+
+	/* Set the generic HCD owner for the STM32 HCD.  */
+	hcd_stm32->ux_hcd_stm32_hcd_owner = hcd;
+
+	/* Initialize the function collector for this HCD.  */
+	hcd->ux_hcd_entry_function = _ux_hcd_stm32_entry;
+
+	/* Set the state of the controller to HALTED first.  */
+	hcd->ux_hcd_status = UX_HCD_STATUS_HALTED;
+
+	/* Initialize the number of channels.  */
+	hcd_stm32->ux_hcd_stm32_nb_channels = UX_HCD_STM32_MAX_NB_CHANNELS;
+
+	/* Check if the parameter is null.  */
+	if (hcd->ux_hcd_irq == 0) {
+		_ux_utility_memory_free(hcd_stm32);
+		return (UX_ERROR);
+	}
+
+	/* Get HCD handle from parameter.  */
+	hcd_stm32->hcd_handle = (HCD_HandleTypeDef *)hcd->ux_hcd_irq;
+	hcd_stm32->hcd_handle->pData = hcd;
+
+	/* Allocate the list of eds.   */
+	hcd_stm32->ux_hcd_stm32_ed_list = _ux_utility_memory_allocate(
+		UX_NO_ALIGN, UX_REGULAR_MEMORY,
+		sizeof(UX_HCD_STM32_ED) * _ux_system_host->ux_system_host_max_ed);
+	if (hcd_stm32->ux_hcd_stm32_ed_list == UX_NULL) {
+		_ux_utility_memory_free(hcd_stm32);
+		return (UX_MEMORY_INSUFFICIENT);
+	}
+
+	/* Since we know this is a high-speed controller, we can hardwire the version.  */
+#if UX_MAX_DEVICES > 1
+	hcd->ux_hcd_version = 0x200;
+#endif
+
+	/* The number of ports on the controller is fixed to 1. The number of ports needs to
+	   be reflected both for the generic HCD container and the local stm32 container.  */
+	hcd->ux_hcd_nb_root_hubs = UX_HCD_STM32_NB_ROOT_PORTS;
+
+	/* The root port must now be powered to pick up device insertion.  */
+	_ux_hcd_stm32_power_on_port(hcd_stm32, 0);
+
+	/* The asynchronous queues are empty for now.  */
+	hcd_stm32->ux_hcd_stm32_queue_empty = UX_TRUE;
+
+	/* The periodic scheduler is not active.  */
+	hcd_stm32->ux_hcd_stm32_periodic_scheduler_active = 0;
+
+	/* Set the host controller into the operational state.  */
+	hcd->ux_hcd_status = UX_HCD_STATUS_OPERATIONAL;
+
+	/* Return successful completion.  */
+	return (UX_SUCCESS);
+}
+
+
+static TX_SEMAPHORE hcd_irq_signal;
+static TX_THREAD    hcd_irq_thread;
+static ULONG        hcd_irq_stack[1024 / sizeof(ULONG)];
+static HCD_HandleTypeDef usbhost_handle = {
+	.Instance = USB_OTG_FS,
+	.Init = {
+		.dev_endpoints = 15,
+		.Host_channels = UX_HCD_STM32_MAX_NB_CHANNELS,
+		.speed = USBD_FS_SPEED,
+		.ep0_mps = 0,
+		.phy_itface = USB_OTG_EMBEDDED_PHY,
+		.Sof_enable = 0,
+		.lpm_enable = 0,
+		.battery_charging_enable = 0,
+		.vbus_sensing_enable = 0,
+		.use_dedicated_ep1 = 0,
+		.use_external_vbus = 0
+	}
+};
+
+static void _ux_hcd_stm32_interrupt_thread(void *arg) {
+	(void) arg;
+
+	for ( ; ; ) {
+		tx_semaphore_get(&hcd_irq_signal, TX_WAIT_FOREVER);
+
+		/* Process host controller interrupt */
+		_ux_hcd_stm32_interrupt_handler();
+	}
+}
+
+static void __fastcode _ux_hcd_stm32_interrupt_routine(void *arg) {
+	HCD_HandleTypeDef *hcd = &usbhost_handle;
+	HCD_TypeDef *reg = hcd->Instance;
+	uint32_t sta = reg->GINTSTS;
+
+	/* Clear pending interrupt flags */
+	reg->GINTSTS = sta;
+	hcd->Pending = sta & reg->GINTMSK;
+
+	/* If does have any interrupt pending then wake up interrupt thread */
+	if (hcd->Pending)
+		tx_semaphore_ceiling_put(&hcd_irq_signal, 1);
+}
+
+static int stm32_usbhost_irq_initialize(void) {
+	const int nr_irqs[] = {
+		OTG_FS_EP1_OUT_IRQn,
+		OTG_FS_EP1_IN_IRQn,
+		OTG_FS_WKUP_IRQn,
+		OTG_FS_IRQn
+	};
+
+	/* Create interrupt sync semaphore */
+	tx_semaphore_create(&hcd_irq_signal, "hcd_signal", 0);
+
+	/* Create interrupt service thread */
+	tx_thread_spawn(&hcd_irq_thread, "hcd_irq", _ux_hcd_stm32_interrupt_thread, 
+		0, hcd_irq_stack, sizeof(hcd_irq_stack), 3, 3, TX_NO_TIME_SLICE, TX_AUTO_START);
+	
+	/* Install hardware interrupt process handler */
+	for (size_t i = 0; i < rte_array_size(nr_irqs); i++) {
+		int err = request_irq(nr_irqs[i], _ux_hcd_stm32_interrupt_routine, NULL);
+		if (err)
+			return err;
+	}
+
+	return 0;
+}
+
+static int stm32_usbhost_init(void) {
+	static ULONG _ux_memory[UX_MEMORY_SIZE / sizeof(ULONG)];
+	UINT err;
+
+	HAL_HCD_Init(&usbhost_handle);
+
+	/* Install hardware interrupt service for USB host controller */
+	err = (UINT)stm32_usbhost_irq_initialize();
+	if (err)
+		return err;	
+
+	/* Initialize USBX Memory.  */
+	err = _ux_system_initialize(_ux_memory, sizeof(_ux_memory), UX_NULL, 0);
+	if (err != UX_SUCCESS)
+		return _UX_ERR(err);
+
+	/* The code below is required for installing the host portion of USBX.  */
+	err = _ux_host_stack_initialize(_ux_hcd_stm32_event_callback);
+	if (err != UX_SUCCESS)
+		return _UX_ERR(err);
+
+	/* Register a callback error function */
+	_ux_utility_error_callback_register(_ux_hcd_stm32_error_callback);
+
+	/* Register the host storage class drivers.  */
+	err = _ux_host_stack_class_register(_ux_system_host_class_storage_name, 
+	ux_host_class_storage_entry);
+	if (err != UX_SUCCESS)
+		return _UX_ERR(err);
+
+	/* Register the host acm class drivers.  */
+	err = _ux_host_stack_class_register(_ux_system_host_class_cdc_acm_name, 
+	ux_host_class_cdc_acm_entry);
+	if (err != UX_SUCCESS)
+		return _UX_ERR(err);
+
+	/* Register all the USB host controllers available in this system */
+	err =  _ux_host_stack_hcd_register(_ux_system_host_hcd_stm32_name, 
+	_ux_hcd_stm32_initialize, 0, (ULONG)&usbhost_handle);
+	if (err != UX_SUCCESS)
+		return _UX_ERR(err);
+
+	return 0;
+}
+
+SYSINIT(stm32_usbhost_init, SI_BUSDRIVER_LEVEL, 60);

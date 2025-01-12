@@ -439,7 +439,7 @@ static int filex_fs_mkfs(struct fs_class *fs, const char *devname,
                     0,                   // Hidden sectors
                     blkcnt,               // Total sectors
                     blksz,             // Sector size
-                    16,              // Sectors per cluster
+                    32,              // Sectors per cluster
                     1,                            // Heads
                     1);               // Sectors per track
 

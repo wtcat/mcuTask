@@ -77,9 +77,16 @@ set (BOARD_SOURCES
 )
 
 if (CONFIG_SUBSYS_SD)
-    list(APPEND BOARD_SOURCES stm32_sdmmc.c)
+    list(APPEND BOARD_SOURCES 
+        stm32_sdmmc.c
+    )
 endif()
 
+if (CONFIG_USBX)
+    list(APPEND BOARD_SOURCES 
+        stm32_usbhost.c
+    )
+endif()
 
 add_executable(${PROJECT_NAME}
     ${BOARD_SOURCES}

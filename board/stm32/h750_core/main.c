@@ -6,9 +6,12 @@
 #define TX_USE_SECTION_INIT_API_EXTENSION 1
 
 #include "tx_api.h"
+
 #include "basework/rte_cpu.h"
 #include "basework/os/osapi.h"
+
 #include "subsys/cli/cli.h"
+#include "subsys/fs/fs.h"
 
 #define MAIN_THREAD_PRIO  11
 #define MAIN_THREAD_STACK 1024
@@ -28,6 +31,9 @@ static void main_thread(void *arg) {
     __do_init_array();
     tx_thread_preemption_change(pid, new, &old);
 
+    /* Mount file system */
+    fs_mount("/c", "sdblk0", FS_EXFATFS, 0, NULL);
+    
     /*
      * Create command line interface
      */

@@ -25,14 +25,6 @@
  extern "C" {
 #endif
 
-/* Includes ------------------------------------------------------------------*/
-#include "stm32h7xx.h"
-#include "Legacy/stm32_hal_legacy.h"
-#include <stddef.h>
-#include <math.h>
-
-/* Exported types ------------------------------------------------------------*/
-
 /**
   * @brief  HAL Status structures definition
   */
@@ -210,6 +202,14 @@ typedef enum
 
 #endif
 
+
+/* Includes ------------------------------------------------------------------*/
+#include "stm32h7xx.h"
+#include "Legacy/stm32_hal_legacy.h"
+#include <stddef.h>
+#include <math.h>
+
+/* Exported types ------------------------------------------------------------*/
 
 #ifdef __cplusplus
 }

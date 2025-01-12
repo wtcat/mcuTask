@@ -77,6 +77,7 @@ typedef struct
   HAL_LockTypeDef           Lock;       /*!< HCD peripheral status    */
   __IO HCD_StateTypeDef     State;      /*!< HCD communication state  */
   __IO  uint32_t            ErrorCode;  /*!< HCD Error code           */
+  __IO uint32_t             Pending;
   void                      *pData;     /*!< Pointer Stack Handler    */
 #if (USE_HAL_HCD_REGISTER_CALLBACKS == 1U)
   void (* SOFCallback)(struct __HCD_HandleTypeDef *hhcd);                               /*!< USB OTG HCD SOF callback                */

@@ -35,6 +35,18 @@ static void pins_configure(void) {
 
     GPIO_InitStruct.Pin = GPIO_PIN_2;
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+    /*
+     * USB Host
+     *
+     * PA11 - USB_OTG_FS_DM
+     * PA12 - USB_OTG_FS_DP
+     */
+    GPIO_InitStruct.Pin = GPIO_PIN_11 | GPIO_PIN_12;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+    GPIO_InitStruct.Alternate = GPIO_AF10_OTG1_FS;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    __HAL_RCC_USB_OTG_FS_CLK_ENABLE();
 }
 
 static int stm32_pins_init(void) {

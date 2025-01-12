@@ -99,7 +99,6 @@ stm32_sdmmc_isr(void *arg) {
     sd->reg->ICR = sta;
     sd->status = sta;
     tx_semaphore_ceiling_put(&sd->reqdone, 1);
-    printk("ISR sta: 0x%lx\n", sta);
 }
 
 static int __fastcode 
