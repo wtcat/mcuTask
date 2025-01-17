@@ -42,15 +42,15 @@ static void main_thread(void *arg) {
         "[task]# ", &_cli_ifdev_uart);
 
     //TODO: Test code
-    int count = 0;
-    uint32_t prevalue = 0;
+    // int count = 0;
+    // uint32_t prevalue = 0;
     for ( ; ; ) {
-        uint32_t now = HRTIMER_JIFFIES;
-        uint32_t diff = HRTIMER_CYCLE_TO_US(now - prevalue);
-        prevalue = now;
-        printk("Thread-2: count(%d) time_diff(%ld)\n", count++, diff);
-        // tx_thread_sleep(TX_MSEC(10000));
-        tx_os_nanosleep(1000000000);
+        // uint32_t now = HRTIMER_JIFFIES;
+        // uint32_t diff = HRTIMER_CYCLE_TO_US(now - prevalue);
+        // prevalue = now;
+        // printk("Thread-2: count(%d) time_diff(%ld)\n", count++, diff);
+        tx_thread_sleep(TX_MSEC(10000));
+        // tx_os_nanosleep(1000000000);
     }
 }
 

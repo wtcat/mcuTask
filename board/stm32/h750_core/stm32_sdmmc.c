@@ -34,7 +34,8 @@ struct stm32_sdmmc {
     const struct stm32_sdmmc_config *config;
 };
 
-#define STM32_SDMMC_DEBUG
+// #define STM32_SDMMC_DEBUG
+
 #define to_sdmmc(_dev) rte_container_of(_dev, struct stm32_sdmmc, dev)
 
 #define SDIO_ERRORS \
@@ -49,31 +50,33 @@ struct stm32_sdmmc {
      SDMMC_MASK_CMDSENTIE | SDMMC_MASK_DATAENDIE | SDMMC_MASK_ACKTIMEOUTIE)
 
 #ifdef STM32_SDMMC_DEBUG
-static void stm32_sdmmc_dumpreg(SDMMC_TypeDef *sdmmc) {
-    printk("SDMMC BASE: %p\n", sdmmc);
-    printk("sdmmc->POWER = 0x%lx\n", sdmmc->POWER);
-    printk("sdmmc->CLKCR = 0x%lx\n", sdmmc->CLKCR);
-    printk("sdmmc->ARG = 0x%lx\n", sdmmc->ARG);
-    printk("sdmmc->CMD = 0x%lx\n", sdmmc->CMD);
-    printk("sdmmc->RESPCMD = 0x%lx\n", sdmmc->RESPCMD);
-    printk("sdmmc->RESP1 = 0x%lx\n", sdmmc->RESP1);
-    printk("sdmmc->RESP2 = 0x%lx\n", sdmmc->RESP2);
-    printk("sdmmc->RESP3 = 0x%lx\n", sdmmc->RESP3);
-    printk("sdmmc->RESP4 = 0x%lx\n", sdmmc->RESP4);
-    printk("sdmmc->DTIMER = 0x%lx\n", sdmmc->DTIMER);
-    printk("sdmmc->DLEN = 0x%lx\n", sdmmc->DLEN);
-    printk("sdmmc->DCTRL = 0x%lx\n", sdmmc->DCTRL);
-    printk("sdmmc->DCOUNT = 0x%lx\n", sdmmc->DCOUNT);
-    printk("sdmmc->STA = 0x%lx\n", sdmmc->STA);
-    printk("sdmmc->ICR = 0x%lx\n", sdmmc->ICR);
-    printk("sdmmc->MASK = 0x%lx\n", sdmmc->MASK);
-    printk("sdmmc->ACKTIME = 0x%lx\n", sdmmc->ACKTIME);
-    printk("sdmmc->IDMACTRL = 0x%lx\n", sdmmc->IDMACTRL);
-    printk("sdmmc->IDMABSIZE = 0x%lx\n", sdmmc->IDMABSIZE);
-    printk("sdmmc->IDMABASE0 = 0x%lx\n", sdmmc->IDMABASE0);
-    printk("sdmmc->IDMABASE1 = 0x%lx\n", sdmmc->IDMABASE1);
-    printk("sdmmc->FIFO = 0x%lx\n", sdmmc->FIFO);
-    printk("sdmmc->IPVR = 0x%lx\n\n", sdmmc->IPVR);
+static void stm32_sdmmc_dumpreg(SDMMC_TypeDef *sdmmc,
+    struct sdhc_command *cmd, struct sdhc_data *data) {
+    printk("\n\n@send command: %ld (data: %p)\n", cmd->opcode, data);
+    // printk("SDMMC BASE: %p\n", sdmmc);
+    printk("\tPOWER = 0x%lx\n", sdmmc->POWER);
+    printk("\tCLKCR = 0x%lx\n", sdmmc->CLKCR);
+    printk("\tARG = 0x%lx\n", sdmmc->ARG);
+    printk("\tCMD = 0x%lx\n", sdmmc->CMD);
+    // printk("\tRESPCMD = 0x%lx\n", sdmmc->RESPCMD);
+    // printk("\tRESP1 = 0x%lx\n", sdmmc->RESP1);
+    // printk("\tRESP2 = 0x%lx\n", sdmmc->RESP2);
+    // printk("\tRESP3 = 0x%lx\n", sdmmc->RESP3);
+    // printk("\tRESP4 = 0x%lx\n", sdmmc->RESP4);
+    // printk("\tDTIMER = 0x%lx\n", sdmmc->DTIMER);
+    printk("\tDLEN = 0x%lx\n", sdmmc->DLEN);
+    printk("\tDCTRL = 0x%lx\n", sdmmc->DCTRL);
+    printk("\tDCOUNT = 0x%lx\n", sdmmc->DCOUNT);
+    printk("\tSTA = 0x%lx\n", sdmmc->STA);
+    printk("\tICR = 0x%lx\n", sdmmc->ICR);
+    printk("\tMASK = 0x%lx\n", sdmmc->MASK);
+    // printk("\tACKTIME = 0x%lx\n", sdmmc->ACKTIME);
+    printk("\tIDMACTRL = 0x%lx\n", sdmmc->IDMACTRL);
+    printk("\tIDMABSIZE = 0x%lx\n", sdmmc->IDMABSIZE);
+    printk("\tIDMABASE0 = 0x%lx\n", sdmmc->IDMABASE0);
+    // printk("\tIDMABASE1 = 0x%lx\n", sdmmc->IDMABASE1);
+    // printk("\tFIFO = 0x%lx\n", sdmmc->FIFO);
+    // printk("\tIPVR = 0x%lx\n\n", sdmmc->IPVR);
 }
 
 static int stm32_hrtimer_cmd(struct cli_process *cli, int argc, 
@@ -81,7 +84,7 @@ static int stm32_hrtimer_cmd(struct cli_process *cli, int argc,
     (void) cli;
     (void) argc;
     (void) argv;
-    stm32_sdmmc_dumpreg(SDMMC1);
+    stm32_sdmmc_dumpreg(SDMMC1, NULL, NULL);
 	return 0;
 }
 
@@ -108,6 +111,7 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct sdhc_command *cmd,
     uint32_t regcmd;
     uint32_t resp;
 
+    reg->CMD &= ~SDMMC_CMD_CPSMEN;
     regcmd = cmd->opcode | SDMMC_CMD_CPSMEN;
 
     /* Reset request semaphore */
@@ -115,7 +119,7 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct sdhc_command *cmd,
 
     if (data != NULL) {
         rte_assert(((uint32_t)data->data & (RTE_CACHE_LINE_SIZE - 1)) == 0);
-        uint32_t timeout = (uint32_t)((uint64_t)sd->mclk * data->timeout_ms / 1000);
+        // uint32_t timeout = (uint32_t)((uint64_t)sd->mclk * data->timeout_ms / 1000);
         uint32_t dctrl = (ffs(data->block_size) - 1) << SDMMC_DCTRL_DBLOCKSIZE_Pos;
         uint32_t dlen;
 
@@ -137,11 +141,15 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct sdhc_command *cmd,
         dlen = data->block_size * data->blocks;
         SCB_InvalidateDCache_by_Addr(data->data, dlen);
         reg->IDMABASE0 = (uint32_t)data->data;
-        reg->DTIMER = timeout;
+        reg->DTIMER = UINT32_MAX;
         reg->DLEN = dlen;
         reg->DCTRL = dctrl;
         reg->IDMACTRL = SDMMC_IDMA_IDMAEN;
         regcmd |= SDMMC_CMD_CMDTRANS;
+    } else {
+        reg->DLEN = 0;
+        reg->DCTRL = 0;
+        reg->IDMACTRL = 0;
     }
 
     resp = cmd->response_type & SDHC_NATIVE_RESPONSE_MASK;
@@ -185,13 +193,16 @@ stm32_sdmmc_request(struct device *dev, struct sdhc_command *cmd,
     int err;
 
     err = stm32_sdmmc_sendcmd(sd, cmd, data);
-    if (data != NULL) {
-        int retry = 100;
-        while (--retry > 0 && (sd->reg->STA & SDMMC_STA_DPSMACT)) {
-            tx_os_nanosleep(HRTIMER_US(10));
-            pr_warn("dpsm busy!\n");
-        }
-    }
+#ifdef STM32_SDMMC_DEBUG
+    stm32_sdmmc_dumpreg(sd->reg, cmd, data);
+#endif
+    // if (data != NULL) {
+    //     int retry = 100;
+    //     while (--retry > 0 && (sd->reg->STA & SDMMC_STA_DPSMACT)) {
+    //         tx_os_nanosleep(HRTIMER_US(10));
+    //         pr_warn("dpsm busy!\n");
+    //     }
+    // }
 
     return err;
 }
@@ -238,6 +249,11 @@ static int stm32_sdmmc_set_io(struct device *dev, struct sdhc_io *ios) {
 static int stm32_sdmmc_get_card_present(struct device *dev) {
     (void) dev;
     return 1;
+}
+
+static int stm32_sdmmc_card_busy(struct device *dev) {
+    struct stm32_sdmmc *sd = to_sdmmc(dev);
+    return !!(sd->reg->STA & SDMMC_STA_DPSMACT);
 }
 
 static int stm32_sdmmc_get_host_props(struct device *dev, 
@@ -332,6 +348,7 @@ static struct stm32_sdmmc sdmmc1_device = {
         .request = stm32_sdmmc_request,
         .set_io = stm32_sdmmc_set_io,
         .get_card_present = stm32_sdmmc_get_card_present,
+        .card_busy = stm32_sdmmc_card_busy,
         .get_host_props = stm32_sdmmc_get_host_props,
         .enable_interrupt = stm32_sdmmc_enable_interrupt,
         .disable_interrupt = stm32_sdmmc_disable_interrupt

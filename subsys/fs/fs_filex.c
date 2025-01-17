@@ -36,14 +36,13 @@ struct dir_private {
 #define CONFIG_FILEX_MAX_FILES 1
 #endif
 
+extern UINT _fx_partition_offset_calculate(void  *partition_sector, UINT partition,
+    ULONG *partition_start, ULONG *partition_size);
+
 static char media_buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
 static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
 
 static void filex_fs_driver(FX_MEDIA *media_ptr) {
-	UCHAR *buffer;
-	UINT bytes_per_sector;
-
-	/* Process the driver request specified in the media control block.  */
 	switch (media_ptr->fx_media_driver_request) {
 	case FX_DRIVER_READ: {
         struct blkdev_req req;
@@ -112,38 +111,28 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
 
 	case FX_DRIVER_BOOT_READ: {
         struct blkdev_req req;
+        ULONG partition_start, partition_size;
         int err;
 
         req.op = BLKDEV_REQ_READ;
         req.blkno = 0;
-        req.blkcnt = 1;
+        req.blkcnt = media_ptr->fx_media_driver_sectors;
         req.buffer = media_ptr->fx_media_driver_buffer;
         err = blkdev_request(media_ptr->fx_media_driver_info, &req);
 		if (err == FX_SUCCESS) {
-			/* Calculate the RAM disk boot sector offset, which is at the very beginning of
-			the RAM disk. Note the RAM disk memory is pointed to by the
-			fx_media_driver_info pointer, which is supplied by the application in the
-			call to fx_media_open.  */
-			buffer = (UCHAR *)media_ptr->fx_media_driver_buffer;
-
-			/* For RAM driver, determine if the boot record is valid.  */
-			if ((buffer[0] != (UCHAR)0xEB) ||
-				((buffer[1] != (UCHAR)0x34) && (buffer[1] != (UCHAR)0x76)) ||
-				(buffer[2] != (UCHAR)0x90)) {
-				/* Invalid boot record, return an error!  */
-				media_ptr->fx_media_driver_status = FX_MEDIA_INVALID;
-				return;
-			}
-
-			/* For RAM disk only, pickup the bytes per sector.  */
-			bytes_per_sector = _fx_utility_16_unsigned_read(&buffer[FX_BYTES_SECTOR]);
-
-			/* Ensure this is less than the media memory size.  */
-			if (bytes_per_sector > media_ptr->fx_media_memory_size) {
-				media_ptr->fx_media_driver_status = FX_BUFFER_ERROR;
-				break;
-			}
-		}
+            err = _fx_partition_offset_calculate(media_ptr->fx_media_driver_buffer, 0,
+                &partition_start, &partition_size);
+            if (err) {
+                media_ptr->fx_media_driver_status = FX_IO_ERROR;
+                break;
+            }
+            if (partition_start) {
+                /* Yes, now lets read the actual boot record.  */
+                req.blkno  = partition_start;
+                req.blkcnt = media_ptr->fx_media_driver_sectors;
+                err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+            }
+        }
         media_ptr->fx_media_driver_status = err;
 		break;
     }
@@ -153,8 +142,8 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
         int err;
 
         req.op = BLKDEV_REQ_WRITE;
-        req.blkno = 0;
-        req.blkcnt = 1;
+        req.blkno  = 0;
+        req.blkcnt = media_ptr->fx_media_driver_sectors;
         req.buffer = media_ptr->fx_media_driver_buffer;
         err = blkdev_request(media_ptr->fx_media_driver_info, &req);
         media_ptr->fx_media_driver_status = err;
