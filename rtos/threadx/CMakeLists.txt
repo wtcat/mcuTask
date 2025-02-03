@@ -65,6 +65,17 @@ target_include_directories(${PROJECT_NAME}
 # target_compile_definitions(${PROJECT_NAME} PUBLIC "TX_INCLUDE_USER_DEFINE_FILE" )
 compile_definitions(TX_INCLUDE_USER_DEFINE_FILE)
 
+# Utility
+lib_include_directories(
+    ${CMAKE_CURRENT_LIST_DIR}/utility/execution_profile_kit
+    ${CMAKE_CURRENT_LIST_DIR}/utility/low_power
+)
+target_sources(${PROJECT_NAME}
+    PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}/utility/execution_profile_kit/tx_execution_profile.c
+    ${CMAKE_CURRENT_LIST_DIR}/utility/low_power/tx_low_power.c
+)
+
 # Enable a build target that produces a ZIP file of all sources
 # set(CPACK_SOURCE_GENERATOR "ZIP")
 # set(CPACK_SOURCE_IGNORE_FILES

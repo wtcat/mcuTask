@@ -37,7 +37,7 @@ static void main_thread(void *arg) {
     /*
      * Create command line interface
      */
-    static ULONG stack[256];
+    static ULONG stack[1024];
     cli_run("uart1", 15, stack, sizeof(stack), 
         "[task]# ", &_cli_ifdev_uart);
 
