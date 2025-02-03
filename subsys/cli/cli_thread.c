@@ -4,9 +4,12 @@
 
 #define TX_SOURCE_CODE
 #include <inttypes.h>
+
 #include "tx_api.h"
 #include "tx_thread.h"
 #include "subsys/cli/cli.h"
+
+#include "basework/lib/string.h"
 
 #define THREAD_MONITOR_MAX 32
 
@@ -18,6 +21,25 @@ struct thread_monitor {
     UINT thread_priority;
     UINT thread_current_priority;
     UINT thread_state;
+};
+
+struct thread_param {
+    struct thread_monitor *array;
+    UINT count;
+    UINT index;
+};
+
+struct stack_monitor {
+    CHAR *thread_name;
+    VOID *thread_stack_start;
+    VOID *thread_stack_end;
+    UINT thread_stack_size;
+};
+
+struct stack_param {
+    struct stack_monitor *array;
+    UINT count;
+    UINT index;
 };
 
 #define _STATE_ITEM(_name) [TX_##_name] = #_name
@@ -39,12 +61,10 @@ static const char *thread_state_name[] = {
 	_STATE_ITEM(PRIORITY_CHANGE),
 };
 
-static UINT thread_information_collect(struct thread_monitor *thread_monitor, 
-    size_t count) {
+static void thread_foreach(bool (*iterator)(TX_THREAD *, void *arg), void *arg) {
     TX_INTERRUPT_SAVE_AREA
     TX_THREAD *thread_ptr;
     UINT thread_count;
-    UINT index = 0;
 
     TX_DISABLE
     _tx_thread_preempt_disable++;
@@ -53,15 +73,10 @@ static UINT thread_information_collect(struct thread_monitor *thread_monitor,
     thread_ptr   = _tx_thread_created_ptr;
     thread_count = _tx_thread_created_count;
 
-    while (thread_count > 0 && index < count) {
-        thread_monitor[index].thread_execution_time = 
-            thread_ptr->tx_thread_execution_time_total;
-        thread_monitor[index].thread_name = thread_ptr->tx_thread_name;
-        thread_monitor[index].thread_priority = thread_ptr->tx_thread_user_priority;
-        thread_monitor[index].thread_current_priority = thread_ptr->tx_thread_priority;
-        thread_monitor[index].thread_state = thread_ptr->tx_thread_state;
+    while (thread_count > 0) {
+        if (iterator(thread_ptr, arg))
+            break;
 
-        index++;
         thread_count--;
 
         /* Pointer to the next thread */
@@ -71,8 +86,36 @@ static UINT thread_information_collect(struct thread_monitor *thread_monitor,
     TX_DISABLE
     _tx_thread_preempt_disable--;
     TX_RESTORE
+}
 
-    return index;
+static bool cpuuse_iterator(TX_THREAD *thread_ptr, void *arg) {
+    struct thread_param *p = arg;
+    UINT index = p->index;
+
+    if (index >= p->count)
+        return true;
+
+    p->array[index].thread_execution_time = 
+        thread_ptr->tx_thread_execution_time_total;
+    p->array[index].thread_name = thread_ptr->tx_thread_name;
+    p->array[index].thread_priority = thread_ptr->tx_thread_user_priority;
+    p->array[index].thread_current_priority = thread_ptr->tx_thread_priority;
+    p->array[index].thread_state = thread_ptr->tx_thread_state;
+    p->index = index + 1;
+
+    return false;
+}
+
+static UINT thread_information_collect(struct thread_monitor *thread_monitor, 
+    size_t count) {
+    struct thread_param param;
+
+    param.array = thread_monitor;
+    param.count = count;
+    param.index = 0;
+
+    thread_foreach(cpuuse_iterator, &param);
+    return param.index;
 }
 
 static int cli_thread_monitor(struct cli_process *cli, int argc, char *argv[]) {
@@ -81,7 +124,7 @@ static int cli_thread_monitor(struct cli_process *cli, int argc, char *argv[]) {
         EXECUTION_TIME total_time, isr_time, idle_time;
         UINT threads;
 
-        threads = thread_information_collect(monitors, sizeof(monitors));
+        threads = thread_information_collect(monitors, THREAD_MONITOR_MAX);
         _tx_execution_thread_total_time_get(&total_time);
         _tx_execution_isr_time_get(&isr_time);
         _tx_execution_idle_time_get(&idle_time);
@@ -113,8 +156,9 @@ static int cli_thread_monitor(struct cli_process *cli, int argc, char *argv[]) {
                 percent
             );
         }
+        return 0;
     }
-
+    
     if (argc == 2) {
         /* Reset time */
         if (!strcmp(argv[1], "-r")) {
@@ -125,14 +169,87 @@ static int cli_thread_monitor(struct cli_process *cli, int argc, char *argv[]) {
             _tx_execution_isr_time_reset();
             _tx_execution_idle_time_reset();
             TX_RESTORE
+            return 0;
         }
     }
-    return 0;
+
+    cli_println(cli, "cpuuse [-r]\n");
+    return -EINVAL;
 }
 
 CLI_CMD(cpuuse, "cpuuse [-r]",
     "Show cpu usage and task information",
     cli_thread_monitor
+)
+
+static bool stackuse_iterator(TX_THREAD *thread_ptr, void *arg) {
+    struct stack_param *p = arg;
+    UINT index = p->index;
+
+    if (index >= p->count)
+        return true;
+
+    p->array[index].thread_name = thread_ptr->tx_thread_name;
+    p->array[index].thread_stack_start = thread_ptr->tx_thread_stack_start;
+    p->array[index].thread_stack_end = thread_ptr->tx_thread_stack_end;
+    p->array[index].thread_stack_size = thread_ptr->tx_thread_stack_size;
+    p->index = index + 1;
+
+    return false;
+}
+
+static UINT stack_information_collect(struct stack_monitor *stack_monitor, 
+    size_t count) {
+    struct stack_param param;
+
+    param.array = stack_monitor;
+    param.count = count;
+    param.index = 0;
+
+    thread_foreach(stackuse_iterator, &param);
+    return param.index;
+}
+
+static int cli_stack_monitor(struct cli_process *cli, int argc, char *argv[]) {
+    if (argc != 1) {
+        cli_println(cli, "stackuse\n");
+        return -EINVAL;
+    }
+
+    struct stack_monitor monitors[THREAD_MONITOR_MAX];
+    UINT stack_size = 0;
+    UINT threads;
+
+    threads = stack_information_collect(monitors, THREAD_MONITOR_MAX);
+    for (UINT i = 0; i < threads; i++)
+        stack_size += monitors[i].thread_stack_size;
+
+    cli_println(cli, "\nThreadStackSize: %" PRId32 " bytes\n", stack_size);
+    cli_println(cli,
+    "\n"
+        " NAME                | STACK AREA             | SIZE    \n"
+        "---------------------+------------------------+---------\n"
+    );
+
+    for (UINT i = 0; i < threads; i++) {
+        CHAR thread_name[20];
+        strlcpy(thread_name, monitors[i].thread_name, 19);
+
+        cli_println(cli, 
+            " %-19s |  %08" PRIX32 " - %08" PRIX32 "   |  %" PRId32" \n",
+            thread_name,
+            monitors[i].thread_stack_start,
+            monitors[i].thread_stack_end,
+            monitors[i].thread_stack_size
+        );
+    }
+
+    return 0;
+}
+
+CLI_CMD(stackuse, "stackuse",
+    "Show thread stack usage",
+    cli_stack_monitor
 )
 
 static int tx_profile_init(void) {

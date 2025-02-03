@@ -12,7 +12,7 @@ static TX_THREAD cli_pid;
 static TX_MUTEX cli_mtx;
 
 static const char cli_panel[] = {
-    "\n* McuTask Command Line *\n\n"
+    "\n* McuTask Command Line *\r\n"
 };
 
 static void cli_thread(void *arg) {
