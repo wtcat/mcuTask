@@ -23,12 +23,12 @@ void __fastcode dispatch_irq(void) {
 	int irq = IRQ_VECTOR_GET();
 	struct irq_desc *desc = _irqdesc_table + irq;
 
-#ifdef TX_ENABLE_EXECUTION_CHANGE_NOTIFY
-    _tx_execution_isr_enter()
+#ifdef TX_EXECUTION_PROFILE_ENABLE
+    _tx_execution_isr_enter();
 #endif
 	desc->handler(desc->arg);
-#ifdef TX_ENABLE_EXECUTION_CHANGE_NOTIFY
-    _tx_execution_isr_exit()
+#ifdef TX_EXECUTION_PROFILE_ENABLE
+    _tx_execution_isr_exit();
 #endif
 }
 

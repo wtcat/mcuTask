@@ -8,12 +8,14 @@
 extern void _tx_timer_interrupt(void);
 
 void __fastcode cortexm_systick_handler(void) {
-#ifdef TX_ENABLE_EXECUTION_CHANGE_NOTIFY
-    _tx_execution_isr_enter()
+#ifdef TX_EXECUTION_PROFILE_ENABLE
+    _tx_execution_isr_enter();
 #endif
+
 	_tx_timer_interrupt();
-#ifdef TX_ENABLE_EXECUTION_CHANGE_NOTIFY
-    _tx_execution_isr_exit()
+	
+#ifdef TX_EXECUTION_PROFILE_ENABLE
+    _tx_execution_isr_exit();
 #endif
 }
 

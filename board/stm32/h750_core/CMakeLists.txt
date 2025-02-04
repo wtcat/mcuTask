@@ -84,7 +84,9 @@ endif()
 
 if (CONFIG_USBX)
     list(APPEND BOARD_SOURCES 
-        stm32_usbhost.c
+        # stm32_usbhost.c
+        stm32_usbdevice.c
+        stm32_usbmsc.c
     )
 endif()
 
