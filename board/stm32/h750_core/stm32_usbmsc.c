@@ -9,7 +9,7 @@
 #include "ux_device_class_storage.h"
 #include "drivers/blkdev.h"
 
-#define _UX_ERR(_err) -(__ELASTERROR + (int)(_err))
+#define UX_ERR(_err) (_err)? -(__ELASTERROR + (int)(_err)): 0
 #define USBMSC_LUN_MAX 1
 
 /* Device ID */
@@ -102,7 +102,7 @@ static int stm32_usbmsc_init(void) {
     err = _ux_device_stack_class_register(_ux_system_slave_class_storage_name,
         ux_device_class_storage_entry, 1, 0, &class_storage);
 
-    return _UX_ERR(err);
+    return UX_ERR(err);
 }
 
-SYSINIT(stm32_usbmsc_init, SI_BUSDRIVER_LEVEL, 61);
+SYSINIT(stm32_usbmsc_init, SI_FILESYSTEM_LEVEL, 50);
