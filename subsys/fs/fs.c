@@ -321,7 +321,7 @@ int fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
 				break;
 		}
 		if (rc < 0)
-			pr_err("directory read error (%d)", rc);
+			pr_err("directory read error (%d)\n", rc);
 
 		return rc;
 	}
