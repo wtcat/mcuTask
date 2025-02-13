@@ -30,6 +30,20 @@ static struct registry_entry registry[FS_MAX];
 static struct fs_manager fs_manager;
 
 
+static void fs_operations_copy(struct fs_operations *to, 
+	const struct fs_operations *from) {
+	size_t n = sizeof(struct fs_operations) / sizeof(void *);
+	void **pdst = (void **)to;
+	void *const *psrc = (void **)from;
+	
+	*to = _fs_default_operation;
+
+	for (size_t i = 0; i < n; i++) {
+		if (psrc[i] != NULL)
+			pdst[i] = psrc[i];
+	}
+}
+
 static int registry_add(int type, const struct fs_operations *fs_ops) {
 	for (size_t i = 0; i < rte_array_size(registry); ++i) {
 		struct registry_entry *ep = &registry[i];
@@ -582,7 +596,7 @@ int fs_mount(struct fs_class *fs) {
 		}
 	}
 
-	fs->fs_ops = *fs_ops;
+	fs_operations_copy(&fs->fs_ops, fs_ops);
 	rc = fs->fs_ops.mount(fs);
 	if (rc < 0) {
 		pr_err("fs mount error (%d)", rc);
@@ -664,14 +678,14 @@ int fs_register(int type, const struct fs_operations *fs_ops) {
 		return -EINVAL;
 
 	/* Check filesystem operations */
-	void **p_ops = (void **)&fs_ops;
-	size_t n_ops = sizeof(*fs_ops) / sizeof(void *);
-	size_t n = 0;
-	while (n < n_ops) {
-		if (p_ops[n] == NULL)
-			return -EINVAL;
-		n++;
-	}
+	// void **p_ops = (void **)&fs_ops;
+	// size_t n_ops = sizeof(*fs_ops) / sizeof(void *);
+	// size_t n = 0;
+	// while (n < n_ops) {
+	// 	if (p_ops[n] == NULL)
+	// 		return -EINVAL;
+	// 	n++;
+	// }
 
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
