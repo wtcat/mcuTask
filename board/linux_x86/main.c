@@ -5,6 +5,7 @@
 #include "tx_api.h"
 #include "basework/log.h"
 
+#include "fx_api.h"
 #include "subsys/fs/fs.h"
 
 #define MAIN_THREAD_PRIO  11
@@ -13,6 +14,15 @@
 #define KERNEL_HEAP_SIZE 1024*1024
 char _kernel_byte_pool_start[KERNEL_HEAP_SIZE];
 UINT _kernel_byte_pool_size = KERNEL_HEAP_SIZE;
+
+static FX_MEDIA fs_media;
+static struct fs_class main_fs = {
+    .mnt_point = "/home",
+    .mountp_len = 5,
+    .storage_dev = "ramblk",
+    .type = FS_EXFATFS,
+    .fs_data = &fs_media
+};
 
 static TX_THREAD main_pid;
 static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)];
@@ -67,13 +77,14 @@ void tx_application_define(void *unused) {
 
 
 static void file_test(void) {
+    static 
     int err;
 
     err = fs_mkfs(FS_EXFATFS, "ramblk", NULL, 0);
     if (err)
         return;
 
-    err = fs_mount("/home", "ramblk", FS_EXFATFS, 0, NULL);
+    err = fs_mount(&main_fs);
     if (err)
         return;
 

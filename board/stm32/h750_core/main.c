@@ -6,6 +6,7 @@
 #define TX_USE_SECTION_INIT_API_EXTENSION 1
 
 #include "tx_api.h"
+#include "fx_api.h"
 
 #include "basework/rte_cpu.h"
 #include "basework/os/osapi.h"
@@ -18,6 +19,13 @@
 
 static TX_THREAD main_pid;
 static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)] __rte_section(".dtcm");
+static FX_MEDIA fs_media;
+static struct fs_class main_fs = {
+    .mnt_point = "/c",
+    .type = FS_EXFATFS,
+    .storage_dev = "sdblk0",
+    .fs_data = &fs_media
+};
 
 static void main_thread(void *arg) {
     TX_THREAD *pid = arg;
@@ -32,7 +40,7 @@ static void main_thread(void *arg) {
     tx_thread_preemption_change(pid, new, &old);
 
     /* Mount file system */
-    fs_mount("/c", "sdblk0", FS_EXFATFS, 0, NULL);
+    fs_mount(&main_fs);
     
     /*
      * Create command line interface

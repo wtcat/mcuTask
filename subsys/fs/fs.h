@@ -248,8 +248,7 @@ struct fs_operations {
 	 *
 	 * @note This operation destroys existing data on the target device.
 	 */
-	int (*mkfs)(struct fs_class *mountp, const char *dev, void *cfg, 
-		int flags);
+	int (*mkfs)(const char *dev, void *cfg, int flags);
 };
 
 /**
@@ -283,7 +282,7 @@ enum {
 	FS_EXT2,
 
 	/** Base identifier for external file systems. */
-	FS_TYPE_EXTERNAL_BASE,
+	FS_MAX,
 };
 
 /** Flag prevents formatting device if requested file system not found */
@@ -762,8 +761,7 @@ int fs_closedir(struct fs_dir *zdp);
  *	   has been set;
  * @retval <0 an other negative errno code on error.
  */
-int fs_mount(const char *mnt, void *storage_dev, int type, 
-    unsigned int options, void *fs_data);
+int fs_mount(struct fs_class *fs);
 
 /**
  * @brief Unmount filesystem
@@ -860,7 +858,7 @@ int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags);
  * @retval -ENOSCP when there is no space left, in file system registry, to add
  *	   this file system type.
  */
-int fs_register(int type, struct fs_class *fs);
+int fs_register(int type, const struct fs_operations *fs_ops);
 
 /**
  * @brief Unregister a file system

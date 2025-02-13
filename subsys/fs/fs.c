@@ -21,18 +21,44 @@ struct fs_manager {
 	TX_MUTEX mtx;
 };
 
-struct fs_manager fs_manager;
+struct registry_entry {
+	int type;
+	const struct fs_operations *fs_ops;
+};
 
-static struct fs_class *fs_type_registered_get(int type) {
-	struct fs_class *iter;
-	rte_list_foreach_entry(iter, &fs_manager.list, node) {
-		if (iter->type == type)
-			return iter;
+static struct registry_entry registry[FS_MAX];
+static struct fs_manager fs_manager;
+
+
+static int registry_add(int type, const struct fs_operations *fs_ops) {
+	for (size_t i = 0; i < rte_array_size(registry); ++i) {
+		struct registry_entry *ep = &registry[i];
+
+		if (ep->fs_ops == NULL) {
+			ep->type   = type;
+			ep->fs_ops = fs_ops;
+			return 0;
+		}
+	}
+	return -ENOSPC;
+}
+
+static struct registry_entry *registry_find(int type) {
+	for (size_t i = 0; i < rte_array_size(registry); ++i) {
+		struct registry_entry *ep = &registry[i];
+		if (ep->fs_ops != NULL && ep->type == type)
+			return ep;
 	}
 	return NULL;
 }
 
-static struct fs_class *fs_mntp_mounted_get(const char *mnt) {
+static const struct fs_operations *fs_type_get(int type) {
+	struct registry_entry *ep = registry_find(type);
+
+	return (ep != NULL)? ep->fs_ops: NULL;
+}
+
+static struct fs_class *fs_mounted_get(const char *mnt) {
 	struct fs_class *iter;
 	rte_list_foreach_entry(iter, &fs_manager.mnt_list, node) {
 		if (!strcmp(mnt, iter->mnt_point))
@@ -499,9 +525,9 @@ int fs_statvfs(const char *abs_path, struct fs_statvfs *stat) {
 	return rc;
 }
 
-int fs_mount(const char *mnt, void *storage_dev, int type, unsigned int options,
-			 void *fs_data) {
-	struct fs_class *itr, *fs;
+int fs_mount(struct fs_class *fs) {
+	const struct fs_operations *fs_ops;
+	struct fs_class *itr;
 	struct rte_list *node;
 	int rc = -EINVAL;
 	size_t len = 0;
@@ -509,13 +535,19 @@ int fs_mount(const char *mnt, void *storage_dev, int type, unsigned int options,
 	/* Do all the mp checks prior to locking the mutex on the file
 	 * subsystem.
 	 */
-	if ((mnt == NULL) || (storage_dev == NULL)) {
+	if ((fs->mnt_point == NULL) || (fs->storage_dev == NULL)) {
 		pr_err("mount point not initialized!!");
 		return -EINVAL;
 	}
 
-	len = strlen(mnt);
-	if ((len <= 1) || (mnt[0] != '/')) {
+	/* If the link-node doest not empty */
+	if (fs->node.next != NULL) {
+		pr_err("file system already mounted!!");
+		return -EBUSY;
+	}
+
+	len = strlen(fs->mnt_point);
+	if ((len <= 1) || (fs->mnt_point[0] != '/')) {
 		pr_err("invalid mount point!!");
 		return -EINVAL;
 	}
@@ -523,16 +555,10 @@ int fs_mount(const char *mnt, void *storage_dev, int type, unsigned int options,
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
 	/* Get file system information */
-	fs = fs_type_registered_get(type);
-	if (fs == NULL) {
+	fs_ops = fs_type_get(fs->type);
+	if (fs_ops == NULL) {
 		pr_err("requested file system type not registered!!");
 		rc = -ENOENT;
-		goto mount_err;
-	}
-
-	if (fs->mnt_point != NULL) {
-		pr_err("file system already mounted!!");
-		rc = -EBUSY;
 		goto mount_err;
 	}
 
@@ -543,37 +569,28 @@ int fs_mount(const char *mnt, void *storage_dev, int type, unsigned int options,
 		if (len != itr->mountp_len)
 			continue;
 
-		if (fs_data == itr->fs_data) {
+		if (fs->fs_data == itr->fs_data) {
 			pr_err("file system already mounted!!");
 			rc = -EBUSY;
 			goto mount_err;
 		}
 
-		if (strncmp(mnt, itr->mnt_point, len) == 0) {
+		if (strncmp(fs->mnt_point, itr->mnt_point, len) == 0) {
 			pr_err("mount point already exists!!");
 			rc = -EBUSY;
 			goto mount_err;
 		}
 	}
 
-	fs->mnt_point = mnt;
-	fs->storage_dev = storage_dev;
-	fs->flags = (uint8_t)options;
-	fs->fs_data = fs_data;
+	fs->fs_ops = *fs_ops;
 	rc = fs->fs_ops.mount(fs);
 	if (rc < 0) {
-		fs->mnt_point = NULL;
-		fs->storage_dev = NULL;
-		fs->flags = 0;
-		fs->fs_data = NULL;
 		pr_err("fs mount error (%d)", rc);
 		goto mount_err;
 	}
 
 	/* Update mount point data and append it to the list */
 	fs->mountp_len = len;
-
-	rte_list_del(&fs->node);
 	rte_list_add_tail(&fs->node, &fs_manager.mnt_list);
 	pr_dbg("fs mounted at %s", fs->mnt_point);
 
@@ -584,19 +601,19 @@ mount_err:
 
 int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags) {
 	int rc = -EINVAL;
-	struct fs_class *fs;
+	const struct fs_operations *fs_ops;
 
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
 	/* Get file system information */
-	fs = fs_type_registered_get(fs_type);
-	if (fs == NULL) {
+	fs_ops = fs_type_get(fs_type);
+	if (fs_ops == NULL) {
 		pr_err("fs type %d not registered!!", fs_type);
 		rc = -ENOENT;
 		goto mount_err;
 	}
 
-	rc = fs->fs_ops.mkfs(fs, dev, cfg, flags);
+	rc = fs_ops->mkfs(dev, cfg, flags);
 	if (rc < 0) {
 		pr_err("mkfs error (%d)", rc);
 		goto mount_err;
@@ -615,7 +632,7 @@ int fs_unmount(const char *mnt_point) {
 
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
 
-	struct fs_class *fs = fs_mntp_mounted_get(mnt_point);
+	struct fs_class *fs = fs_mounted_get(mnt_point);
 	if (fs == NULL) {
 		pr_err("fs not mounted (fs == %p)", fs);
 		goto unmount_err;
@@ -639,16 +656,16 @@ unmount_err:
 }
 
 /* Register File system */
-int fs_register(int type, struct fs_class *fs) {
+int fs_register(int type, const struct fs_operations *fs_ops) {
 	struct fs_class *iter;
 	int rc = 0;
 
-	if (fs == NULL)
+	if (fs_ops == NULL)
 		return -EINVAL;
 
 	/* Check filesystem operations */
-	void **p_ops = (void **)&fs->fs_ops;
-	size_t n_ops = sizeof(fs->fs_ops) / sizeof(void *);
+	void **p_ops = (void **)&fs_ops;
+	size_t n_ops = sizeof(*fs_ops) / sizeof(void *);
 	size_t n = 0;
 	while (n < n_ops) {
 		if (p_ops[n] == NULL)
@@ -671,9 +688,8 @@ int fs_register(int type, struct fs_class *fs) {
 		}
 	}
 
-	fs->type = type;
-	rte_list_add_tail(&fs->node, &fs_manager.list);
-	pr_dbg("fs register %d: %d", type, rc);
+	rc = registry_add(type, fs_ops);
+	pr_info("fs register %d: %d", type, rc);
 
 _out:
 	tx_mutex_put(&fs_manager.mtx);

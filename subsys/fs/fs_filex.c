@@ -4,14 +4,9 @@
  */
 
 #include <errno.h>
-#include "tx_api.h"
 #include "fx_api.h"
 #include "drivers/blkdev.h"
 
-#define FS_PRIVATE_EXTENSION \
-    FX_MEDIA media; \
-    struct object_pool pool;
-    
 #include "subsys/fs/fs.h"
 
 
@@ -41,6 +36,7 @@ extern UINT _fx_partition_offset_calculate(void  *partition_sector, UINT partiti
 
 static char media_buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
 static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
+static struct object_pool filex_fds_pool;
 
 static void filex_fs_driver(FX_MEDIA *media_ptr) {
 	switch (media_ptr->fx_media_driver_request) {
@@ -163,26 +159,30 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
     UINT err;
 
     if (flags & FS_O_CREATE) {
-        err = fx_file_create(&fs->media, FX_PATH(file_name));
-        if (err != FX_SUCCESS)
+        err = fx_file_create(fs->fs_data, FX_PATH(file_name));
+        if (err == FX_SUCCESS)
+            created = true;
+        else if (err != FX_ALREADY_CREATED)
             return FX_ERR(err);
-        created = true;
     }
 
-    int rw_flags = flags & (FS_O_WRITE|FS_O_READ);
+    int rw_flags = flags & (FS_O_WRITE | FS_O_READ | FS_O_TRUNC);
     if (!rw_flags && !created)
         return -EINVAL;
 
-    FX_FILE *fxp = object_allocate(&fs->pool);
+    FX_FILE *fxp = object_allocate(&filex_fds_pool);
     if (fxp) {
-        err = fx_file_open(&fs->media, fxp, FX_PATH(file_name), 
+        err = fx_file_open(fs->fs_data, fxp, FX_PATH(file_name), 
             rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
         if (err == FX_SUCCESS) {
             fp->filep = fxp;
             return 0;
         }
 
-        object_free(&fs->pool, fxp);
+        if (rw_flags & FS_O_TRUNC)
+            fx_file_truncate(fxp, 0);
+
+        object_free(&filex_fds_pool, fxp);
         return _FX_ERR(err);
     }
 
@@ -195,7 +195,7 @@ static int filex_fs_close(struct fs_file *fp) {
 
     err = fx_file_close(fxp);
     if (err == FX_SUCCESS) {
-        object_free(&fp->vfs->pool, fp->filep);
+        object_free(&filex_fds_pool, fp->filep);
         return 0;
     }
     return _FX_ERR(err);
@@ -274,7 +274,7 @@ static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
     if (dir == NULL)
         return -ENOMEM;
 
-    err = fx_directory_local_path_set(&fs->media, &dir->path, FX_PATH(abs_path));
+    err = fx_directory_local_path_set(fs->fs_data, &dir->path, FX_PATH(abs_path));
     if (err == FX_SUCCESS) {
         dir->first = true;
         dp->dirp = dir;
@@ -293,11 +293,11 @@ static int filex_fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
     UINT err;
 
     if (!dir->first) {
-        err = fx_directory_next_full_entry_find(&fs->media, (CHAR *)entry->name,
+        err = fx_directory_next_full_entry_find(fs->fs_data, (CHAR *)entry->name,
             &attr, &size, NULL, NULL, NULL, NULL, NULL, NULL);
     } else {
         dir->first = false;
-        err = fx_directory_first_full_entry_find(&fs->media, (CHAR *)entry->name,
+        err = fx_directory_first_full_entry_find(fs->fs_data, (CHAR *)entry->name,
             &attr, &size, NULL, NULL, NULL, NULL, NULL, NULL);
     }
 
@@ -319,7 +319,7 @@ static int filex_fs_closedir(struct fs_dir *dp) {
     struct dir_private *dir = dp->dirp;
     if (dir) {
         struct fs_class *fs = dp->vfs;
-        fx_directory_local_path_clear(&fs->media);
+        fx_directory_local_path_clear(fs->fs_data);
         kfree(dir);
         dp->dirp = NULL;
     }
@@ -335,7 +335,7 @@ static int filex_fs_mount(struct fs_class *fs) {
     if (dev == NULL)
         return -ENODEV;
 
-    err = fx_media_open(&fs->media, (CHAR *)dev->name, filex_fs_driver, 
+    err = fx_media_open(fs->fs_data, (CHAR *)dev->name, filex_fs_driver, 
         dev, media_buffer, sizeof(media_buffer));
 
     return FX_ERR(err);
@@ -344,7 +344,7 @@ static int filex_fs_mount(struct fs_class *fs) {
 static int filex_fs_unmount(struct fs_class *fs) {
     UINT err;
 
-    err = fx_media_close(&fs->media);
+    err = fx_media_close(fs->fs_data);
     return FX_ERR(err);
 }
 
@@ -352,29 +352,29 @@ static int filex_fs_unmount(struct fs_class *fs) {
 static int filex_fs_mkdir(struct fs_class *fs, const char *abs_path) {
     UINT err;
 
-    err = fx_directory_create(&fs->media, FX_PATH(abs_path));
+    err = fx_directory_create(fs->fs_data, FX_PATH(abs_path));
     return FX_ERR(err);
 }
 
 static int filex_fs_unlink(struct fs_class *fs, const char *abs_path) {
     UINT attr, err;
 
-    err = fx_file_attributes_read(&fs->media, FX_PATH(abs_path), &attr);
+    err = fx_file_attributes_read(fs->fs_data, FX_PATH(abs_path), &attr);
     if (err == FX_SUCCESS)
-        err = fx_file_delete(&fs->media, FX_PATH(abs_path));
+        err = fx_file_delete(fs->fs_data, FX_PATH(abs_path));
     else if (err == FX_NOT_A_FILE)
-        err = fx_directory_delete(&fs->media, FX_PATH(abs_path));
+        err = fx_directory_delete(fs->fs_data, FX_PATH(abs_path));
     return FX_ERR(err);
 }
 
 static int filex_fs_rename(struct fs_class *fs, const char *from, const char *to) {
     UINT attr, err;
 
-    err = fx_file_attributes_read(&fs->media, FX_PATH(from), &attr);
+    err = fx_file_attributes_read(fs->fs_data, FX_PATH(from), &attr);
     if (err == FX_SUCCESS)
-        err = fx_file_rename(&fs->media, FX_PATH(from), FX_PATH(to));
+        err = fx_file_rename(fs->fs_data, FX_PATH(from), FX_PATH(to));
     else if (err == FX_NOT_A_FILE)
-        err = fx_directory_rename(&fs->media, FX_PATH(from), FX_PATH(to));
+        err = fx_directory_rename(fs->fs_data, FX_PATH(from), FX_PATH(to));
     return FX_ERR(err);
 }
 
@@ -383,7 +383,7 @@ static int filex_fs_stat(struct fs_class *fs, const char *abs_path,
     ULONG size;
     UINT err;
 
-    err = fx_directory_information_get(&fs->media, FX_PATH(abs_path), NULL, &size,
+    err = fx_directory_information_get(fs->fs_data, FX_PATH(abs_path), NULL, &size,
         NULL, NULL, NULL, NULL, NULL, NULL);
     
     if (err == FX_SUCCESS) {
@@ -400,8 +400,7 @@ static int filex_fs_statvfs(struct fs_class *fs, const char *abs_path,
     return -ENOTSUP;
 }
 
-static int filex_fs_mkfs(struct fs_class *fs, const char *devname, 
-    void *cfg, int flags) {
+static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
     struct device *dev;
     UINT blkcnt = 0;
     UINT blksz = 0;
@@ -417,7 +416,8 @@ static int filex_fs_mkfs(struct fs_class *fs, const char *devname,
     if (blkcnt == 0 || blksz == 0)
         return -EINVAL;
 
-    err = fx_media_format(&fs->media,
+    FX_MEDIA media = {0};
+    err = fx_media_format(&media,
                     filex_fs_driver,               // Driver entry
                     dev, // RAM disk memory pointer
                     (UCHAR *)media_buffer,     // Media buffer pointer
@@ -435,36 +435,34 @@ static int filex_fs_mkfs(struct fs_class *fs, const char *devname,
     return FX_ERR(err);
 }
 
-static struct fs_class filex_fs = {
-    .fs_ops = {
-        .open     = filex_fs_open,
-        .read     = filex_fs_read,
-        .write    = filex_fs_write,
-        .lseek    = filex_fs_lseek,
-        .tell     = filex_fs_tell,
-        .truncate = filex_fs_truncate,
-        .sync     = filex_fs_sync,
-        .close    = filex_fs_close,
-        .opendir  = filex_fs_opendir,
-        .readdir  = filex_fs_readdir,
-        .closedir = filex_fs_closedir,
-        .mount    = filex_fs_mount,
-        .unmount  = filex_fs_unmount,
-        .unlink   = filex_fs_unlink,
-        .rename   = filex_fs_rename,
-        .mkdir    = filex_fs_mkdir,
-        .stat     = filex_fs_stat,
-        .statvfs  = filex_fs_statvfs,
-        .mkfs     = filex_fs_mkfs
-    }
+static const struct fs_operations fs_ops = {
+    .open     = filex_fs_open,
+    .read     = filex_fs_read,
+    .write    = filex_fs_write,
+    .lseek    = filex_fs_lseek,
+    .tell     = filex_fs_tell,
+    .truncate = filex_fs_truncate,
+    .sync     = filex_fs_sync,
+    .close    = filex_fs_close,
+    .opendir  = filex_fs_opendir,
+    .readdir  = filex_fs_readdir,
+    .closedir = filex_fs_closedir,
+    .mount    = filex_fs_mount,
+    .unmount  = filex_fs_unmount,
+    .unlink   = filex_fs_unlink,
+    .rename   = filex_fs_rename,
+    .mkdir    = filex_fs_mkdir,
+    .stat     = filex_fs_stat,
+    .statvfs  = filex_fs_statvfs,
+    .mkfs     = filex_fs_mkfs
 };
 
 static int fs_filex_init(void) {
     fx_system_initialize();
 
-    object_pool_initialize(&filex_fs.pool, filex_fds, 
+    object_pool_initialize(&filex_fds_pool, filex_fds, 
         sizeof(filex_fds), sizeof(filex_fds[0]));
-    return fs_register(FS_EXFATFS, &filex_fs);
+    return fs_register(FS_EXFATFS, &fs_ops);
 }
 
 SYSINIT(fs_filex_init, SI_FILESYSTEM_LEVEL, 00);
