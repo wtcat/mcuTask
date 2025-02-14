@@ -21,11 +21,91 @@ static TX_THREAD main_pid;
 static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)] __rte_section(".dtcm");
 static FX_MEDIA fs_media;
 static struct fs_class main_fs = {
-    .mnt_point = "/c",
+    .mnt_point = "/home",
     .type = FS_EXFATFS,
     .storage_dev = "sdblk0",
     .fs_data = &fs_media
 };
+
+static void file_test(void) {
+    int err;
+
+    err = fs_mkdir("/home/a");
+    if (err)
+        goto _unmount;
+
+    err = fs_mkdir("/home/b");
+    if (err)
+        goto _unmount;
+
+    struct fs_file fd = {0};
+    err = fs_open(&fd, "/home/a/hello.txt", FS_O_CREATE | FS_O_WRITE);
+    if (err)
+        goto _unmount;
+    fs_write(&fd, "hello world", 11);
+    fs_close(&fd);
+
+    struct fs_file rfd = {0};
+    char buffer[12] = {0};
+    err = fs_open(&rfd, "/home/a/hello.txt", FS_O_READ);
+    if (err)
+        goto _unmount;
+
+    fs_seek(&rfd, 0, FS_SEEK_END);
+    size_t fsize = fs_tell(&rfd);
+    pr_out("file size: %d\n", fsize);
+    fs_seek(&rfd, 0, FS_SEEK_SET);
+
+    struct fs_stat stat;
+    fs_stat("/home/a/hello.txt", &stat);
+    if ((size_t)stat.st_size != fsize)
+        pr_out("fs_stat failed to get file size\n");
+    
+    fs_read(&rfd, buffer, fsize);
+    fs_close(&rfd);
+    if (strcmp(buffer, "hello world"))
+        pr_out("failed to read file\n");
+
+    struct fs_dir dir = {0};
+    err = fs_opendir(&dir, "/home/");
+    if (err)
+        goto _unmount;
+    
+    struct fs_dirent entry;
+    while ((err = fs_readdir(&dir, &entry)) == 0) {
+        pr_out("dir: %s size: %d\n", entry.name, entry.size);
+    }
+    fs_closedir(&dir);
+
+
+    fs_rename("/home/a", "/home/f");
+    fs_rename("/home/b", "/home/e");
+    err = fs_opendir(&dir, "/home/");
+    if (err)
+        goto _unmount;
+    
+    while ((err = fs_readdir(&dir, &entry)) == 0) {
+        pr_out("new-dir: %s size: %d\n", entry.name, entry.size);
+    }
+    fs_closedir(&dir);
+
+    err = fs_unlink("/home/f/hello.txt");
+    if (err)
+        goto _unmount;
+
+    err = fs_unlink("/home/f");
+    if (err)
+        goto _unmount;
+
+    err = fs_stat("/home/f", &stat);
+    if (err == 0) {
+        pr_out("failed to unlink directory\n");
+    }
+
+_unmount:
+    fs_unmount("/home");
+    return;
+}
 
 static void main_thread(void *arg) {
     TX_THREAD *pid = arg;
@@ -49,6 +129,7 @@ static void main_thread(void *arg) {
     cli_run("uart1", 15, stack, sizeof(stack), 
         "[task]# ", &_cli_ifdev_uart);
 
+    file_test();
     //TODO: Test code
     // int count = 0;
     // uint32_t prevalue = 0;
