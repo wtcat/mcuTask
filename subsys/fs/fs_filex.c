@@ -179,7 +179,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
             return 0;
         }
 
-        if (rw_flags & FS_O_TRUNC)
+        if ((rw_flags & FS_O_TRUNC) || ((rw_flags & FS_O_WRITE) && !created))
             fx_file_truncate(fxp, 0);
 
         object_free(&filex_fds_pool, fxp);

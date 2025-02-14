@@ -5,6 +5,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "fx_api.h"
+
 #include "subsys/fs/fs.h"
 #include "subsys/cli/cli.h"
 
@@ -24,7 +26,14 @@ static int cli_cmd_mountfat(struct cli_process *cli, int argc, char *argv[]) {
     if (argc != 2)
         return -EINVAL;
 
-    return fs_mount("/c", argv[1], FS_EXFATFS, 0, NULL);
+    static FX_MEDIA fs_media;
+    static struct fs_class main_fs = {
+        .mnt_point = "/c",
+        .type = FS_EXFATFS,
+        .storage_dev = "sdblk0",
+        .fs_data = &fs_media
+    };
+    return fs_mount(&main_fs);
 }
 CLI_CMD(mount, "mount devname",
     "Mount exFAT filesystem",
