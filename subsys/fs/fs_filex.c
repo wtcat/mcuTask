@@ -38,30 +38,43 @@ static char media_buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE
 static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
 static struct object_pool filex_fds_pool;
 
+        req.blkno = media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors;
+        req.blkcnt = media_ptr->fx_media_driver_sectors;
+
+static int filex_media_write(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
+        struct blkdev_req req;
+
+        req.op     = BLKDEV_REQ_WRITE;
+        req.blkno  = sector_start;
+        req.blkcnt = sector_num;
+        req.buffer = media_ptr->fx_media_driver_buffer;
+        return blkdev_request(media_ptr->fx_media_driver_info, &req);
+}
+
+static int filex_media_read(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
+        struct blkdev_req req;
+
+        req.op     = BLKDEV_REQ_READ;
+        req.blkno  = sector_start;
+        req.blkcnt = sector_num;
+        req.buffer = media_ptr->fx_media_driver_buffer;
+        return blkdev_request(media_ptr->fx_media_driver_info, &req);
+}
+
 static void filex_fs_driver(FX_MEDIA *media_ptr) {
 	switch (media_ptr->fx_media_driver_request) {
 	case FX_DRIVER_READ: {
-        struct blkdev_req req;
-        int err;
-
-        req.op = BLKDEV_REQ_READ;
-        req.blkno = media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors;
-        req.blkcnt = media_ptr->fx_media_driver_sectors;
-        req.buffer = media_ptr->fx_media_driver_buffer;
-        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        int err = filex_media_read(media_ptr->fx_media_driver_info, 
+            media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors,
+            media_ptr->fx_media_driver_sectors);
         media_ptr->fx_media_driver_status = err;
         break;
     }
 
 	case FX_DRIVER_WRITE: {
-        struct blkdev_req req;
-        int err;
-
-        req.op = BLKDEV_REQ_WRITE;
-        req.blkno = media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors;
-        req.blkcnt = media_ptr->fx_media_driver_sectors;
-        req.buffer = media_ptr->fx_media_driver_buffer;
-        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        int err = filex_media_write(media_ptr->fx_media_driver_info, 
+            media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors,
+            media_ptr->fx_media_driver_sectors);
         media_ptr->fx_media_driver_status = err;
         break;
     }
@@ -78,24 +91,6 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
 		break;
 
 	case FX_DRIVER_INIT:
-		/* FLASH drivers are responsible for setting several fields in the
-		   media structure, as follows:
-
-				media_ptr -> fx_media_driver_free_sector_update
-				media_ptr -> fx_media_driver_write_protect
-
-		   The fx_media_driver_free_sector_update flag is used to instruct
-		   FileX to inform the driver whenever sectors are not being used.
-		   This is especially useful for FLASH managers so they don't have
-		   maintain mapping for sectors no longer in use.
-
-		   The fx_media_driver_write_protect flag can be set anytime by the
-		   driver to indicate the media is not writable.  Write attempts made
-		   when this flag is set are returned as errors.  */
-
-		/* Perform basic initialization here... since the boot record is going
-		   to be read subsequently and again for volume name requests.  */
-
 		/* Successful driver request.  */
 		media_ptr->fx_media_driver_status = FX_SUCCESS;
 		break;
@@ -106,15 +101,10 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
 		break;
 
 	case FX_DRIVER_BOOT_READ: {
-        struct blkdev_req req;
         ULONG partition_start, partition_size;
-        int err;
 
-        req.op = BLKDEV_REQ_READ;
-        req.blkno = 0;
-        req.blkcnt = media_ptr->fx_media_driver_sectors;
-        req.buffer = media_ptr->fx_media_driver_buffer;
-        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        int err = filex_media_read(media_ptr->fx_media_driver_info, 0,
+            media_ptr->fx_media_driver_sectors);
 		if (err == FX_SUCCESS) {
             err = _fx_partition_offset_calculate(media_ptr->fx_media_driver_buffer, 0,
                 &partition_start, &partition_size);
@@ -124,9 +114,8 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
             }
             if (partition_start) {
                 /* Yes, now lets read the actual boot record.  */
-                req.blkno  = partition_start;
-                req.blkcnt = media_ptr->fx_media_driver_sectors;
-                err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+                err = filex_media_read(media_ptr->fx_media_driver_info, partition_start,
+                    media_ptr->fx_media_driver_sectors);
             }
         }
         media_ptr->fx_media_driver_status = err;
@@ -134,14 +123,8 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
     }
 
 	case FX_DRIVER_BOOT_WRITE: {
-        struct blkdev_req req;
-        int err;
-
-        req.op = BLKDEV_REQ_WRITE;
-        req.blkno  = 0;
-        req.blkcnt = media_ptr->fx_media_driver_sectors;
-        req.buffer = media_ptr->fx_media_driver_buffer;
-        err = blkdev_request(media_ptr->fx_media_driver_info, &req);
+        int err = filex_media_write(media_ptr->fx_media_driver_info, 0,
+            media_ptr->fx_media_driver_sectors);
         media_ptr->fx_media_driver_status = err;
         break;
     }
@@ -262,7 +245,10 @@ static int filex_fs_truncate(struct fs_file *fp, off_t length) {
 }
 
 static int filex_fs_sync(struct fs_file *fp) {
-    return -ENOTSUP;
+    UINT err; 
+    
+    err = fx_media_flush(fp->vfs->fs_data);
+    return FX_ERR(err);
 }
 
 static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
