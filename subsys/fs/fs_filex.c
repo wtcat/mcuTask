@@ -175,12 +175,12 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
         err = fx_file_open(fs->fs_data, fxp, FX_PATH(file_name), 
             rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
         if (err == FX_SUCCESS) {
+            if ((rw_flags & FS_O_TRUNC) || ((rw_flags & FS_O_WRITE) && !created))
+                fx_file_truncate(fxp, 0);
+
             fp->filep = fxp;
             return 0;
         }
-
-        if ((rw_flags & FS_O_TRUNC) || ((rw_flags & FS_O_WRITE) && !created))
-            fx_file_truncate(fxp, 0);
 
         object_free(&filex_fds_pool, fxp);
         return _FX_ERR(err);
