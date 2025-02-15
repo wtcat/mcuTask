@@ -38,9 +38,6 @@ static char media_buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE
 static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
 static struct object_pool filex_fds_pool;
 
-        req.blkno = media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors;
-        req.blkcnt = media_ptr->fx_media_driver_sectors;
-
 static int filex_media_write(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
         struct blkdev_req req;
 
