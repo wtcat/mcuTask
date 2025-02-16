@@ -9,11 +9,10 @@
  * 2024-05-25     HPMicro       add strobe support
  */
 
-#ifndef __DEV_MMC_H__
-#define __DEV_MMC_H__
+#ifndef DRIVER_MMC_H_
+#define DRIVER_MMC_H_
 
-#include <rtthread.h>
-#include <drivers/mmcsd_host.h>
+#include "subsys/sdio/mmcsd_host.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -185,11 +184,10 @@ extern "C" {
 /*
  * extern function
  */
-rt_err_t mmc_send_op_cond(struct rt_mmcsd_host *host, rt_uint32_t ocr, rt_uint32_t *rocr);
-rt_int32_t init_mmc(struct rt_mmcsd_host *host, rt_uint32_t ocr);
+int mmc_send_op_cond(struct mmcsd_host *host, uint32_t ocr, uint32_t *rocr);
+int init_mmc(struct mmcsd_host *host, uint32_t ocr);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif
+#endif /* DRIVER_MMC_H_ */

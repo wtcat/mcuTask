@@ -9,13 +9,13 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "tx_api.h"
-#include "basework/assert.h"
-#include "basework/log.h"
+#include <tx_api.h>
+#include <basework/assert.h>
+#include <basework/log.h>
+#include <basework/assert.h>
+#include <drivers/sdio/mmcsd_core.h>
 
-#include "subsys/sd/sdhc.h"
-#include "subsys/sd/sd.h"
-#include "subsys/cli/cli.h"
+#include <subsys/cli/cli.h>
 
 struct stm32_sdmmc_config {
     uint32_t fmax;
@@ -25,19 +25,19 @@ struct stm32_sdmmc_config {
 };
 
 struct stm32_sdmmc {
-    struct sd_card card;
-    struct sdhc_device dev;
+    struct mmcsd_host host;
     SDMMC_TypeDef *reg;
-    TX_SEMAPHORE reqdone;
-    uint32_t status;
+    TX_SEMAPHORE sdio_idle;
+    volatile uint32_t status;
     uint32_t mclk;
     const struct stm32_sdmmc_config *config;
 };
 
 // #define STM32_SDMMC_DEBUG
 
-#define to_sdmmc(_dev) rte_container_of(_dev, struct stm32_sdmmc, dev)
+#define to_sdmmc(_dev) rte_container_of(_dev, struct stm32_sdmmc, host)
 
+#define SDIO_BUFF_SIZE 2048
 #define SDIO_ERRORS \
     (SDMMC_STA_IDMATE | SDMMC_STA_ACKTIMEOUT | \
      SDMMC_STA_RXOVERR | SDMMC_STA_TXUNDERR | \
@@ -101,257 +101,211 @@ stm32_sdmmc_isr(void *arg) {
 
     sd->reg->ICR = sta;
     sd->status = sta;
-    tx_semaphore_ceiling_put(&sd->reqdone, 1);
+
+    tx_semaphore_ceiling_put(&sd->sdio_idle, 1);
 }
 
-static int __fastcode 
-stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct sdhc_command *cmd,
-    struct sdhc_data *data) {
+static void 
+stm32_sdmmc_wait_complete(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd) {
     SDMMC_TypeDef *reg = sd->reg;
-    uint32_t regcmd;
-    uint32_t resp;
+    UINT err;
 
-    reg->CMD &= ~SDMMC_CMD_CPSMEN;
-    regcmd = cmd->opcode | SDMMC_CMD_CPSMEN;
-
-    /* Reset request semaphore */
-    tx_semaphore_get(&sd->reqdone, TX_NO_WAIT);
-
-    if (data != NULL) {
-        rte_assert(((uint32_t)data->data & (RTE_CACHE_LINE_SIZE - 1)) == 0);
-        // uint32_t timeout = (uint32_t)((uint64_t)sd->mclk * data->timeout_ms / 1000);
-        uint32_t dctrl = (ffs(data->block_size) - 1) << SDMMC_DCTRL_DBLOCKSIZE_Pos;
-        uint32_t dlen;
-
-		switch (cmd->opcode) {
-		case SD_WRITE_SINGLE_BLOCK:
-		case SD_WRITE_MULTIPLE_BLOCK:
-			dctrl |= (SDMMC_TRANSFER_DIR_TO_CARD | SDMMC_TRANSFER_MODE_BLOCK);
-			break;
-		case SD_APP_SEND_SCR:
-		case SD_SWITCH:
-		case SD_READ_SINGLE_BLOCK:
-		case SD_READ_MULTIPLE_BLOCK:
-			dctrl |= (SDMMC_TRANSFER_DIR_TO_SDMMC | SDMMC_TRANSFER_MODE_BLOCK);
-			break;
-		default:
-			return -ENOTSUP;
-		}
-
-        dlen = data->block_size * data->blocks;
-        SCB_InvalidateDCache_by_Addr(data->data, dlen);
-        reg->IDMABASE0 = (uint32_t)data->data;
-        reg->DTIMER = UINT32_MAX;
-        reg->DLEN = dlen;
-        reg->DCTRL = dctrl;
-        reg->IDMACTRL = SDMMC_IDMA_IDMAEN;
-        regcmd |= SDMMC_CMD_CMDTRANS;
-    } else {
-        reg->DLEN = 0;
-        reg->DCTRL = 0;
-        reg->IDMACTRL = 0;
+    err = tx_semaphore_get(&sd->sdio_idle, TX_MSEC(5000));
+    if (err) {
+        printk("wait for sdio complete timeout\n");
+        cmd->err = -ETIMEDOUT;
+        return;
     }
 
-    resp = cmd->response_type & SDHC_NATIVE_RESPONSE_MASK;
-    if (resp == SD_RSP_TYPE_R2)
+    cmd->resp[0] = reg->RESP1;
+    if (resp_type(cmd) == RESP_R2) {
+        cmd->resp[1] = reg->RESP2;
+        cmd->resp[2] = reg->RESP3;
+        cmd->resp[3] = reg->RESP4;
+    }
+
+    uint32_t status = sd->status;
+    if (status & SDIO_ERRORS) {
+        if ((status & SDMMC_STA_CCRCFAIL) && 
+            (resp_type(cmd) & (RESP_R3 | RESP_R4)))
+            return;
+        
+        printk("sdio bus error(status = 0x%08"PRIx32")\n", status);
+        cmd->err = -EIO;
+    }
+}
+
+static int 
+stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd, 
+    struct mmcsd_data *data) {
+    static uint8_t dma_buffer[SDIO_BUFF_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
+    SDMMC_TypeDef *reg = sd->reg;
+    void *pbuffer = NULL;
+    uint32_t regcmd;
+    uint32_t bytes;
+    bool upload;
+
+    pr_dbg(" CMD:%ld ARG:0x%08lx RES:%s%s%s%s%s%s%s%s%s rw:%c len:%ld blksize:%ld\n",
+          cmd->cmd_code,
+          cmd->arg,
+          resp_type(cmd) == RESP_NONE ? "NONE"  : "",
+          resp_type(cmd) == RESP_R1  ? "R1"  : "",
+          resp_type(cmd) == RESP_R1B ? "R1B"  : "",
+          resp_type(cmd) == RESP_R2  ? "R2"  : "",
+          resp_type(cmd) == RESP_R3  ? "R3"  : "",
+          resp_type(cmd) == RESP_R4  ? "R4"  : "",
+          resp_type(cmd) == RESP_R5  ? "R5"  : "",
+          resp_type(cmd) == RESP_R6  ? "R6"  : "",
+          resp_type(cmd) == RESP_R7  ? "R7"  : "",
+          data ? (data->flags & DATA_DIR_WRITE ?  'w' : 'r') : '-',
+          data ? data->blks * data->blksize : 0,
+          data ? data->blksize : 0
+         );
+
+    reg->CMD = 0;
+    reg->MASK |= SDIO_MASKR_ALL;
+    regcmd = cmd->cmd_code | SDMMC_CMD_CPSMEN;
+
+    /* data pre configuration */
+    if (data != NULL) {
+        bytes = data->blks * data->blksize;
+        rte_assert(bytes <= SDIO_BUFF_SIZE);
+
+        upload = !!(data->flags & DATA_DIR_READ);
+        pbuffer = data->buf;
+        if ((uint32_t)pbuffer & (RTE_CACHE_LINE_SIZE - 1)) {
+            pbuffer = dma_buffer;
+            if (!upload) 
+                memcpy(pbuffer, data->buf, bytes);
+        }
+
+        SCB_InvalidateDCache_by_Addr(pbuffer, bytes);
+        regcmd |= SDMMC_CMD_CMDTRANS;
+        reg->MASK &= ~(SDMMC_MASK_CMDRENDIE | SDMMC_MASK_CMDSENTIE);
+        reg->DTIMER = UINT32_MAX;
+        reg->DLEN = bytes;
+        reg->DCTRL = ((ffs(data->blksize) - 1) << SDMMC_DCTRL_DBLOCKSIZE_Pos) 
+                    | (upload ? SDMMC_DCTRL_DTDIR : 0);
+        reg->IDMABASE0 = (uint32_t)pbuffer;
+        reg->IDMACTRL = SDMMC_IDMA_IDMAEN;
+    }
+
+    if (resp_type(cmd) == RESP_R2)
         regcmd |= SDMMC_CMD_WAITRESP;
-    else if (resp != SD_RSP_TYPE_NONE)
+    else if (resp_type(cmd) != RESP_NONE)
         regcmd |= SDMMC_CMD_WAITRESP_0;
 
-    reg->MASK |= SDIO_MASKR_ALL;
     reg->ARG = cmd->arg;
     reg->CMD = regcmd;
 
-    /* 
-     * Waiting for transfer complete 
-     */
-    if (tx_semaphore_get(&sd->reqdone, TX_MSEC(3000))) {
-        pr_err("sdmmc transfer timeout\n");
-        return -ETIME;
-    }
+    /* Wait for sdio transfer to complete */
+    stm32_sdmmc_wait_complete(sd, cmd);
 
-    cmd->response[0] = reg->RESP1;
-    if (resp == SD_RSP_TYPE_R2) {
-        cmd->response[1] = reg->RESP2;
-        cmd->response[2] = reg->RESP3;
-        cmd->response[3] = reg->RESP4;
-    }
+    if (data != NULL) {
+        int timeout = 5;
+        while (reg->STA & SDMMC_STA_DPSMACT) {
+            if (--timeout < 0) {
+                cmd->err = -EIO;
+                return -1;
+            }
+            tx_thread_sleep(TX_MSEC(1));
+        }
 
-    if (sd->status & SDIO_ERRORS) {
-        if (!((sd->status & SDMMC_STA_CCRCFAIL) && 
-            (resp & (SD_RSP_TYPE_R3 | SD_RSP_TYPE_R4))))
-            return -EIO;
+        if (upload) 
+            memcpy(data->buf, pbuffer, bytes);
     }
 
     return 0;
 }
 
-static int __fastcode 
-stm32_sdmmc_request(struct device *dev, struct sdhc_command *cmd,
-    struct sdhc_data *data) {
-    struct stm32_sdmmc *sd = to_sdmmc(dev);
-    int err;
+static void 
+stm32_sdmmc_request(struct mmcsd_host *host, struct mmcsd_req *req) {
+    struct stm32_sdmmc *sd = to_sdmmc(host);
 
-    err = stm32_sdmmc_sendcmd(sd, cmd, data);
-#ifdef STM32_SDMMC_DEBUG
-    stm32_sdmmc_dumpreg(sd->reg, cmd, data);
-#endif
-    // if (data != NULL) {
-    //     int retry = 100;
-    //     while (--retry > 0 && (sd->reg->STA & SDMMC_STA_DPSMACT)) {
-    //         tx_os_nanosleep(HRTIMER_US(10));
-    //         pr_warn("dpsm busy!\n");
-    //     }
-    // }
+    if (req->cmd)
+        stm32_sdmmc_sendcmd(sd, req->cmd, req->data);
 
-    return err;
+    if (req->stop)
+        stm32_sdmmc_sendcmd(sd, req->stop, NULL);
+
+    mmcsd_req_complete(&sd->host);
 }
 
-static int stm32_sdmmc_set_io(struct device *dev, struct sdhc_io *ios) {
-    struct stm32_sdmmc *sd = to_sdmmc(dev);
-    uint32_t clkcr = sd->reg->CLKCR;
-    uint32_t clkrate = ios->clock;
-    uint32_t div;
+static void 
+stm32_sdmmc_iocfg(struct mmcsd_host *host, struct mmcsd_io_cfg *cfg) {
+    struct stm32_sdmmc *sd = to_sdmmc(host);
+    uint32_t clk = cfg->clock;
+    uint32_t temp = 0;
 
-    /*
-     * Configure clock rate and buswidth
-     */
-    clkcr &= ~CLKCR_CLEAR_MASK;
-    if (ios->bus_width == SDHC_BUS_WIDTH1BIT)
-        clkcr |= SDMMC_BUS_WIDE_1B;
-    else if (ios->bus_width == SDHC_BUS_WIDTH4BIT)
-        clkcr |= SDMMC_BUS_WIDE_4B;
-    else if (ios->bus_width == SDHC_BUS_WIDTH8BIT)
-        clkcr |= SDMMC_BUS_WIDE_8B;
-    else
-        clkcr |= SDMMC_BUS_WIDE_1B;
+    if (clk > 0) {
+        if (clk > host->freq_max)
+            clk = host->freq_max;
+        temp = rte_div_roundup(sd->mclk, 2 * clk);
+        if (temp > 0x3FF)
+            temp = 0x3FF;
+    }
 
-    if (clkrate > SD_CLOCK_50MHZ)
-        clkrate = SD_CLOCK_50MHZ;
-    
-    div = rte_div_roundup(sd->mclk, (clkrate * 2));
-    if (div >= 0x3FF)
-        div = 0x3FF;
+    if (cfg->bus_width == MMCSD_BUS_WIDTH_4)
+        temp |= SDMMC_CLKCR_WIDBUS_0;
+    else if (cfg->bus_width == MMCSD_BUS_WIDTH_8)
+        temp |= SDMMC_CLKCR_WIDBUS_1;
 
-    clkcr |= div;
-    clkcr |= SDMMC_HARDWARE_FLOW_CONTROL_ENABLE | SDMMC_CLOCK_EDGE_FALLING;
-    sd->reg->CLKCR = clkcr;
-
-    /*
-     * Configure power state
-     */
-    if (ios->power_mode == SDHC_POWER_ON)
+    sd->reg->CLKCR = temp;
+    if (cfg->power_mode == MMCSD_POWER_ON)
         sd->reg->POWER |= SDMMC_POWER_PWRCTRL;
-
-    return 0;
-}
-
-static int stm32_sdmmc_get_card_present(struct device *dev) {
-    (void) dev;
-    return 1;
-}
-
-static int stm32_sdmmc_card_busy(struct device *dev) {
-    struct stm32_sdmmc *sd = to_sdmmc(dev);
-    return !!(sd->reg->STA & SDMMC_STA_DPSMACT);
-}
-
-static int stm32_sdmmc_get_host_props(struct device *dev, 
-    struct sdhc_host_props *props) {
-    struct stm32_sdmmc *sd = to_sdmmc(dev);
-
-    (void) sd;
-    memset(props, 0, sizeof(*props));
-    props->f_min = SDMMC_CLOCK_400KHZ;
-    props->f_max = sd->config->fmax;
-    props->host_caps.bus_4_bit_support = true;
-    props->host_caps.vol_330_support = true;
-    props->is_spi = false;
-
-    return 0;
-}
-
-static int stm32_sdmmc_enable_interrupt(struct device *dev, 
-    sdhc_interrupt_cb_t callback, int sources, void *user_data) {
-    struct stm32_sdmmc *sd = to_sdmmc(dev);
-
-    (void) sd;
-    (void) callback;
-    (void) sources;
-    (void) user_data;
-    return -ENOSYS;
-}
-
-static int stm32_sdmmc_disable_interrupt(struct device *dev, int sources) {
-    struct stm32_sdmmc *sd = to_sdmmc(dev);
-
-    (void) sd;
-    (void) sources;
-    return -ENOSYS;
 }
 
 static int _stm32_sdmmc_init(struct stm32_sdmmc *sd) {
     const struct stm32_sdmmc_config *config = sd->config;
+    struct mmcsd_host *host = &sd->host;
     int err;
 
-    tx_semaphore_create(&sd->reqdone, (CHAR *)sd->dev.name, 0);
+    mmcsd_host_init(&sd->host);
     err = request_irq(config->irq, stm32_sdmmc_isr, sd);
     if (err) {
         pr_err("failed to request irq(%d)\n", config->irq);
-        goto _remove_sem;
+        goto _remove_host;
     }
+
+    tx_semaphore_create(&sd->sdio_idle, (CHAR *)"sdio", 0);
 
     /* Enable periph clock */
     config->clk_enable(config->clken);
     sd->reg->MASK = 0;
     sd->reg->ICR = 0xFFFFFFFF;
     sd->mclk = LL_RCC_GetSDMMCClockFreq(LL_RCC_SDMMC_CLKSOURCE);
-    sd->dev.private_data = sd;
 
-    pr_dbg("SDMMC bus clock: %"PRIu32"\n", sd->mclk);
+    /* set host default attributes */
+    host->ops.request = stm32_sdmmc_request;
+    host->ops.set_iocfg = stm32_sdmmc_iocfg;
 
-    /* Register device */
-    err = device_register((struct device *)&sd->dev);
-    if (err) {
-        pr_err("failed to reigister device %d\n", err);
-        goto _remove_irq;
-    }
-    
-    /* Initialize SD card */
-    err = sd_init((struct device *)&sd->dev, &sd->card);
-    if (err) {
-        pr_err("failed to initialize sd %d\n", err);
-        goto _remove_dev;
-    }
+    host->freq_min = 400 * 1000;
+    host->freq_max = sd->config->fmax;
+    host->valid_ocr = VDD_32_33 | VDD_33_34;
+    host->flags = MMCSD_BUSWIDTH_4 | MMCSD_MUTBLKWRITE | MMCSD_SUP_HIGHSPEED;
+    host->max_seg_size  = SDIO_BUFF_SIZE;
+    host->max_dma_segs  = 1;
+    host->max_blk_size  = 512;
+    host->max_blk_count = 512;
+    mmcsd_change(host);
 
-    pr_dbg("%s register success\n", sd->dev.name);
+    printk("register sdmmc0 device\n");
     return 0;
 
-_remove_dev:
-    device_unregister((struct device *)sd);
-_remove_irq:
-    remove_irq(config->irq, stm32_sdmmc_isr, sd);
-_remove_sem:
-    tx_semaphore_delete(&sd->reqdone);
+_remove_host:
+    mmcsd_host_uninit(&sd->host);
     return err;
 }
 
 static const struct stm32_sdmmc_config sdmmc1_config = {
-    .fmax = SD_CLOCK_50MHZ,
-    .irq = SDMMC1_IRQn,
+    .fmax = 50000000,
+    .irq  = SDMMC1_IRQn,
     .clken = RCC_AHB3ENR_SDMMC1EN,
     .clk_enable = LL_AHB3_GRP1_EnableClock
 };
 static struct stm32_sdmmc sdmmc1_device = {
-    .dev = {
+    .host = {
         .name = "sdmmc1",
-        .request = stm32_sdmmc_request,
-        .set_io = stm32_sdmmc_set_io,
-        .get_card_present = stm32_sdmmc_get_card_present,
-        .card_busy = stm32_sdmmc_card_busy,
-        .get_host_props = stm32_sdmmc_get_host_props,
-        .enable_interrupt = stm32_sdmmc_enable_interrupt,
-        .disable_interrupt = stm32_sdmmc_disable_interrupt
     },
     .reg = SDMMC1,
     .config = &sdmmc1_config

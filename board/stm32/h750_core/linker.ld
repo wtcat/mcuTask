@@ -150,6 +150,10 @@ SECTIONS
      * Static data with locate_data(".sram4") will be located
      * at start of SRAM4; the rest of SRAM4 will be added to the heap.
      */
+    .sram3_reserve (NOLOAD) :
+    {
+        end = ABSOLUTE(.);
+    } > sram3
 
     .sram4_reserve (NOLOAD) :
     {
@@ -160,7 +164,6 @@ SECTIONS
 
     _kernel_byte_pool_start = _sram4_heap_start;
     _kernel_byte_pool_size = ORIGIN(sram4) + LENGTH(sram4) - _sram4_heap_start;
-
 
     /* Stabs debugging sections. */
 

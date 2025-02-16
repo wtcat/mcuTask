@@ -9,11 +9,10 @@
  * 2024-05-26     HPMicro       Add UHS-I support
  */
 
-#ifndef __DEV_SD_H__
-#define __DEV_SD_H__
+#ifndef DRIVER_SD_H_
+#define DRIVER_SD_H_
 
-#include <rtthread.h>
-#include <drivers/mmcsd_host.h>
+#include <subsys/sdio/mmcsd_host.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,16 +29,15 @@ extern "C" {
 #define SD_SWITCH_FUNC_TIMING_DDR50   4
 
 
-rt_err_t mmcsd_send_if_cond(struct rt_mmcsd_host *host, rt_uint32_t ocr);
-rt_err_t mmcsd_send_app_op_cond(struct rt_mmcsd_host *host, rt_uint32_t ocr, rt_uint32_t *rocr);
+int mmcsd_send_if_cond(struct mmcsd_host *host, uint32_t ocr);
+int mmcsd_send_app_op_cond(struct mmcsd_host *host, uint32_t ocr, uint32_t *rocr);
 
-rt_err_t mmcsd_get_card_addr(struct rt_mmcsd_host *host, rt_uint32_t *rca);
-rt_int32_t mmcsd_get_scr(struct rt_mmcsd_card *card, rt_uint32_t *scr);
+int mmcsd_get_card_addr(struct mmcsd_host *host, uint32_t *rca);
+int mmcsd_get_scr(struct mmcsd_card *card, uint32_t *scr);
 
-rt_int32_t init_sd(struct rt_mmcsd_host *host, rt_uint32_t ocr);
+int init_sd(struct mmcsd_host *host, uint32_t ocr);
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif
+#endif /* DRIVER_SD_H_ */
