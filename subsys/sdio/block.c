@@ -283,7 +283,7 @@ int mmcsd_blkdev_probe(struct mmcsd_card *card) {
     bdev->control = mmcsd_blkdev_control;
     err = device_register((struct device *)bdev);
     if (!err) {
-        pr_info("%s register success\n", name);
+        pr_info("%s register device(%p) success\n", name, bdev);
         card->blk_dev = bdev;
         devno++;
         return 0;

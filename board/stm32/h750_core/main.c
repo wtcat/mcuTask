@@ -15,7 +15,7 @@
 #include "subsys/fs/fs.h"
 
 #define MAIN_THREAD_PRIO  11
-#define MAIN_THREAD_STACK 1024
+#define MAIN_THREAD_STACK 4096
 
 static TX_THREAD main_pid;
 static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)] __rte_section(".dtcm");
@@ -119,8 +119,11 @@ static void main_thread(void *arg) {
     __do_init_array();
     tx_thread_preemption_change(pid, new, &old);
 
+    tx_thread_sleep(TX_MSEC(300));
+    
     /* Mount file system */
-    fs_mount(&main_fs);
+    if (!fs_mount(&main_fs))
+        printk("Mount filesystem success\n");
     
     /*
      * Create command line interface

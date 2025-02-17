@@ -26,7 +26,7 @@
 #include <drivers/sdio/sdio.h>
 
 #ifndef CONFIG_SDIO_STACK_SIZE
-#define CONFIG_SDIO_STACK_SIZE 512
+#define CONFIG_SDIO_STACK_SIZE 1700
 #endif
 #ifndef CONFIG_SDIO_THREAD_PRIORITY
 #define CONFIG_SDIO_THREAD_PRIORITY 28

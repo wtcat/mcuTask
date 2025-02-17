@@ -4,10 +4,10 @@
  */
 
 #include <errno.h>
-#include "fx_api.h"
-#include "drivers/blkdev.h"
+#include <fx_api.h>
+#include <drivers/blkdev.h>
 
-#include "subsys/fs/fs.h"
+#include <subsys/fs/fs.h>
 
 
 struct dir_private {
@@ -39,29 +39,32 @@ static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
 static struct object_pool filex_fds_pool;
 
 static int filex_media_write(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
-        struct blkdev_req req;
+    struct device *dev = (struct device *)media_ptr->fx_media_driver_info;
+    struct blkdev_req req;
 
-        req.op     = BLKDEV_REQ_WRITE;
-        req.blkno  = sector_start;
-        req.blkcnt = sector_num;
-        req.buffer = media_ptr->fx_media_driver_buffer;
-        return blkdev_request(media_ptr->fx_media_driver_info, &req);
+    req.op     = BLKDEV_REQ_WRITE;
+    req.blkno  = sector_start;
+    req.blkcnt = sector_num;
+    req.buffer = media_ptr->fx_media_driver_buffer;
+    return blkdev_request(dev, &req);
 }
 
 static int filex_media_read(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
-        struct blkdev_req req;
+    struct device *dev = (struct device *)media_ptr->fx_media_driver_info;
+    struct blkdev_req req;
 
-        req.op     = BLKDEV_REQ_READ;
-        req.blkno  = sector_start;
-        req.blkcnt = sector_num;
-        req.buffer = media_ptr->fx_media_driver_buffer;
-        return blkdev_request(media_ptr->fx_media_driver_info, &req);
+    req.op     = BLKDEV_REQ_READ;
+    req.blkno  = sector_start;
+    req.blkcnt = sector_num;
+    req.buffer = media_ptr->fx_media_driver_buffer;
+
+    return blkdev_request(dev, &req);
 }
 
 static void filex_fs_driver(FX_MEDIA *media_ptr) {
 	switch (media_ptr->fx_media_driver_request) {
 	case FX_DRIVER_READ: {
-        int err = filex_media_read(media_ptr->fx_media_driver_info, 
+        int err = filex_media_read(media_ptr, 
             media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors,
             media_ptr->fx_media_driver_sectors);
         media_ptr->fx_media_driver_status = err;
@@ -69,7 +72,7 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
     }
 
 	case FX_DRIVER_WRITE: {
-        int err = filex_media_write(media_ptr->fx_media_driver_info, 
+        int err = filex_media_write(media_ptr, 
             media_ptr->fx_media_driver_logical_sector + media_ptr->fx_media_hidden_sectors,
             media_ptr->fx_media_driver_sectors);
         media_ptr->fx_media_driver_status = err;
@@ -100,7 +103,7 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
 	case FX_DRIVER_BOOT_READ: {
         ULONG partition_start, partition_size;
 
-        int err = filex_media_read(media_ptr->fx_media_driver_info, 0,
+        int err = filex_media_read(media_ptr, 0,
             media_ptr->fx_media_driver_sectors);
 		if (err == FX_SUCCESS) {
             err = _fx_partition_offset_calculate(media_ptr->fx_media_driver_buffer, 0,
@@ -111,7 +114,7 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
             }
             if (partition_start) {
                 /* Yes, now lets read the actual boot record.  */
-                err = filex_media_read(media_ptr->fx_media_driver_info, partition_start,
+                err = filex_media_read(media_ptr, partition_start,
                     media_ptr->fx_media_driver_sectors);
             }
         }
@@ -120,7 +123,7 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
     }
 
 	case FX_DRIVER_BOOT_WRITE: {
-        int err = filex_media_write(media_ptr->fx_media_driver_info, 0,
+        int err = filex_media_write(media_ptr, 0,
             media_ptr->fx_media_driver_sectors);
         media_ptr->fx_media_driver_status = err;
         break;
