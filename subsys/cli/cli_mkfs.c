@@ -15,7 +15,9 @@ static int cli_cmd_mkfat(struct cli_process *cli, int argc, char *argv[]) {
     if (argc != 2)
         return -EINVAL;
 
-    return fs_mkfs(FS_EXFATFS, argv[1], NULL, 0);
+    int err = fs_mkfs(FS_EXFATFS, argv[1], NULL, 0);
+    cli_println(cli, "Format filex with result(%d)\n", err);
+    return err;
 }
 CLI_CMD(mkfat, "mkfat devname",
     "Format exFAT filesystem",

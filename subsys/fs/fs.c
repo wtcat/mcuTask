@@ -4,7 +4,7 @@
  * Virtual Filesystem (borrowed from zephyr)
  */
 
-#define pr_fmt(fmt) "[fs]: " fmt
+#define pr_fmt(fmt) "[fs]: " fmt"\n"
 #include <errno.h>
 #include <string.h>
 

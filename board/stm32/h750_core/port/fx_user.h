@@ -188,7 +188,7 @@
 
 /* Defined, error checking is disabled.  */
 
-/*#define FX_DISABLE_ERROR_CHECKING   */
+#define FX_DISABLE_ERROR_CHECKING
 
 
 /* Defined, cache is disabled.  */

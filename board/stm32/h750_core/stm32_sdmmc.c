@@ -4,7 +4,7 @@
 
 #define TX_USE_BOARD_PRIVATE
 #define pr_fmt(fmt) "[sdmmc]: "fmt
-#define CONFIG_LOGLEVEL   LOGLEVEL_DEBUG
+// #define CONFIG_LOGLEVEL   LOGLEVEL_DEBUG
 
 #include <errno.h>
 #include <inttypes.h>

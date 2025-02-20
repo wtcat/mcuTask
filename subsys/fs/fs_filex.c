@@ -3,6 +3,8 @@
  *
  */
 
+#include "basework/generic.h"
+#include "tx_api_extension.h"
 #include <errno.h>
 #include <fx_api.h>
 #include <drivers/blkdev.h>
@@ -145,8 +147,10 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
         err = fx_file_create(fs->fs_data, FX_PATH(file_name));
         if (err == FX_SUCCESS)
             created = true;
-        else if (err != FX_ALREADY_CREATED)
+        else if (err != FX_ALREADY_CREATED) {
+            printk("%s: failed(%d) to create file(%s) \n", __func__, err, FX_PATH(file_name));
             return FX_ERR(err);
+        }
     }
 
     int rw_flags = flags & (FS_O_WRITE | FS_O_READ | FS_O_TRUNC);
@@ -165,6 +169,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
             return 0;
         }
 
+        printk("%s: open file(%s) failed(%d)\n", __func__, FX_PATH(file_name), err);
         object_free(&filex_fds_pool, fxp);
         return _FX_ERR(err);
     }
@@ -315,16 +320,33 @@ static int filex_fs_closedir(struct fs_dir *dp) {
 
 static int filex_fs_mount(struct fs_class *fs) {
     struct device *dev;
+    FX_MEDIA *media;
     UINT err;
 
     dev = device_find(fs->storage_dev);
     if (dev == NULL)
         return -ENODEV;
 
-    err = fx_media_open(fs->fs_data, (CHAR *)dev->name, filex_fs_driver, 
-        dev, media_buffer, sizeof(media_buffer));
+    UINT blksz = 0;
+    device_control(dev, BLKDEV_IOC_GET_BLKSIZE, &blksz);
+    if (blksz == 0 || blksz > 4096)
+        return -EIO;
 
-    return FX_ERR(err);
+    media = kzalloc(sizeof(*media) + RTE_CACHE_LINE_SIZE + blksz,GMF_KERNEL);
+    if (media == NULL)
+        return -ENOMEM;
+    
+    void *media_buffer = media + 1;
+    media_buffer = (void *)RTE_ALIGN((uintptr_t)media_buffer, RTE_CACHE_LINE_SIZE);
+
+    err = fx_media_open(fs->fs_data, (CHAR *)dev->name, filex_fs_driver, 
+        dev, media_buffer, blksz);
+    if (err) {
+        kfree(media);
+        return _FX_ERR(err);
+    }
+
+    return 0;
 }
 
 static int filex_fs_unmount(struct fs_class *fs) {
@@ -399,7 +421,7 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
     device_control(dev, BLKDEV_IOC_GET_BLKCOUNT, &blkcnt);
     device_control(dev, BLKDEV_IOC_GET_BLKSIZE, &blksz);
 
-    if (blkcnt == 0 || blksz == 0)
+    if (blkcnt == 0 || blksz == 0 || blksz > 4096)
         return -EINVAL;
 
     FX_MEDIA media = {0};
@@ -417,6 +439,8 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
                     32,              // Sectors per cluster
                     1,                            // Heads
                     1);               // Sectors per track
+    if (err == FX_SUCCESS)
+        err = fx_media_flush(&media);
 
     return FX_ERR(err);
 }
