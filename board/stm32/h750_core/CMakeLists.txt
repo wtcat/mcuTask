@@ -14,6 +14,8 @@ project(mcutask
     LANGUAGES C CXX ASM
 )
 
+include(${WKSAPCE_PATH}/cmake/kconfig.cmake)
+
 if (POLICY CMP0076)
     cmake_policy(SET CMP0076 NEW)
 endif(POLICY CMP0076)

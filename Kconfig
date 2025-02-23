@@ -1,0 +1,7 @@
+menu "MCU Task"
+
+config SUBSYS_FS
+    bool "Enable filesystem"
+    default y
+
+endmenu

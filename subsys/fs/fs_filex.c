@@ -3,19 +3,15 @@
  *
  */
 
-#include "basework/generic.h"
-#include "tx_api_extension.h"
-#include <errno.h>
-#include <fx_api.h>
-#include <drivers/blkdev.h>
+#define pr_fmt(fmt) "[filex]: "fmt
 
+#include <errno.h>
+
+#include <fx_api.h>
+#include <basework/log.h>
+#include <drivers/blkdev.h>
 #include <subsys/fs/fs.h>
 
-
-struct dir_private {
-    FX_LOCAL_PATH path;
-    bool first;
-};
 
 #ifndef __ELASTERROR
 #define __ELASTERROR (2000)
@@ -25,20 +21,40 @@ struct dir_private {
 #define FX_ERR(_err)   ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
 
-
 #ifndef CONFIG_FILEX_MEDIA_BUFFER_SIZE
 #define CONFIG_FILEX_MEDIA_BUFFER_SIZE 4096
 #endif
 #ifndef CONFIG_FILEX_MAX_FILES
 #define CONFIG_FILEX_MAX_FILES 1
 #endif
+#ifndef CONFIG_FILEX_MAX_DIRS
+#define CONFIG_FILEX_MAX_DIRS 3
+#endif
+#ifndef CONFIG_FILEX_MAX_INSTANCE
+#define CONFIG_FILEX_MAX_INSTANCE 1
+#endif
+
+struct dir_private {
+    FX_LOCAL_PATH path;
+    bool first;
+};
+
+struct filex_instance {
+    FX_MEDIA media;
+    char buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE]  __rte_aligned(RTE_CACHE_LINE_SIZE);
+};
 
 extern UINT _fx_partition_offset_calculate(void  *partition_sector, UINT partition,
     ULONG *partition_start, ULONG *partition_size);
 
-static char media_buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
 static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
 static struct object_pool filex_fds_pool;
+
+static struct dir_private filex_dirs[CONFIG_FILEX_MAX_DIRS];
+static struct object_pool filex_dirs_pool;
+
+static struct filex_instance filex_inst[CONFIG_FILEX_MAX_INSTANCE];
+static struct object_pool filex_inst_pool;
 
 static int filex_media_write(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
     struct device *dev = (struct device *)media_ptr->fx_media_driver_info;
@@ -59,7 +75,6 @@ static int filex_media_read(FX_MEDIA *media_ptr, ULONG sector_start, ULONG secto
     req.blkno  = sector_start;
     req.blkcnt = sector_num;
     req.buffer = media_ptr->fx_media_driver_buffer;
-
     return blkdev_request(dev, &req);
 }
 
@@ -148,7 +163,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
         if (err == FX_SUCCESS)
             created = true;
         else if (err != FX_ALREADY_CREATED) {
-            printk("%s: failed(%d) to create file(%s) \n", __func__, err, FX_PATH(file_name));
+            pr_err("%s: failed(%d) to create file(%s) \n", __func__, err, FX_PATH(file_name));
             return FX_ERR(err);
         }
     }
@@ -169,7 +184,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
             return 0;
         }
 
-        printk("%s: open file(%s) failed(%d)\n", __func__, FX_PATH(file_name), err);
+        pr_dbg("%s: open file(%s) failed(%d)\n", __func__, FX_PATH(file_name), err);
         object_free(&filex_fds_pool, fxp);
         return _FX_ERR(err);
     }
@@ -257,22 +272,22 @@ static int filex_fs_sync(struct fs_file *fp) {
 }
 
 static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
-    struct fs_class *fs = dp->vfs;
-    struct dir_private *dir;
-    int err;
+    UINT err;
     
-    dir = kmalloc(sizeof(*dir), 0);
+     struct dir_private *dir = object_allocate(&filex_dirs_pool);
     if (dir == NULL)
         return -ENOMEM;
 
-    err = fx_directory_local_path_set(fs->fs_data, &dir->path, FX_PATH(abs_path));
+    struct fs_class *fs = dp->vfs;
+    err = fx_directory_local_path_set(fs->fs_data, &dir->path, 
+        FX_PATH(abs_path));
     if (err == FX_SUCCESS) {
         dir->first = true;
         dp->dirp = dir;
         return 0;
     }
 
-    kfree(dir);
+    object_free(&filex_dirs_pool, dir);
     return FX_ERR(err);
 }
 
@@ -311,7 +326,7 @@ static int filex_fs_closedir(struct fs_dir *dp) {
     if (dir) {
         struct fs_class *fs = dp->vfs;
         fx_directory_local_path_clear(fs->fs_data);
-        kfree(dir);
+        object_free(&filex_dirs_pool, dir);
         dp->dirp = NULL;
     }
 
@@ -320,7 +335,6 @@ static int filex_fs_closedir(struct fs_dir *dp) {
 
 static int filex_fs_mount(struct fs_class *fs) {
     struct device *dev;
-    FX_MEDIA *media;
     UINT err;
 
     dev = device_find(fs->storage_dev);
@@ -329,22 +343,22 @@ static int filex_fs_mount(struct fs_class *fs) {
 
     UINT blksz = 0;
     device_control(dev, BLKDEV_IOC_GET_BLKSIZE, &blksz);
-    if (blksz == 0 || blksz > 4096)
+    if (blksz == 0 || blksz > 4096 || blksz > CONFIG_FILEX_MEDIA_BUFFER_SIZE)
         return -EIO;
 
-    media = kzalloc(sizeof(*media) + RTE_CACHE_LINE_SIZE + blksz,GMF_KERNEL);
-    if (media == NULL)
+    struct filex_instance *fx = object_allocate(&filex_inst_pool);
+    if (fx == NULL)
         return -ENOMEM;
-    
-    void *media_buffer = media + 1;
-    media_buffer = (void *)RTE_ALIGN((uintptr_t)media_buffer, RTE_CACHE_LINE_SIZE);
 
-    err = fx_media_open(fs->fs_data, (CHAR *)dev->name, filex_fs_driver, 
-        dev, media_buffer, blksz);
+    memset(&fx->media, 0, sizeof(fx->media));
+    err = fx_media_open(&fx->media, (CHAR *)dev->name, filex_fs_driver, 
+        dev, fx->buffer, sizeof(fx->buffer));
     if (err) {
-        kfree(media);
+        object_free(&filex_inst_pool, fx);
         return _FX_ERR(err);
     }
+
+    fs->fs_data = &fx->media;
 
     return 0;
 }
@@ -352,7 +366,14 @@ static int filex_fs_mount(struct fs_class *fs) {
 static int filex_fs_unmount(struct fs_class *fs) {
     UINT err;
 
+    if (fs->fs_data == NULL)
+        return -ENODATA;
+
     err = fx_media_close(fs->fs_data);
+    if (err == FX_SUCCESS) {
+        object_free(&filex_inst_pool, fs->fs_data);
+        fs->fs_data = NULL;
+    }
     return FX_ERR(err);
 }
 
@@ -424,12 +445,16 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
     if (blkcnt == 0 || blksz == 0 || blksz > 4096)
         return -EINVAL;
 
-    FX_MEDIA media = {0};
-    err = fx_media_format(&media,
+    struct filex_instance *fx = object_allocate(&filex_inst_pool);
+    if (fx == NULL)
+        return -ENOMEM;
+
+    memset(&fx->media, 0, sizeof(fx->media));
+    err = fx_media_format(&fx->media,
                     filex_fs_driver,               // Driver entry
                     dev, // RAM disk memory pointer
-                    (UCHAR *)media_buffer,     // Media buffer pointer
-                    sizeof(media_buffer),   // Media buffer size
+                    (UCHAR *)fx->buffer,     // Media buffer pointer
+                    sizeof(fx->buffer),   // Media buffer size
                     "exfat",                // Volume Name
                     1,                   // Number of FATs
                     32,               // Directory Entries
@@ -440,7 +465,9 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
                     1,                            // Heads
                     1);               // Sectors per track
     if (err == FX_SUCCESS)
-        err = fx_media_flush(&media);
+        err = fx_media_flush(&fx->media);
+
+    object_free(&filex_inst_pool, fx);
 
     return FX_ERR(err);
 }
@@ -470,8 +497,15 @@ static const struct fs_operations fs_ops = {
 static int fs_filex_init(void) {
     fx_system_initialize();
 
+    object_pool_initialize(&filex_inst_pool, filex_inst, 
+        sizeof(filex_inst), sizeof(filex_inst[0]));
+
     object_pool_initialize(&filex_fds_pool, filex_fds, 
         sizeof(filex_fds), sizeof(filex_fds[0]));
+
+    object_pool_initialize(&filex_dirs_pool, filex_dirs, 
+        sizeof(filex_dirs), sizeof(filex_dirs[0]));
+
     return fs_register(FS_EXFATFS, &fs_ops);
 }
 
