@@ -52,7 +52,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/common)
 # Include the user's override file if required
 if (NOT LX_USER_FILE)
     message(STATUS "Using default lx_user.h file")
-    set(LX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/common/inc/lx_user_sample.h)
+    set(LX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/lx_user_config.h)
 else()
     message(STATUS "Using custom lx_user.h file from ${LX_USER_FILE}")
 endif()

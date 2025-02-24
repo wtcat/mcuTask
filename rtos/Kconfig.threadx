@@ -1,5 +1,6 @@
 menuconfig THREADX
     bool "Enable ThreadX RTOS"
+    default y
     help
         For maximum speed, the following should be defined:
             TX_MAX_PRIORITIES                       32

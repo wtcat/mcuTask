@@ -1,0 +1,7 @@
+menu "Subsystem"
+
+rsource "cli/Kconfig"
+rsource "fs/Kconfig"
+rsource "sdio/Kconfig"
+
+endmenu

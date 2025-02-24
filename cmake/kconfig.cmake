@@ -258,9 +258,6 @@ else()
   set(input_configs ${DOTCONFIG})
 endif()
 
-message(STATUS "DOTCONFIG=${DOTCONFIG} autoconf=${AUTOCONF_H}")
-message(STATUS "input_configs=${input_configs}")
-
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E env
   ${COMMON_KCONFIG_ENV_SETTINGS}

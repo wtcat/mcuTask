@@ -72,7 +72,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tsn)
 # If the user provided an override, copy it to the custom directory
 if (NOT NX_USER_FILE)
     message(STATUS "Using default nx_user.h file")
-    set(NX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/common/inc/nx_user_sample.h)
+    set(NX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/nx_user_config.h)
 else()
     message(STATUS "Using custom nx_user.h file from ${NX_USER_FILE}")
 endif()

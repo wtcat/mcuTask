@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.0.0...3.8.0 FATAL_ERROR)
 
 # Setup toolchain
 set(CROSS_COMPILER arm-none-eabi-)
-set(WKSAPCE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-
+set(WKSAPCE_PATH   ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
+set(BOARD          "stm32/h750_core")
 include(${WKSAPCE_PATH}/cmake/cortex_m7.cmake)
 include(${WKSAPCE_PATH}/cmake/utils.cmake)
 include(${WKSAPCE_PATH}/cmake/zephyr.cmake)
@@ -15,36 +15,23 @@ project(mcutask
 )
 
 include(${WKSAPCE_PATH}/cmake/kconfig.cmake)
-
-if (POLICY CMP0076)
-    cmake_policy(SET CMP0076 NEW)
-endif(POLICY CMP0076)
-
-# Configure options
-include(${WKSAPCE_PATH}/cmake/options.cmake)
-# set(CONFIG_NETX   1)
-# set(CONFIG_FILEX  1)
-# set(CONFIG_USBX   1)
-# set(CONFIG_LEVELX 1)
-# set(CONFIG_KMALLOC 1)
-# set(CONFIG_SUBSYS_CLI 1)
-# set(CONFIG_SUBSYS_SD  1)
-set(CONFIG_SUBSYS_FS 1)
+cmake_policy(SET CMP0076 NEW)
+cmake_policy(SET CMP0003 NEW)
 
 # Add configure files
 set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
 
 if (CONFIG_FILEX)
     set(FILEX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-    set(FX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/fx_user.h)
+    # set(FX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/fx_user.h)
 endif()
 if (CONFIG_NETX)
     set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-    set(NX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/nx_user.h)
+    # set(NX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/nx_user.h)
 endif()
 if (CONFIG_USBX)
     set(USBX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-    set(UX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/ux_user.h)
+    # set(UX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/ux_user.h)
 endif()
 
 # Add compile options

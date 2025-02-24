@@ -1,7 +1,7 @@
 menu "MCU Task"
-
-config SUBSYS_FS
-    bool "Enable filesystem"
-    default y
-
+rsource "rtos/Kconfig"
 endmenu
+
+rsource "board/shared/Kconfig"
+rsource "subsys/Kconfig"
+rsource "basework/Kconfig"

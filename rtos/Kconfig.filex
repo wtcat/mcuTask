@@ -1,10 +1,10 @@
 
-menuconfig FILE_SYSTEM_FILEXFS
+menuconfig FILEX
     bool "FileX filesystem"
     select SUBSYS_FS
     default n
 
-if FILE_SYSTEM_FILEXFS
+if FILEX
 
 config FS_FILEX_NUM_DIRS
     int "The maximum number of directories"
@@ -144,4 +144,4 @@ config FX_DISABLE_CONSECUTIVE_DETECT
     bool "Consecutive detect is disabled"
     default y
 
-endif #FILE_SYSTEM_FILEXFS
+endif #FILEX

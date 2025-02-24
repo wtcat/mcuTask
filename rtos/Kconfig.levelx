@@ -1,0 +1,55 @@
+menuconfig LEVELX
+    bool "Nor/Nand flash wear balance component"
+    default n
+
+if LEVELX
+
+config LX_DIRECT_READ
+    bool "Reading the NOR memory directly"
+    default n
+    help
+        Defined, this option bypasses the NOR flash driver read routine in favor or reading 
+        the NOR memory directly, resulting in a significant performance increase.
+
+config LX_FREE_SECTOR_DATA_VERIFY
+    bool "LevelX NOR instance open logic to verify free NOR sectors are all ones"
+    default n
+
+config LX_NAND_FLASH_MAX_METADATA_BLOCKS
+    int "The maximum of blocks that can be allocated for metadata"
+    default 4
+
+config LX_NOR_DISABLE_EXTENDED_CACHE
+    bool "Disabled the extended NOR cache"
+    default n
+
+config LX_NOR_EXTENDED_CACHE_SIZE
+    int "The maximum of sectors that can be cached in a NOR instance"
+    depends on !LX_NOR_DISABLE_EXTENDED_CACHE
+    default 8
+
+config LX_NOR_SECTOR_MAPPING_CACHE_SIZE
+    int "The logical sector mapping cache size"
+    default 16
+    help
+        By default this value is 16 and defines the logical sector mapping cache size.
+        Large values improve performance, but cost memory. The minimum size is 8 and all 
+        values must be a power of 2.
+
+config LX_THREAD_SAFE_ENABLE
+    bool "Enable thread safe"
+    default y
+    help
+        Defined, this makes LevelX thread-safe by using a ThreadX mutex object 
+        throughout the API.
+
+config LX_NOR_ENABLE_MAPPING_BITMAP
+    bool "Enable logical sector mapping bitmap in extended cache"
+    default y
+
+config LX_NOR_ENABLE_OBSOLETE_COUNT_CACHE
+    bool "Enable obsolete count cache"
+    default n
+
+
+endif #LEVELX

@@ -68,8 +68,8 @@
 /*                                                                        */
 /**************************************************************************/
 
-#ifndef TX_USER_H
-#define TX_USER_H
+#ifndef TX_USER_CONFIG_H
+#define TX_USER_CONFIG_H
 
 
 /* Define various build options for the ThreadX port.  The application should either make changes
@@ -112,7 +112,7 @@
 
 #define TX_MAX_PRIORITIES                       CONFIG_TX_MAX_PRIORITIES
 #define TX_MINIMUM_STACK                        CONFIG_TX_MINIMUM_STACK
-#define TX_THREAD_USER_EXTENSION
+// #define TX_THREAD_USER_EXTENSION
 #define TX_TIMER_THREAD_STACK_SIZE              CONFIG_TX_TIMER_THREAD_STACK_SIZE
 #define TX_TIMER_THREAD_PRIORITY                CONFIG_TX_TIMER_THREAD_PRIORITY
 
@@ -289,4 +289,4 @@
 /*  Override options for byte pool search delay to avoid thrashing. */
 #define TX_BYTE_POOL_DELAY_VALUE              CONFIG_TX_BYTE_POOL_DELAY_VALUE
 
-#endif /* TX_USER_H */
+#endif /* TX_USER_CONFIG_H */
