@@ -1,0 +1,221 @@
+menuconfig THREADX
+    bool "Enable ThreadX RTOS"
+    help
+        For maximum speed, the following should be defined:
+            TX_MAX_PRIORITIES                       32
+            TX_DISABLE_PREEMPTION_THRESHOLD
+            TX_DISABLE_REDUNDANT_CLEARING
+            TX_DISABLE_NOTIFY_CALLBACKS
+            TX_NOT_INTERRUPTABLE
+            TX_TIMER_PROCESS_IN_ISR
+            TX_REACTIVATE_INLINE
+            TX_DISABLE_STACK_FILLING
+            TX_INLINE_THREAD_RESUME_SUSPEND
+        For minimum size, the following should be defined:
+            TX_MAX_PRIORITIES                       32
+            TX_DISABLE_PREEMPTION_THRESHOLD
+            TX_DISABLE_REDUNDANT_CLEARING
+            TX_DISABLE_NOTIFY_CALLBACKS
+            TX_NO_FILEX_POINTER
+            TX_NOT_INTERRUPTABLE
+            TX_TIMER_PROCESS_IN_ISR
+
+if THREADX
+config TX_MAX_PRIORITIES
+    int "The maximum priority of thread"
+    range 0 1024
+    default 32
+    help
+        The priority must be a multiple of 32
+
+config TX_MINIMUM_STACK
+    int "The minimum stack size of thread"
+    default 512
+
+config TX_TIMER_TICKS_PER_SECOND
+    int "The system timer tick frequency"
+    default 1000
+    help
+        Define the common timer tick reference for use by other middleware components. The default
+        value is 10ms (i.e. 100 ticks, defined in tx_api.h), but may be replaced by a port-specific
+        version in tx_port.h or here.
+        Note: the actual hardware timer value may need to be changed (usually in tx_initialize_low_level).
+
+config TX_NO_FILEX_POINTER
+    bool "Disable filex extension for threadx"
+    depends on FILE_SYSTEM_FILEXFS
+    default n
+
+config TX_TIMER_PROCESS_IN_ISR
+    bool "Enable timer callback process in interrupt context"
+    default y
+    help
+        Determine if timer expirations application timers, timeouts, and tx_thread_sleep calls
+        should be processed within the a system timer thread or directly in the timer ISR.
+        By default, the timer thread is used. When the following is defined, the timer expiration
+        processing is done directly from the timer ISR, thereby eliminating the timer thread control
+        block, stack, and context switching to activate it.
+
+
+config TX_TIMER_THREAD_STACK_SIZE
+    int "The stack size of timer thread"
+    depends on !TX_TIMER_PROCESS_IN_ISR
+    default 2048
+
+config TX_TIMER_THREAD_PRIORITY
+    int "The priority of timer thread"
+    depends on !TX_TIMER_PROCESS_IN_ISR
+    default 8
+
+config TX_REACTIVATE_INLINE
+    bool "Inline timer reactive code to improve performance"
+    default n
+    help
+        Determine if in-line timer reactivation should be used within the timer expiration processing.
+        By default, this is disabled and a function call is used. When the following is defined,
+        reactivating is performed in-line resulting in faster timer processing but slightly larger
+        code size.
+
+config TX_ENABLE_STACK_CHECKING
+    bool "Enable thread stack overflow check"
+    help
+        Determine whether or not stack checking is enabled. By default, ThreadX stack checking is
+        disabled. When the following is defined, ThreadX thread stack checking is enabled.  If stack
+        checking is enabled (TX_ENABLE_STACK_CHECKING is defined), the TX_DISABLE_STACK_FILLING
+        define is negated, thereby forcing the stack fill which is necessary for the stack checking
+        logic.
+
+config TX_DISABLE_STACK_FILLING
+    bool "Disable thread stack filling"
+    default n if TX_ENABLE_STACK_CHECKING
+    default y
+    help
+        Determine is stack filling is enabled. By default, ThreadX stack filling is enabled,
+        which places an 0xEF pattern in each byte of each thread's stack.  This is used by
+        debuggers with ThreadX-awareness and by the ThreadX run-time stack checking feature.
+
+config TX_ENABLE_RANDOM_NUMBER_STACK_FILLING
+    bool "Enable thread stack filling by random number"
+    depends on TX_ENABLE_STACK_CHECKING
+    default n
+    help
+        Determine if random number is used for stack filling. By default, ThreadX uses a fixed
+        pattern for stack filling. When the following is defined, ThreadX uses a random number
+        for stack filling. This is effective only when TX_ENABLE_STACK_CHECKING is defined.
+
+config TX_DISABLE_PREEMPTION_THRESHOLD
+    bool "Disable thread preemption threshold"
+    default n
+    help
+        Determine if preemption-threshold should be disabled. By default, preemption-threshold is
+        enabled. If the application does not use preemption-threshold, it may be disabled to reduce
+        code size and improve performance.
+
+config TX_DISABLE_REDUNDANT_CLEARING
+    bool "Disable threadx global variable clearing at startup"
+    default y
+    help
+        Determine if global ThreadX variables should be cleared. If the compiler startup code clears
+        the .bss section prior to ThreadX running, the define can be used to eliminate unnecessary
+        clearing of ThreadX global variables.
+
+config TX_NO_TIMER
+    bool "Disable timer component"
+    select TX_TIMER_PROCESS_IN_ISR
+    default n
+    help
+        Determine if no timer processing is required. This option will help eliminate the timer
+        processing when not needed. The user will also have to comment out the call to
+        tx_timer_interrupt, which is typically made from assembly language in
+        tx_initialize_low_level. Note: if TX_NO_TIMER is used, the define TX_TIMER_PROCESS_IN_ISR
+        must also be used and tx_timer_initialize must be removed from ThreadX library.
+
+config TX_DISABLE_NOTIFY_CALLBACKS
+    bool "Disable notify callbacks"
+    default n
+    help
+        Determine if the notify callback option should be disabled. By default, notify callbacks are
+        enabled. If the application does not use notify callbacks, they may be disabled to reduce
+        code size and improve performance.
+
+config TX_INLINE_THREAD_RESUME_SUSPEND
+    bool "Inline thread resume and suspend routine to improve performance"
+    default y
+    help
+        Determine if the tx_thread_resume and tx_thread_suspend services should have their internal
+        code in-line. This results in a larger image, but improves the performance of the thread
+        resume and suspend services.
+
+config TX_NOT_INTERRUPTABLE
+    bool "Enable internal threadX code is non-interruptable"
+    default n
+    help
+        Determine if the internal ThreadX code is non-interruptable. This results in smaller code
+        size and less processing overhead, but increases the interrupt lockout time.
+
+config TX_ENABLE_EVENT_TRACE
+    bool "Enable trace event logging"
+    default n
+    help
+        Determine if the trace event logging code should be enabled. This causes slight increases in
+        code size and overhead, but provides the ability to generate system trace information which
+        is available for viewing in TraceX.
+
+config TX_BLOCK_POOL_ENABLE_PERFORMANCE_INFO
+    bool "Enable byte pool performance gathering"
+    default n
+    help
+        Determine if byte pool performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various byte pool performance information.
+
+config TX_EVENT_FLAGS_ENABLE_PERFORMANCE_INFO
+    bool "Enable event flags performance gathering"
+    default n
+    help
+        Determine if event flags performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various event flags performance information.
+
+config TX_MUTEX_ENABLE_PERFORMANCE_INFO
+    bool "Enable mutex performance gathering"
+    default n
+    help
+        Determine if mutex performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various mutex performance information.
+
+config TX_QUEUE_ENABLE_PERFORMANCE_INFO
+    bool "Enable queue performance gathering"
+    default n
+    help
+        Determine if queue performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various queue performance information.
+
+config TX_SEMAPHORE_ENABLE_PERFORMANCE_INFO
+    bool "Enable semaphore performance gathering"
+    default n
+    help
+        Determine if semaphore performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various semaphore performance information.
+
+config TX_THREAD_ENABLE_PERFORMANCE_INFO
+    bool "Enable thread performance gathering"
+    default n
+    help
+        Determine if thread performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various thread performance information.
+    
+config TX_TIMER_ENABLE_PERFORMANCE_INFO
+    bool "Enable timer performance gathering"
+    default n
+    help
+        Determine if timer performance gathering is required by the application. When the following is
+        defined, ThreadX gathers various timer performance information.
+
+config TX_BYTE_POOL_MULTIPLE_BLOCK_SEARCH
+    int "Override options for byte pool searches of multiple blocks"
+    default 20
+
+config TX_BYTE_POOL_DELAY_VALUE
+    int "Override options for byte pool search delay to avoid thrashing"
+    default 3
+
+endif #THREADX

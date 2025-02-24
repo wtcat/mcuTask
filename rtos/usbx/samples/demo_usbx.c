@@ -177,21 +177,21 @@ UX_SLAVE_CLASS_DPUMP_PARAMETER  parameter;
         error_handler();
 
     /* The code below is required for installing the host portion of USBX.  */
-    status =  ux_host_stack_initialize(UX_NULL);
+    status =  _ux_host_stack_initialize(UX_NULL);
 
     /* Check for error.  */
     if (status != UX_SUCCESS)
         error_handler();
 
     /* Register all the host class drivers for this USBX implementation.  */
-    status =  ux_host_stack_class_register(_ux_system_host_class_dpump_name, ux_host_class_dpump_entry);
+    status =  _ux_host_stack_class_register(_ux_system_host_class_dpump_name, ux_host_class_dpump_entry);
 
     /* Check for error.  */
     if (status != UX_SUCCESS)
         error_handler();
 
     /* Register all the USB host controllers available in this system */
-    status =  ux_host_stack_hcd_register(_ux_system_host_hcd_simulator_name, ux_hcd_sim_host_initialize,0,0);
+    status =  _ux_host_stack_hcd_register(_ux_system_host_hcd_simulator_name, ux_hcd_sim_host_initialize,0,0);
 
     /* Check for error.  */
     if (status != UX_SUCCESS)

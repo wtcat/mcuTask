@@ -53,7 +53,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/common)
 # If the user provided an override, copy it to the custom directory
 if (NOT TX_USER_FILE)
     message(STATUS "Using default tx_user.h file")
-    set(TX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/common/inc/tx_user_sample.h)
+    set(TX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/tx_user_config.h)
 else()
     message(STATUS "Using custom tx_user.h file from ${TX_USER_FILE}")
 endif()    

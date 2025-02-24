@@ -1,3 +1,4 @@
 stm32/ART-PI/build/*
 board/stm32/**/build/*
 board/**/build/*
+scripts/kconfig/__pycache__/*

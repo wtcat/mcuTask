@@ -51,7 +51,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/common)
 # Include the user's override file if required
 if (NOT FX_USER_FILE)
 message(STATUS "Using default fx_user.h file")
-set(FX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/common/inc/fx_user_sample.h)
+set(FX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/fx_user_config.h)
 else()
     message(STATUS "Using custom fx_user.h file from ${FX_USER_FILE}")
 endif()
