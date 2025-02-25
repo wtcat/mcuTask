@@ -19,20 +19,11 @@ cmake_policy(SET CMP0076 NEW)
 cmake_policy(SET CMP0003 NEW)
 
 # Add configure files
-set(TX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
+set(TX_USER_FILE        ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
+set(FILEX_CUSTOM_PORT   ${CMAKE_CURRENT_SOURCE_DIR}/port)
+set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
+set(USBX_CUSTOM_PORT    ${CMAKE_CURRENT_SOURCE_DIR}/port)
 
-if (CONFIG_FILEX)
-    set(FILEX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-    # set(FX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/fx_user.h)
-endif()
-if (CONFIG_NETX)
-    set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-    # set(NX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/nx_user.h)
-endif()
-if (CONFIG_USBX)
-    set(USBX_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-    # set(UX_USER_FILE ${CMAKE_CURRENT_SOURCE_DIR}/port/ux_user.h)
-endif()
 
 # Add compile options
 include_dirs(
@@ -42,6 +33,7 @@ include_dirs(
     ${CMAKE_CURRENT_SOURCE_DIR}/port
 )
 add_compile_options(
+    -imacros ${AUTOCONF_H}
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1

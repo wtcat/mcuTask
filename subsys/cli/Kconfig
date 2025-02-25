@@ -1,0 +1,9 @@
+
+menuconfig SUBSYS_CLI
+    bool "Enable command interface"
+    default n
+
+if SUBSYS_CLI
+
+
+endif

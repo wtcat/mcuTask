@@ -22,9 +22,6 @@
 #include <drivers/blkdev.h>
 #include <drivers/sdio/mmcsd_core.h>
 
-#ifndef CONFIG_MMCSD_MAX_PARTITION
-#define CONFIG_MMCSD_MAX_PARTITION 16
-#endif
 
 #ifndef CONFIG_SECTOR_SIZE
 #define CONFIG_SECTOR_SIZE  512

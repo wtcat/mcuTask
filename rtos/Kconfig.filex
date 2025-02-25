@@ -6,6 +6,10 @@ menuconfig FILEX
 
 if FILEX
 
+config FS_FILEX_NUM_INSTANCE
+    int "The maximum number of filesystem instance"
+    default 1
+
 config FS_FILEX_NUM_DIRS
     int "The maximum number of directories"
     default 3

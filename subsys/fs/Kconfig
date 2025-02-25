@@ -1,0 +1,8 @@
+menuconfig SUBSYS_FS
+    bool "Enable filesytem"
+    default n
+
+if SUBSYS_FS
+
+
+endif #SUBSYS_FS

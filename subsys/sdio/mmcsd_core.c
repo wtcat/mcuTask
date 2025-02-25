@@ -24,8 +24,8 @@
 #ifndef CONFIG_MMCSD_STACK_SIZE
 #define CONFIG_MMCSD_STACK_SIZE 2048
 #endif
-#ifndef CONFIG_MMCSD_THREAD_PREORITY
-#define CONFIG_MMCSD_THREAD_PREORITY 30
+#ifndef CONFIG_MMCSD_THREAD_PRIORITY
+#define CONFIG_MMCSD_THREAD_PRIORITY 30
 #endif
 
 static TX_QUEUE mmcsd_detect_q;
@@ -599,7 +599,7 @@ static int mmcsd_core_init(void) {
 
 	ret = tx_thread_spawn(&mmcsd_detect_thread, "mmcsd_detect", mmcsd_detect, NULL,
 						  &mmcsd_stack[0], CONFIG_MMCSD_STACK_SIZE,
-						  CONFIG_MMCSD_THREAD_PREORITY, CONFIG_MMCSD_THREAD_PREORITY,
+						  CONFIG_MMCSD_THREAD_PRIORITY, CONFIG_MMCSD_THREAD_PRIORITY,
 						  TX_NO_TIME_SLICE, TX_AUTO_START);
 	rte_assert(ret == TX_SUCCESS);
 

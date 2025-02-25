@@ -1,0 +1,12 @@
+config KMALLOC
+    bool "Enable kernel malloc"
+    default y
+
+config MALLOC
+    bool "Enable general malloc"
+    default n
+
+config CPLUSPLUS
+    bool "Enable C++ language support"
+    default n
+

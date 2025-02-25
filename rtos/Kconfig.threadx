@@ -65,7 +65,6 @@ config TX_TIMER_THREAD_STACK_SIZE
 
 config TX_TIMER_THREAD_PRIORITY
     int "The priority of timer thread"
-    depends on !TX_TIMER_PROCESS_IN_ISR
     default 8
 
 config TX_REACTIVATE_INLINE

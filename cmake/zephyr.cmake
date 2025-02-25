@@ -538,7 +538,7 @@ function(zephyr_append_cmake_library library)
       "https://docs.zephyrproject.org/latest/guides/modules.html"
     )
   endif()
-  set_property(GLOBAL APPEND PROPERTY ZEPHYR_LIBS ${library})
+  set_property(GLOBAL APPEND PROPERTY common_interface ${library})
 endfunction()
 
 # Add the imported library 'library_name', located at 'library_path' to the

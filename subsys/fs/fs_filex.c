@@ -21,19 +21,6 @@
 #define FX_ERR(_err)   ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
 
-#ifndef CONFIG_FILEX_MEDIA_BUFFER_SIZE
-#define CONFIG_FILEX_MEDIA_BUFFER_SIZE 4096
-#endif
-#ifndef CONFIG_FILEX_MAX_FILES
-#define CONFIG_FILEX_MAX_FILES 1
-#endif
-#ifndef CONFIG_FILEX_MAX_DIRS
-#define CONFIG_FILEX_MAX_DIRS 3
-#endif
-#ifndef CONFIG_FILEX_MAX_INSTANCE
-#define CONFIG_FILEX_MAX_INSTANCE 1
-#endif
-
 struct dir_private {
     FX_LOCAL_PATH path;
     bool first;
@@ -41,19 +28,19 @@ struct dir_private {
 
 struct filex_instance {
     FX_MEDIA media;
-    char buffer[CONFIG_FILEX_MEDIA_BUFFER_SIZE]  __rte_aligned(RTE_CACHE_LINE_SIZE);
+    char buffer[CONFIG_FS_FILEX_MEDIA_BUFFER_SIZE]  __rte_aligned(RTE_CACHE_LINE_SIZE);
 };
 
 extern UINT _fx_partition_offset_calculate(void  *partition_sector, UINT partition,
     ULONG *partition_start, ULONG *partition_size);
 
-static FX_FILE filex_fds[CONFIG_FILEX_MAX_FILES];
+static FX_FILE filex_fds[CONFIG_FS_FILEX_NUM_FILES];
 static struct object_pool filex_fds_pool;
 
-static struct dir_private filex_dirs[CONFIG_FILEX_MAX_DIRS];
+static struct dir_private filex_dirs[CONFIG_FS_FILEX_NUM_DIRS];
 static struct object_pool filex_dirs_pool;
 
-static struct filex_instance filex_inst[CONFIG_FILEX_MAX_INSTANCE];
+static struct filex_instance filex_inst[CONFIG_FS_FILEX_NUM_INSTANCE];
 static struct object_pool filex_inst_pool;
 
 static int filex_media_write(FX_MEDIA *media_ptr, ULONG sector_start, ULONG sector_num) {
@@ -343,7 +330,7 @@ static int filex_fs_mount(struct fs_class *fs) {
 
     UINT blksz = 0;
     device_control(dev, BLKDEV_IOC_GET_BLKSIZE, &blksz);
-    if (blksz == 0 || blksz > 4096 || blksz > CONFIG_FILEX_MEDIA_BUFFER_SIZE)
+    if (blksz == 0 || blksz > 4096 || blksz > CONFIG_FS_FILEX_MEDIA_BUFFER_SIZE)
         return -EIO;
 
     struct filex_instance *fx = object_allocate(&filex_inst_pool);
