@@ -8,8 +8,8 @@
  * SPDX-License-Identifier: MIT
  **************************************************************************/
 
-#ifndef FX_USER_H
-#define FX_USER_H
+#ifndef FX_USER_CONFIG_H
+#define FX_USER_CONFIG_H
 
 /* Define various build options for the FileX port.  The application should either make changes
    here by commenting or un-commenting the conditional compilation defined OR supply the defines
@@ -255,4 +255,4 @@
 #define FX_DISABLE_CONSECUTIVE_DETECT
 #endif
 
-#endif /* FX_USER_H */
+#endif /* FX_USER_CONFIG_H */

@@ -10,3 +10,11 @@ config CPLUSPLUS
     bool "Enable C++ language support"
     default n
 
+config HRTIMER
+    bool "Enable high resolution timer"
+    default n
+
+config TASK_RUNNER
+    bool "Enable task runner queue"
+    default y
+

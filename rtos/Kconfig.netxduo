@@ -1,0 +1,655 @@
+menuconfig NETX
+    bool "Enable tcp/ip protocol stack"
+    default n
+
+if NETX
+
+menu "Interface Options"
+config NX_MAX_PHYSICAL_INTERFACES
+    int "The number physical network interfaces present to NetX Duo IP layer"
+    default 1
+    help
+        Physical interface does not include loopback interface. By default 
+        there is at least one physical interface in the system.
+
+config NX_DISABLE_LOOPBACK_INTERFACE
+    bool "Disable loopback interface"
+    default n
+    help
+        This option disables NetX Duo support on the 127.0.0.1 loopback interface.
+
+config NX_ENABLE_INTERFACE_CAPABILITY
+    bool "Enable specify extra capability for link driver"
+    default n
+    help
+        If defined, the link driver is able to specify extra capability, 
+        such as checksum offloading features.
+endmenu
+
+
+menu "IPv4 Options"
+config NX_ENABLE_IP_RAW_PACKET_FILTER
+    bool "Enable raw packet filter"
+    default n
+    help
+        This option allows an application to install a filter for incoming raw packets. 
+        This feature is disabled by default.
+
+config NX_IP_RAW_MAX_QUEUE_DEPTH
+    int "The maximum number of RAW packets can be queued for receive"
+    default 20
+
+config NX_ENABLE_IP_STATIC_ROUTING
+    bool "Enable ip static routing feature"
+    default n
+
+config NX_IP_ROUTING_TABLE_SIZE
+    int "The size of IP routing table"
+    default 8
+
+config NX_ENABLE_IP_ID_RANDOMIZATION
+    bool "Enables random IP id"
+    default n
+    help
+        This option enables random IP id. By default IP id is increased by one for each packet.
+
+config NX_MAX_MULTICAST_GROUPS
+    int "The maximum number of multicast groups that can be joined"
+    default 7
+endmenu
+
+
+
+menu "IPv6 Options"
+config NX_DISABLE_IPV6
+    bool "Disable IPv6"
+    default n
+
+config NX_DISABLE_ICMPV6_REDIRECT_PROCESS
+    bool "Do not process IPv6 ICMP Redirect Messages"
+    default n
+
+config NX_DISABLE_ICMPV6_ROUTER_ADVERTISEMENT_PROCESS
+    bool "Do not process IPv6 Router Advertisement Messages"
+    default n
+
+config NX_DISABLE_ICMPV6_ROUTER_SOLICITATION
+    bool "Do not send IPv6 Router Solicitation Messages"
+    default n
+
+config NX_ICMPV6_MAX_RTR_SOLICITATIONS
+    int "the max number of router solicitations"
+    default 3
+    help
+        Define the max number of router solicitations a host sends until a router response
+        is received.  If no response is received, the host concludes no router is present.
+
+config NX_ICMPV6_RTR_SOLICITATION_INTERVAL
+    int "The interval between which the host sends router solicitations in seconds"
+    default 4
+
+config NX_ICMPV6_RTR_SOLICITATION_DELAY
+    int "The maximum delay for the initial router solicitation in seconds"
+    default 1
+
+config NX_DISABLE_ICMPV4_ERROR_MESSAGE
+    bool "Do not send ICMPv4 Error Messages"
+    default n
+
+config NX_DISABLE_ICMPV6_ERROR_MESSAGE
+    bool "Do not send ICMPv6 Error Messages"
+    default n
+
+config NX_DISABLE_IPV6_DAD
+    bool "Disable the Duplicate Address Detection"
+    default n
+    help
+        Disable the Duplicate Address Detection (DAD) protocol when configuring the host IP address.
+
+config NX_IPV6_STATELESS_AUTOCONFIG_CONTROL
+    bool "Enable IPv6 stateless address autoconfiguration"
+    default n
+    help
+        If defined, application is able to control whether or not to perform IPv6 stateless
+        address autoconfiguration with nxd_ipv6_stateless_address_autoconfig_enable() or
+        nxd_ipv6_stateless_address_autoconfig_disable() service.  If defined, the system starts
+        with IPv6 stateless address autoconfiguration enabled.
+
+config NX_ENABLE_IPV6_ADDRESS_CHANGE_NOTIFY
+    bool "Enable ipv6 address change notify"
+    default n
+    help
+        If enabled, application is able to install a callback function to get notified
+        when an interface IPv6 address is changed.
+
+config NX_DISABLE_IPV6_PURGE_UNUSED_CACHE_ENTRIES
+    bool "Disable IPv6 purge unused cache entires"
+    default n
+    help
+        This option prevents NetX Duo from removing stale (old) cache table entries
+        whose timeout has not expired so are otherwise still valid to make room for new entries
+        when the table is full.  Static and router entries are not purged.
+
+config NX_ENABLE_IPV6_MULTICAST
+    bool "Enable IPv6 multicast"
+    default n
+    help
+        This option enables simple IPv6 multicast group join/leave function
+
+config NX_ENABLE_IPV6_PATH_MTU_DISCOVERY
+    bool "Enable IPv6 path MTU discovery"
+    default n
+
+config NX_PATH_MTU_INCREASE_WAIT_INTERVAL
+    int "Path MTU increase wait interval"
+    default 600
+    help
+        Define wait interval in seconds to reset the path MTU for a destination
+        table entry after decreasing it in response to a packet too big error message.
+        RFC 1981 Section 5.4 states the minimum time to wait is 5 minutes and 
+        recommends 10 minutes.
+endmenu
+
+
+menu "Neighbor Discovery Options"
+config NX_MAX_MULTICAST_SOLICIT
+    int "The maximum number of multicast Neighbor Solicitation packets"
+    default 3
+    help
+        Define the maximum number of multicast Neighbor Solicitation packets
+        NetX Duo sends for a packet destination needing physical mapping
+        to the IP address.
+
+config NX_MAX_UNICAST_SOLICIT
+    int "The maximum number of unicast Neighbor Solicitation packets"
+    default 3
+    help
+        Define the maximum number of unicast Neighbor Solicitation packets
+        NetX Duo sends for a cache entry whose reachable time has expired
+        and gone "stale".
+
+config NX_REACHABLE_TIME
+    int "The length of time that reachable state"
+    default 30
+    help
+        Define the length of time, in seconds, that a Neighbor Cache table entry
+        remains in the reachable state before it becomes state.
+
+config NX_RETRANS_TIMER
+    int "Reretransmitting interval"
+    default 1000
+    help
+        Define the length of time, in milliseconds, between retransmitting
+        Neighbor Solicitation (NS) packets.
+
+config NX_DELAY_FIRST_PROBE_TIME
+    int "The Delay first probe timer interval"
+    default 5
+    help
+        Define the length of time, in seconds, for a Neighbor Cache entry
+        to remain in the Delay state.
+
+config NX_ND_MAX_QUEUE_DEPTH
+    int "The maximum queue depth for Neighbor Discovery to resolve an IPv6 address"
+    default 4
+    help
+        This defines specifies the maximum number of packets that can be queued while waiting for a
+        Neighbor Discovery to resolve an IPv6 address.
+
+config NX_IPV6_DAD_TRANSMITS
+    int "The maximum ICMPv6 Duplicate Address Detect Transmit"
+    default 3
+
+config NX_IPV6_NEIGHBOR_CACHE_SIZE
+    int "The number of neighbor cache entries"
+    default 16
+
+config NX_IPV6_DESTINATION_TABLE_SIZE
+    int "The size of the IPv6 destination table"
+    default 8
+
+config NX_IPV6_PREFIX_LIST_TABLE_SIZE
+    int "The size of the IPv6 prefix table"
+    default 8
+endmenu
+
+
+
+config NX_IPSEC_ENABLE
+    bool "Enable IP secure (IPSEC)"
+    default n
+
+config NX_NAT_ENABLE
+    bool "Enable net address translate (NAT)"
+    default n
+
+config NX_DISABLE_IGMPV2
+    bool "Dsiable IGMP v2"
+    default n
+
+
+menu "ARP Options"
+config NX_ARP_DEFEND_BY_REPLY
+    bool "ARP reply is sent when address conflict occurs"
+    default n
+
+config NX_ENABLE_ARP_MAC_CHANGE_NOTIFICATION
+    bool "Enable ARP mac change notification"
+    default n
+    help
+        To use the ARP collision handler to check for invalid ARP messages
+        matching existing entries in the table (man in the middle attack),
+        enable this feature.
+
+config NX_ARP_EXPIRATION_RATE
+    int "The number of seconds ARP entries remain valid"
+    default 0
+    help
+        This define specifies the number of seconds ARP entries remain valid. 
+        The default value of 0 disables aging of ARP entries.
+
+config NX_ARP_UPDATE_RATE
+    int "The number of seconds between ARP retries"
+    default 10
+
+config NX_ARP_MAXIMUM_RETRIES
+    int "The maximum number of ARP retries made without an ARP response"
+    default 18
+
+config NX_ARP_MAX_QUEUE_DEPTH
+    int "The maximum queue depth for ARP"
+    default 4
+    help
+        This defines specifies the maximum number of packets that can be queued 
+        while waiting for an ARP response.
+
+config NX_DISABLE_ARP_AUTO_ENTRY
+    bool "Disables entering ARP request information in the ARP cache"
+    default n
+
+config NX_ARP_DEFEND_INTERVAL
+    int "The ARP defend interval in second"
+    default 10
+endmenu
+
+
+
+menu "TCP Options"
+config NX_TCP_ACK_TIMER_RATE
+    int "TCP delayed ACK rate"
+    default 5
+    help
+        This define specifies how the number of system ticks (NX_IP_PERIODIC_RATE) is divided to calculate the
+        timer rate for the TCP delayed ACK processing. The default value is 5, which represents 200ms.
+
+config NX_TCP_FAST_TIMER_RATE
+    int "The fast TCP timer rate"
+    default 10
+    help
+        This define specifies how the number of system ticks (NX_IP_PERIODIC_RATE) is divided to calculate the
+        fast TCP timer rate. The fast TCP timer is used to drive various TCP timers, including the delayed ACK
+        timer. The default value is 10, which represents 100ms.
+
+config NX_TCP_TRANSMIT_TIMER_RATE
+    int "TCP transmit timer rate"
+    default 1
+    help
+        This define specifies how the number of system ticks (NX_IP_PERIODIC_RATE) is divided to calculate the
+        timer rate for the TCP transmit retry processing. The default value is 1, which represents 1 second.
+
+config NX_TCP_KEEPALIVE_INITIAL
+    int "TCP keepalive time in seconds"
+    default 7200
+    help
+        This define specifies how many seconds of inactivity before the keepalive timer activates.
+        The default value is 7200, which represents 2 hours.
+
+config NX_TCP_KEEPALIVE_RETRY
+    int "TCP keepalive retry period in seconds"
+    default 75
+    help
+        This define specifies how many seconds between retries of the keepalive timer assuming the other side
+        of the connection is not responding. The default value is 75, which represents 75 seconds between
+        retries.
+
+config NX_TCP_MAX_OUT_OF_ORDER_PACKETS
+    int "The maximum packets that are out of order"
+    default 8
+
+config NX_MAX_LISTEN_REQUESTS
+    int "The maximum number of TCP server listen requests"
+    default 10
+
+config NX_ENABLE_TCP_KEEPALIVE
+    bool "Enable tcp keepalive timer"
+    default n
+
+config NX_TCP_IMMEDIATE_ACK
+    bool "Enable tcp immediate ACK response"
+    default n
+
+config NX_TCP_ACK_EVERY_N_PACKETS
+    int "The number of TCP packets to receive before sending an ACK"
+    default 1 if NX_TCP_IMMEDIATE_ACK
+    default 2
+    help
+        This define specifies the number of TCP packets to receive before sending an ACK.
+        The default value is 2: ack every 2 packets.
+
+config NX_TCP_MAXIMUM_RETRIES
+    int "The maximum of TCP transmit retires"
+    default 10
+    help
+        his define specifies how many transmit retires are allowed before the connection is deemed broken.
+
+config NX_TCP_MAXIMUM_TX_QUEUE
+    int "The maximum depth of the TCP transmit queue"
+    default 20
+    help
+        This define specifies the maximum depth of the TCP transmit queue before TCP send requests are
+        suspended or rejected. The default value is 20, which means that a maximum of 20 packets can be in
+        the transmit queue at any given time.
+
+config NX_TCP_RETRY_SHIFT
+    int "TCP retry shift"
+    range 0 1
+    default 0
+    help
+        This define specifies how the retransmit timeout period changes between successive retries. If this
+        value is 0, the initial retransmit timeout is the same as subsequent retransmit timeouts. If this
+        value is 1, each successive retransmit is twice as long.
+
+config NX_TCP_KEEPALIVE_RETRIES
+    int "TCP keepalive retries"
+    default 10
+    help
+        This define specifies how many keepalive retries are allowed before the connection is deemed broken.
+
+config NX_ENABLE_TCP_WINDOW_SCALING
+    bool "Enable tcp window scaling"
+    default n
+    help
+        This option enables the TCP window scaling feature. (RFC 1323)
+
+config NX_DISABLE_RESET_DISCONNECT
+    bool "Disable the reset processing during disconnect"
+    default n
+    help
+        this option disables the reset processing during disconnect when the timeout value is
+        specified as NX_NO_WAIT.
+
+config NX_ENABLE_TCP_MSS_CHECK
+    bool "Enable tcp mss check"
+    default n
+    help
+        If defined, the incoming SYN packet (connection request) is checked for a minimum acceptable
+        MSS for the host to accept the connection.
+
+config NX_TCP_MSS_MINIMUM
+    int "The minimum value of tcp MSS"
+    default 128
+    help
+        The default minimum should be based on the host pplication packet pool payload,
+        socket transmit queue depth and relevant application specific parameters.
+
+config NX_ENABLE_TCP_QUEUE_DEPTH_UPDATE_NOTIFY
+    bool "Enable tcp queue depth update notify"
+    default n
+    help
+        NetX Duo has a notify callback for the transmit TCP socket queue decreased from
+        the maximum queue depth.
+
+config NX_ENABLE_LOW_WATERMARK
+    bool "Enable low watermark"
+    default n
+endmenu
+
+
+
+menu "Fragmentation options"
+config NX_DISABLE_FRAGMENTATION
+    bool "Disable IP fragmentation"
+    default n
+    help
+        This option disables both IPv4 and IPv6 fragmentation and reassembly logic.
+
+config NX_FRAGMENT_IMMEDIATE_ASSEMBLY
+    bool "Process IP fragmentation immediately"
+    default n
+
+config NX_IPV4_MAX_REASSEMBLY_TIME
+    int "The maximum time of IPv4 reassembly"
+    default 15
+
+config NX_IPV6_MAX_REASSEMBLY_TIME
+    int "The maximum time of IPv6 reassembly"
+    default 60
+endmenu
+
+
+
+menu "Checksum Options"
+config NX_DISABLE_ICMPV4_RX_CHECKSUM
+    bool "Disable ICMPv4 receive checkum"
+    default n
+    help
+        This option disables checksum logic on received ICMPv4 packets.
+
+config NX_DISABLE_ICMPV6_RX_CHECKSUM
+    bool "Disable ICMPv6 receive checkum"
+    default n
+    help
+        This option disables checksum logic on received ICMPv6 packets.
+
+config NX_DISABLE_ICMP_RX_CHECKSUM
+    bool "Disable ICMP receive checksum"
+    select NX_DISABLE_ICMPV4_RX_CHECKSUM
+    select NX_DISABLE_ICMPV6_RX_CHECKSUM
+    default n
+    help
+        This option disables checksum logic on received ICMPv4 or ICMPv6 packets.
+
+config NX_DISABLE_ICMPV4_TX_CHECKSUM
+    bool "Disable ICMPv4 transmit checksum"
+    default n
+    help
+        This option disables checksum logic on transmitted ICMPv4 packets.
+
+config NX_DISABLE_ICMPV6_TX_CHECKSUM
+    bool "Disable ICMPv6 transmit checksum"
+    default n
+    help
+        This option disables checksum logic on transmitted ICMPv6 packets.
+
+config NX_DISABLE_ICMP_TX_CHECKSUM
+    bool "Disable ICMP transmit checksum"
+    select NX_DISABLE_ICMPV4_TX_CHECKSUM
+    select NX_DISABLE_ICMPV6_TX_CHECKSUM
+    default n
+    help
+        This option disables checksum logic on transmitted ICMPv4 or ICMPv6 packets.
+
+config NX_DISABLE_IP_RX_CHECKSUM
+    bool "Disable IP receive checksum"
+    default n
+    help
+        This option disables checksum logic on received IP packets.
+
+config NX_DISABLE_IP_TX_CHECKSUM
+    bool "Disable IP transmit checksum"
+    default n
+    help
+        This option disables checksum logic on transmitted IP packets.
+
+config NX_DISABLE_TCP_RX_CHECKSUM
+    bool "Disable TCP receive checksum"
+    default n
+    help
+        This option disables checksum logic on received TCP packets.
+
+config NX_DISABLE_TCP_TX_CHECKSUM
+    bool "Disable TCP transmit checksum"
+    default n
+    help
+        This option disables checksum logic on transmitted TCP packets
+
+config NX_DISABLE_UDP_RX_CHECKSUM
+    bool "Disable UDP receive checksum"
+    default n
+    help
+        This option disables checksum logic on received UDP packets.
+
+config NX_DISABLE_UDP_TX_CHECKSUM
+    bool "Disable UDP transmit checksum"
+    default n
+    help
+        This option disables checksum logic on transmitted UDP packets. Note that
+        IPV6 requires the UDP checksum computed for outgoing packets. If this option is
+        defined, the IPv6 NetX Duo host must ensure the UDP checksum is computed elsewhere
+        before the packet is transmitted.
+endmenu
+
+
+
+menu "Statistics Options"
+config NX_DISABLE_ARP_INFO
+    bool "Disable ARP information gathering"
+    default n
+
+config NX_DISABLE_IP_INFO
+    bool "Disable IP information gathering"
+    default n
+
+config NX_DISABLE_ICMP_INFO
+    bool "Disable ICMP information gathering"
+    default n
+
+config NX_DISABLE_IGMP_INFO
+    bool "Disable IGMP information gathering"
+    default n
+
+config NX_DISABLE_PACKET_INFO
+    bool "Disable packet information gathering"
+    default n
+
+config NX_DISABLE_RARP_INFO
+    bool "Disable RARP information gathering"
+    default n
+
+config NX_DISABLE_TCP_INFO
+    bool "Disable TCP information gathering"
+    default n
+
+config NX_DISABLE_UDP_INFO
+    bool "Disable UDP information gathering"
+    default n
+endmenu
+
+
+
+menu "Packet Pool Options"
+config NX_PHYSICAL_HEADER
+    int "The size of the physical packet header"
+    default 16
+    help
+        This define specifies the size of the physical packet header. The default value is 16 (based on
+        a typical 16-byte Ethernet header).
+
+config NX_PHYSICAL_TRAILER
+    int "The size of the physical packet trailer"
+    default 4
+    help
+        This define specifies the size of the physical packet trailer and is typically used to reserve storage
+        for things like Ethernet CRCs, etc.
+
+config NX_DISABLE_RX_SIZE_CHECKING
+    bool "Disable receive size checking"
+    default n
+
+config NX_ENABLE_PACKET_DEBUG_INFO
+    bool "Enable packet debug information"
+    default n
+
+config NX_PACKET_HEADER_PAD
+    bool "Enable packet header PAD"
+    default n
+
+config NX_PACKET_HEADER_PAD_SIZE
+    int "The size of packet header PAD"
+    default 1
+
+config NX_DISABLE_PACKET_CHAIN
+    bool "Disable packet chain"
+    default n
+
+config NX_ENABLE_DUAL_PACKET_POOL
+    bool "Enable aux packet pool for IP instance"
+    default n
+    help
+        The IP instance manages two packet pools.
+endmenu
+
+
+
+config NX_DISABLE_ERROR_CHECKING
+    bool "Disable error checking"
+    default n
+    help
+        This option bypasses the basic NetX error checking. This define is typically used
+        after the application is fully debugged.
+
+config NX_DRIVER_DEFERRED_PROCESSING
+    bool "Enable driver deferred process packet"
+    default n
+    help
+        This option enables deferred driver packet handling. This allows the driver to place a raw
+        packet on the IP instance and have the driver's real processing routine called from the NetX internal
+        IP helper thread.
+
+config NX_ENABLE_SOURCE_ADDRESS_CHECK
+    bool "Enable source address check"
+    default n
+    help
+        Defined, the source address of incoming packet is checked. 
+
+config NX_ENABLE_EXTENDED_NOTIFY_SUPPORT
+    bool "Enable extended notify support"
+    default n
+    help
+        Defined, the extended notify support is enabled.  This feature adds additional callback/notify services
+        to NetX Duo API for notifying the application of socket events, such as TCP connection and disconnect
+        completion.  These extended notify functions are mainly used by the BSD wrapper.
+
+config NX_DISABLE_ASSERT
+    bool "Disable assert"
+    default y
+
+config NX_DISABLE_IPV4
+    bool "Disable IPv4 protocol"
+    default n
+
+config NX_ENABLE_ICMP_ADDRESS_CHECK
+    bool "Enable ICMP address check"
+    default n
+    help
+        Defined, the destination address of ICMP packet is checked. The default is disabled.
+        An ICMP Echo Request destined to an IP broadcast or IP multicast address will be silently discarded.
+
+config NX_MAX_STRING_LENGTH
+    int "The maximum lenght of string"
+    default 1024
+
+config NX_ENABLE_TCPIP_OFFLOAD
+    bool "Enable TCP/IP offload"
+    select NX_ENABLE_INTERFACE_CAPABILITY
+    default n
+
+config NX_ENABLE_VLAN
+    bool "Enable vlan support"
+    default n
+    help
+        Note: Require driver support to use APIs from this file.
+        A quick check in driver is to search for
+        NX_LINK_RAW_PACKET_SEND. VLAN APIs are not supported if not found.
+
+endif #NETX

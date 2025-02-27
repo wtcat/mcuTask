@@ -1,7 +1,5 @@
-menu "MCU Task"
-rsource "rtos/Kconfig"
-endmenu
 
-rsource "board/shared/Kconfig"
+rsource "rtos/Kconfig"
 rsource "subsys/Kconfig"
 rsource "basework/Kconfig"
+rsource "board/shared/Kconfig"

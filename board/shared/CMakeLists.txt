@@ -2,42 +2,38 @@
 
 include_dirs(.)
 
-target_sources(${PROJECT_NAME}
-    PRIVATE
+set(TARGET_SRCS
     platform.c
     device.c
     sysinit.c
     object_pool.c
-)
+    init_array.c)
 
-if (NOT CONFIG_SIMULATOR)
-target_sources(${PROJECT_NAME}
-    PRIVATE
-    taskrunner.c
-    init_array.c
-    cstub.c
-    irq.c
-    nanosleep.c
-)
+if (CONFIG_HRTIMER)
+    list(APPEND TARGET_SRCS nanosleep.c)
 endif()
 
 if (CONFIG_KMALLOC)
-target_sources(${PROJECT_NAME}
-    PRIVATE
-    kmalloc.c
-)
-endif()
-
-if (CONFIG_MALLOC)
-    target_sources(${PROJECT_NAME}
-        PRIVATE
-        malloc.c
-    )
+    list(APPEND TARGET_SRCS kmalloc.c)
 endif()
 
 if (CONFIG_CPLUSPLUS)
-    target_sources(${PROJECT_NAME}
-        PRIVATE
-        cppnew.cc
-    )
+    list(APPEND TARGET_SRCS cppnew.c)
 endif()
+
+if (CONFIG_MALLOC)
+    list(APPEND TARGET_SRCS malloc.c)
+endif()
+
+if (CONFIG_TASK_RUNNER)
+    list(APPEND TARGET_SRCS taskrunner.c)
+endif()
+
+if (NOT CONFIG_SIMULATOR)
+    list(APPEND TARGET_SRCS cstub.c irq.c)
+endif()
+
+target_sources(${PROJECT_NAME}
+    PRIVATE
+    ${TARGET_SRCS}
+)
