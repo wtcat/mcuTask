@@ -232,19 +232,25 @@
     UX_DEVICE_CLASS_HID_MAX_EVENTS_QUEUE and UX_DEVICE_CLASS_HID_EVENT_BUFFER_LENGTH are used to
     calculate and allocate the queue.
  */
-/* #define UX_DEVICE_CLASS_HID_ZERO_COPY  */
+#ifdef CONFIG_UX_DEVICE_CLASS_HID_ZERO_COPY
+#define UX_DEVICE_CLASS_HID_ZERO_COPY
+#endif
 
 /* Defined, it enables device CDC_ECM zero copy support (works if CDC_ECM owns endpoint buffer).
     Enabled, it requires that the NX IP default packet pool is in cache safe area, and buffer max
     size is larger than UX_DEVICE_CLASS_CDC_ECM_ETHERNET_PACKET_SIZE (1536).
  */
-/* #define UX_DEVICE_CLASS_CDC_ECM_ZERO_COPY  */
+#ifdef CONFIG_UX_DEVICE_CLASS_CDC_ECM_ZERO_COPY
+#define UX_DEVICE_CLASS_CDC_ECM_ZERO_COPY
+#endif
 
 /* Defined, it enables device RNDIS zero copy support (works if RNDIS owns endpoint buffer).
     Enabled, it requires that the NX IP default packet pool is in cache safe area, and buffer max
     size is larger than UX_DEVICE_CLASS_RNDIS_MAX_PACKET_TRANSFER_SIZE (1600).
  */
-/* #define UX_DEVICE_CLASS_RNDIS_ZERO_COPY  */
+#ifdef CONFIG_UX_DEVICE_CLASS_RNDIS_ZERO_COPY
+#define UX_DEVICE_CLASS_RNDIS_ZERO_COPY
+#endif
 
 /* Defined, it enables zero copy support (works if PRINTER owns endpoint buffer).
     Defined, it enables zero copy for bulk in/out endpoints (write/read). In this case, the endpoint
@@ -252,7 +258,9 @@
     buffer must meet device controller driver (DCD) buffer requirements (e.g., aligned and cache
     safe if buffer is for DMA).
  */
-/* #define UX_DEVICE_CLASS_PRINTER_ZERO_COPY  */
+#ifdef CONFIG_UX_DEVICE_CLASS_PRINTER_ZERO_COPY
+#define UX_DEVICE_CLASS_PRINTER_ZERO_COPY
+#endif
 
 
 /* Defined, this value represents the maximum number of bytes that can be received or transmitted

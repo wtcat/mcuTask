@@ -102,6 +102,47 @@ config UX_DEVICE_CLASS_CDC_ACM_ZERO_COPY
         buffer requirements (e.g., aligned and cache safe).
         It only works if UX_DEVICE_ENDPOINT_BUFFER_OWNER is 1 (endpoint buffer managed by class).
 
+config UX_DEVICE_CLASS_HID_ZERO_COPY
+    bool "Enables device HID zero copy"
+    default n
+    help
+        Defined, it enables device HID zero copy and flexible queue support (works if HID owns endpoint buffer).
+        Enabled, the internal queue buffer is directly used for transfer, the APIs are kept to keep
+        backword compatibility, to AVOID KEEPING BUFFERS IN APPLICATION.
+        Flexible queue introduces initialization parameter _event_max_number and _event_max_length,
+        so each HID function could have different queue settings.
+        _event_max_number could be 2 ~ UX_DEVICE_CLASS_HID_MAX_EVENTS_QUEUE.
+        Max of _event_max_length could be UX_DEVICE_CLASS_HID_EVENT_BUFFER_LENGTH.
+        If the initialization parameters are invalid (are 0s or exceed upper mentioned definition),
+        UX_DEVICE_CLASS_HID_MAX_EVENTS_QUEUE and UX_DEVICE_CLASS_HID_EVENT_BUFFER_LENGTH are used to
+        calculate and allocate the queue.
+
+config UX_DEVICE_CLASS_CDC_ECM_ZERO_COPY
+    bool "Enables device CDC_ECM zero copy"
+    default n
+    help
+        Defined, it enables device CDC_ECM zero copy support (works if CDC_ECM owns endpoint buffer).
+        Enabled, it requires that the NX IP default packet pool is in cache safe area, and buffer max
+        size is larger than UX_DEVICE_CLASS_CDC_ECM_ETHERNET_PACKET_SIZE (1536).
+
+config UX_DEVICE_CLASS_RNDIS_ZERO_COPY
+    bool "Enables device RNDIS zero copy"
+    default n
+    help
+        Defined, it enables device RNDIS zero copy support (works if RNDIS owns endpoint buffer).
+        Enabled, it requires that the NX IP default packet pool is in cache safe area, and buffer max
+        size is larger than UX_DEVICE_CLASS_RNDIS_MAX_PACKET_TRANSFER_SIZE (1600).
+
+config UX_DEVICE_CLASS_PRINTER_ZERO_COPY
+    bool "enables device printer zero copy support"
+    default n
+    help
+        Defined, it enables zero copy support (works if PRINTER owns endpoint buffer).
+        Defined, it enables zero copy for bulk in/out endpoints (write/read). In this case, the endpoint
+        buffer is not allocated in class, application must provide the buffer for read/write, and the
+        buffer must meet device controller driver (DCD) buffer requirements (e.g., aligned and cache
+        safe if buffer is for DMA).
+
 
 
 endif #USBX
