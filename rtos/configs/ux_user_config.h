@@ -110,8 +110,8 @@
 /*                                                                        */
 /**************************************************************************/
 
-#ifndef UX_USER_H
-#define UX_USER_H
+#ifndef UX_USER_CONFIG_H
+#define UX_USER_CONFIG_H
 
 
 /* Define various build options for the USBX port.  The application should either make changes
@@ -119,23 +119,17 @@
    though the compiler's equivalent of the -D option.  */
 
 /* Define USBX Generic Thread Stack Size.  */
-/* #define UX_THREAD_STACK_SIZE                                (2 * 1024) */
+#define UX_THREAD_STACK_SIZE                             CONFIG_UX_THREAD_STACK_SIZE
 
 /* Define USBX Host Enum Thread Stack Size. The default is to use UX_THREAD_STACK_SIZE */
-/* 
-#define UX_HOST_ENUM_THREAD_STACK_SIZE                      UX_THREAD_STACK_SIZE 
-*/
+#define UX_HOST_ENUM_THREAD_STACK_SIZE                   CONFIG_UX_HOST_ENUM_THREAD_STACK_SIZE 
 
 
 /* Define USBX Host HCD Thread Stack Size.  The default is to use UX_THREAD_STACK_SIZE */
-/*
-#define UX_HOST_HCD_THREAD_STACK_SIZE                       UX_THREAD_STACK_SIZE
-*/
+#define UX_HOST_HCD_THREAD_STACK_SIZE                    CONFIG_UX_HOST_HCD_THREAD_STACK_SIZE
 
 /* Define USBX Host HNP Polling Thread Stack Size. The default is to use UX_THREAD_STACK_SIZE */
-/*
-#define UX_HOST_HNP_POLLING_THREAD_STACK                    UX_THREAD_STACK_SIZE
-*/
+#define UX_HOST_HNP_POLLING_THREAD_STACK                 CONFIG_UX_HOST_HNP_POLLING_THREAD_STACK
 
 /* Override various options with default values already assigned in ux_api.h or ux_port.h. Please 
    also refer to ux_port.h for descriptions on each of these options.  */
@@ -149,19 +143,15 @@
 
 /* #define UX_PERIODIC_RATE 1000
 */
-#define UX_PERIODIC_RATE (TX_TIMER_TICKS_PER_SECOND)
+#define UX_PERIODIC_RATE (CONFIG_TX_TIMER_TICKS_PER_SECOND)
 
 /* Define control transfer timeout value in millisecond.
    The default is 10000 milliseconds.  */
-/*
-#define UX_CONTROL_TRANSFER_TIMEOUT                         10000
-*/
+#define UX_CONTROL_TRANSFER_TIMEOUT                         CONFIG_UX_CONTROL_TRANSFER_TIMEOUT
 
 /* Define non control transfer timeout value in millisecond.
    The default is 50000 milliseconds.  */
-/*
-#define UX_NON_CONTROL_TRANSFER_TIMEOUT                     50000
-*/
+#define UX_NON_CONTROL_TRANSFER_TIMEOUT                     CONFIG_UX_NON_CONTROL_TRANSFER_TIMEOUT
 
 
 /* Defined, this value is the maximum number of classes that can be loaded by USBX. This value
@@ -169,67 +159,57 @@
    particular implementation of USBX needs the hub class, the printer class, and the storage
    class, then the UX_MAX_CLASSES value can be set to 3 regardless of the number of devices 
    that belong to these classes.  */
+#define UX_MAX_CLASSES  CONFIG_UX_MAX_CLASSES
 
-/* #define UX_MAX_CLASSES  3
-*/
 
 
 /* Defined, this value is the maximum number of classes in the device stack that can be loaded by
    USBX.  */
+#define UX_MAX_SLAVE_CLASS_DRIVER    CONFIG_UX_MAX_SLAVE_CLASS_DRIVER
 
-/* #define UX_MAX_SLAVE_CLASS_DRIVER    1
-*/
 
 /* Defined, this value is the maximum number of interfaces in the device framework.  */
-
-/* #define UX_MAX_SLAVE_INTERFACES    16
-*/
+#define UX_MAX_SLAVE_INTERFACES    CONFIG_UX_MAX_SLAVE_INTERFACES
 
 /* Defined, this value represents the number of different host controllers available in the system. 
    For USB 1.1 support, this value will usually be 1. For USB 2.0 support, this value can be more 
    than 1. This value represents the number of concurrent host controllers running at the same time. 
    If for instance there are two instances of OHCI running, or one EHCI and one OHCI controller
    running, the UX_MAX_HCD should be set to 2.  */
+#define UX_MAX_HCD  CONFIG_UX_MAX_HCD
 
-/* #define UX_MAX_HCD  1
-*/
 
 
 /* Defined, this value represents the maximum number of devices that can be attached to the USB.
    Normally, the theoretical maximum number on a single USB is 127 devices. This value can be 
    scaled down to conserve memory. Note that this value represents the total number of devices 
    regardless of the number of USB buses in the system.  */
+#define UX_MAX_DEVICES  CONFIG_UX_MAX_DEVICES
 
-/* #define UX_MAX_DEVICES  127
-*/
 
 
 /* Defined, this value represents the current number of SCSI logical units represented in the device
    storage class driver.  */
+#define UX_MAX_SLAVE_LUN    CONFIG_UX_MAX_SLAVE_LUN
 
-/* #define UX_MAX_SLAVE_LUN    1
-*/
 
 
 /* Defined, this value represents the maximum number of SCSI logical units represented in the
    host storage class driver.  */
-   
-/* #define UX_MAX_HOST_LUN 1
-*/
+#define UX_MAX_HOST_LUN CONFIG_UX_MAX_HOST_LUN
+
 
 
 /* Defined, this value represents the maximum number of bytes received on a control endpoint in
    the device stack. The default is 256 bytes but can be reduced in memory constrained environments.  */
+#define UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH CONFIG_UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH
 
-/* #define UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH 256
-*/
 
 /* Defined, this value represents the endpoint buffer owner.
    0 - The default, endpoint buffer is managed by core stack. Each endpoint takes UX_SLAVE_REQUEST_DATA_MAX_LENGTH bytes.
    1 - Endpoint buffer managed by classes. In this case not all endpoints consume UX_SLAVE_REQUEST_DATA_MAX_LENGTH bytes.
 */
-
-#define UX_DEVICE_ENDPOINT_BUFFER_OWNER      0
+#define UX_DEVICE_ENDPOINT_BUFFER_OWNER      CONFIG_UX_DEVICE_ENDPOINT_BUFFER_OWNER
 
 /* Defined, it enables device CDC ACM zero copy for bulk in/out endpoints (write/read).
     Enabled, the endpoint buffer is not allocated in class, application must
@@ -237,7 +217,9 @@
     buffer requirements (e.g., aligned and cache safe).
     It only works if UX_DEVICE_ENDPOINT_BUFFER_OWNER is 1 (endpoint buffer managed by class).
  */
-/* #define UX_DEVICE_CLASS_CDC_ACM_ZERO_COPY  */
+#ifdef CONFIG_UX_DEVICE_CLASS_CDC_ACM_ZERO_COPY
+#define UX_DEVICE_CLASS_CDC_ACM_ZERO_COPY
+#endif
 
 /* Defined, it enables device HID zero copy and flexible queue support (works if HID owns endpoint buffer).
     Enabled, the internal queue buffer is directly used for transfer, the APIs are kept to keep

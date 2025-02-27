@@ -1,0 +1,107 @@
+menuconfig USBX
+    bool "Enable USB protocol stack"
+    default n
+
+if USBX
+
+config UX_THREAD_STACK_SIZE
+    int "The size of generic usb thread stack"
+    default 2048
+
+config UX_HOST_ENUM_THREAD_STACK_SIZE
+    int "Host Enum Thread Stack Size"
+    default UX_THREAD_STACK_SIZE
+
+config UX_HOST_HCD_THREAD_STACK_SIZE
+    int "Host HCD Thread Stack Size"
+    default UX_THREAD_STACK_SIZE
+
+config UX_HOST_HNP_POLLING_THREAD_STACK
+    int "Host HNP Polling Thread Stack Size"
+    default UX_THREAD_STACK_SIZE
+
+config UX_CONTROL_TRANSFER_TIMEOUT
+    int "Control transfer timeout value in millisecond"
+    default 10000
+
+config UX_NON_CONTROL_TRANSFER_TIMEOUT
+    int "Non-Control transfer timeout value in millisecond"
+    default 50000
+
+config UX_MAX_CLASSES
+    int "The maximum number of classes"
+    default 3
+    help
+        Defined, this value is the maximum number of classes that can be loaded by USBX. This value
+        represents the class container and not the number of instances of a class. For instance, if a
+        particular implementation of USBX needs the hub class, the printer class, and the storage
+        class, then the UX_MAX_CLASSES value can be set to 3 regardless of the number of devices 
+        that belong to these classes.
+
+config UX_MAX_SLAVE_CLASS_DRIVER
+    int "The maximum number of classes in the device stack"
+    default 1
+
+config UX_MAX_SLAVE_INTERFACES
+    int "The maximum number of interfaces in the device framework"
+    default 16
+
+config UX_MAX_HCD
+    int "The maximum number of host controllers"
+    default 1
+    help
+        Defined, this value represents the number of different host controllers available in the system. 
+        For USB 1.1 support, this value will usually be 1. For USB 2.0 support, this value can be more 
+        than 1. This value represents the number of concurrent host controllers running at the same time.
+        If for instance there are two instances of OHCI running, or one EHCI and one OHCI controller
+        running, the UX_MAX_HCD should be set to 2.
+
+config UX_MAX_DEVICES
+    int "The maximum number of devices"
+    default 127
+    help
+        Defined, this value represents the maximum number of devices that can be attached to the USB.
+        Normally, the theoretical maximum number on a single USB is 127 devices. This value can be
+        scaled down to conserve memory. Note that this value represents the total number of devices 
+        regardless of the number of USB buses in the system.
+
+config UX_MAX_SLAVE_LUN
+    int "The maximum number of slave SCSI logical units"
+    default 1
+    help
+        Defined, this value represents the maximum number of SCSI logical units represented in the
+        host storage class driver.
+
+config UX_MAX_HOST_LUN
+    int "The maximum number of host SCSI logical units"
+    default 1
+    help
+        Defined, this value represents the maximum number of SCSI logical units represented in the
+        host storage class driver.
+
+config UX_SLAVE_REQUEST_CONTROL_MAX_LENGTH
+    int "The maximum number of bytes received on a control endpoint in the device stack"
+    default 256
+
+config UX_DEVICE_ENDPOINT_BUFFER_OWNER
+    int "The device endpoint buffer owner"
+    range 0 1
+    default 0
+    help
+        Defined, this value represents the endpoint buffer owner.
+        0 - The default, endpoint buffer is managed by core stack. Each endpoint takes UX_SLAVE_REQUEST_DATA_MAX_LENGTH bytes.
+        1 - Endpoint buffer managed by classes. In this case not all endpoints consume UX_SLAVE_REQUEST_DATA_MAX_LENGTH bytes.
+
+config UX_DEVICE_CLASS_CDC_ACM_ZERO_COPY
+    bool "Enables device CDC ACM zero copy for bulk in/out endpoints"
+    default n
+    help
+        Defined, it enables device CDC ACM zero copy for bulk in/out endpoints (write/read).
+        Enabled, the endpoint buffer is not allocated in class, application must
+        provide the buffer for read/write, and the buffer must meet device controller driver (DCD)
+        buffer requirements (e.g., aligned and cache safe).
+        It only works if UX_DEVICE_ENDPOINT_BUFFER_OWNER is 1 (endpoint buffer managed by class).
+
+
+
+endif #USBX
