@@ -308,7 +308,7 @@ config UX_DEVICE_CLASS_DFU_ERROR_GET_ENABLE
 config UX_DEVICE_CLASS_DFU_STATUS_MODE
     int "DFU status mode in device class"
     range 0 1
-    default 1
+    default 0
     help
         Defined, this macro will change status mode.
         0 - simple mode,

@@ -9,7 +9,7 @@
  * 2024-05-25     HPMicro      add HS400 support
  */
 
-#define pr_fmt(fmt) "[SDIO]: " fmt
+#define pr_fmt(fmt) "[SDIO]: " fmt "\n"
 
 #include <errno.h>
 #include <string.h>
@@ -499,17 +499,17 @@ static int mmc_select_timing(struct mmcsd_card *card) {
 	int ret = 0;
 
 	if (card->flags & CARD_FLAG_HS400) {
-		pr_info("emmc: switch to HS400 mode\n");
+		pr_info("switch to HS400 mode");
 		ret = mmc_select_hs400(card);
 	} else if (card->flags & CARD_FLAG_HS200) {
-		pr_info("emmc: switch to HS200 mode\n");
+		pr_info("switch to HS200 mode");
 		ret = mmc_select_hs200(card);
 	} else if (card->flags & CARD_FLAG_HIGHSPEED_DDR) {
-		pr_info("emmc: switch to HIGH Speed DDR mode\n");
+		pr_info("switch to HIGH Speed DDR mode");
 		mmcsd_set_timing(card->host, MMCSD_TIMING_MMC_DDR52);
 		mmcsd_set_clock(card->host, card->hs_max_data_rate);
 	} else {
-		pr_info("emmc: switch to HIGH Speed mode\n");
+		pr_info("switch to HIGH Speed mode");
 		mmcsd_set_timing(card->host, MMCSD_TIMING_MMC_HS);
 		mmcsd_set_clock(card->host, card->hs_max_data_rate);
 	}

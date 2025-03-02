@@ -57,7 +57,7 @@ set (BOARD_SOURCES
     main.c
 )
 
-if (CONFIG_SUBSYS_SD)
+if (CONFIG_SUBSYS_SDIO)
     list(APPEND BOARD_SOURCES 
         stm32_sdmmc.c
     )

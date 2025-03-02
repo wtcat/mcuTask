@@ -433,7 +433,7 @@
    The value is 3 bytes long (max 0xFFFFFFu).
    By default the bwPollTimeout is 1 (means 1ms).
  */
-#define UX_DEVICE_CLASS_DFU_STATUS_POLLTIMEOUT           CONFIG_
+#define UX_DEVICE_CLASS_DFU_STATUS_POLLTIMEOUT           CONFIG_UX_DEVICE_CLASS_DFU_STATUS_POLLTIMEOUT
 
 /* Defined, this macro will enable custom request process callback.  */
 #ifdef CONFIG_UX_DEVICE_CLASS_DFU_CUSTOM_REQUEST_ENABLE

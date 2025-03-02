@@ -39,7 +39,7 @@ static void file_test(void) {
         goto _unmount;
 
     struct fs_file fd = {0};
-    err = fs_open(&fd, "/home/a/hello.txt", FS_O_CREATE | FS_O_WRITE);
+    err = fs_open(&fd, "/home/hello.txt", FS_O_CREATE | FS_O_WRITE);
     if (err)
         goto _unmount;
     fs_write(&fd, "hello world", 11);
@@ -47,7 +47,7 @@ static void file_test(void) {
 
     struct fs_file rfd = {0};
     char buffer[12] = {0};
-    err = fs_open(&rfd, "/home/a/hello.txt", FS_O_READ);
+    err = fs_open(&rfd, "/home/hello.txt", FS_O_READ);
     if (err)
         goto _unmount;
 
@@ -57,7 +57,7 @@ static void file_test(void) {
     fs_seek(&rfd, 0, FS_SEEK_SET);
 
     struct fs_stat stat;
-    fs_stat("/home/a/hello.txt", &stat);
+    fs_stat("/home/hello.txt", &stat);
     if ((size_t)stat.st_size != fsize)
         pr_out("fs_stat failed to get file size\n");
     
@@ -78,8 +78,6 @@ static void file_test(void) {
     fs_closedir(&dir);
 
 
-    fs_rename("/home/a", "/home/f");
-    fs_rename("/home/b", "/home/e");
     err = fs_opendir(&dir, "/home/");
     if (err)
         goto _unmount;
@@ -89,21 +87,9 @@ static void file_test(void) {
     }
     fs_closedir(&dir);
 
-    err = fs_unlink("/home/f/hello.txt");
-    if (err)
-        goto _unmount;
-
-    err = fs_unlink("/home/f");
-    if (err)
-        goto _unmount;
-
-    err = fs_stat("/home/f", &stat);
-    if (err == 0) {
-        pr_out("failed to unlink directory\n");
-    }
-
 _unmount:
-    fs_unmount("/home");
+    err = fs_unmount("/home");
+    pr_out("Unmount /home with error(%d)\n", err);
     return;
 }
 

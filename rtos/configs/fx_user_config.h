@@ -72,7 +72,7 @@
    FX_UPDATE_RATE_IN_SECONDS defined previously. By default, the ThreadX timer tick is 10ms,
    so the default value for this constant is 1000.  */
 
-/*#define FX_UPDATE_RATE_IN_TICKS         1000 */
+#define FX_UPDATE_RATE_IN_TICKS         CONFIG_FX_UPDATE_RATE_IN_TICKS //1000
 
 
 /* Defined, FileX is built without update to the time parameters.  */

@@ -9,8 +9,8 @@
 
 #include <fx_api.h>
 #include <basework/log.h>
-#include <drivers/blkdev.h>
 #include <subsys/fs/fs.h>
+#include <drivers/blkdev.h>
 
 
 #ifndef __ELASTERROR

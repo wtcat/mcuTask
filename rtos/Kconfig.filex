@@ -57,6 +57,17 @@ config FX_UPDATE_RATE_IN_SECONDS
     int "The number of seconds the time parameters are updated in FileX"
     default 10
 
+config FX_UPDATE_RATE_IN_TICKS
+    int "Filex timer update period"
+    default 100   if TX_TIMER_TICKS_PER_SECOND = 10
+    default 1000  if TX_TIMER_TICKS_PER_SECOND = 100
+    default 10000 if TX_TIMER_TICKS_PER_SECOND = 1000
+    default 1000
+    help
+        Defines the number of ThreadX timer ticks required to achieve the update rate specified by
+        FX_UPDATE_RATE_IN_SECONDS defined previously. By default, the ThreadX timer tick is 10ms,
+        so the default value for this constant is 1000.
+
 config FX_NO_TIMER
     bool "Disable timer for FileX to update time"
     default n

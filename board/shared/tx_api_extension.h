@@ -41,6 +41,9 @@ extern "C"{
 #define tx_thread_spawn(a, b, c, d, e, f, g, h, i, j) \
     tx_thread_create((a), (CHAR *)(b), (VOID(*)(ULONG))(void *)(c), (ULONG)(d), (e), (f), (g), (h), (i), (j))
 
+#define TX_THREAD_STACK_DEFINE(_name, _size, ...) \
+    ULONG _name[rte_div_roundup((_size), sizeof(ULONG))] __VA_ARGS__;
+
 #define TX_THREAD_DEFINE(_name, _size, ...) \
     struct __VA_ARGS__ {   \
         TX_THREAD task;  \

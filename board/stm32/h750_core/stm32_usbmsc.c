@@ -83,7 +83,8 @@ static int stm32_usbmsc_init(void) {
 
     /* SD media */
     storage_devlist[STORAGE_SD] = device_find("sdblk0");
-    rte_assert(storage_devlist[STORAGE_SD] != NULL);
+    if (storage_devlist[STORAGE_SD] == NULL)
+        return -ENODEV;
 
     storage = &class_storage.ux_slave_class_storage_parameter_lun[0];
     device_control(storage_devlist[STORAGE_SD], BLKDEV_IOC_GET_BLKCOUNT, &block_num);
