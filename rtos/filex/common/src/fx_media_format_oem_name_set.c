@@ -11,8 +11,8 @@
 
 /**************************************************************************/
 /**************************************************************************/
-/**                                                                       */
-/** FileX Component                                                       */
+/**                                                                       */ 
+/** FileX Component                                                       */ 
 /**                                                                       */
 /**   Media                                                               */
 /**                                                                       */
@@ -33,40 +33,40 @@
 extern UCHAR   _fx_media_format_oem_name[8];
 UINT  fx_media_format_oem_name_set(UCHAR new_oem_name[8]);
 
-/**************************************************************************/
-/*                                                                        */
-/*  FUNCTION                                               RELEASE        */
-/*                                                                        */
-/*    _fx_media_format_oem_name_set                       PORTABLE C      */
+/**************************************************************************/ 
+/*                                                                        */ 
+/*  FUNCTION                                               RELEASE        */ 
+/*                                                                        */ 
+/*    _fx_media_format_oem_name_set                       PORTABLE C      */ 
 /*                                                           6.1.5        */
 /*  AUTHOR                                                                */
 /*                                                                        */
 /*    William E. Lamie, Microsoft Corporation                             */
 /*                                                                        */
 /*  DESCRIPTION                                                           */
-/*                                                                        */
-/*    This function modifies the default OEM name for all formatting. The */
-/*    new OEM name must be 8 characters long - blank padded if necessary. */
-/*                                                                        */
-/*                                                                        */
-/*  INPUT                                                                 */
-/*                                                                        */
-/*    new_oem_name                          Pointer to new OEM name       */
-/*                                                                        */
-/*  OUTPUT                                                                */
-/*                                                                        */
-/*    Completion Status                                                   */
-/*                                                                        */
-/*  CALLS                                                                 */
-/*                                                                        */
-/*    None                                                                */
-/*                                                                        */
-/*  CALLED BY                                                             */
-/*                                                                        */
-/*    Application Code                                                    */
-/*                                                                        */
-/*  RELEASE HISTORY                                                       */
-/*                                                                        */
+/*                                                                        */ 
+/*    This function modifies the default OEM name for all formatting. The */ 
+/*    new OEM name must be 8 characters long - blank padded if necessary. */ 
+/*                                                                        */ 
+/*                                                                        */ 
+/*  INPUT                                                                 */ 
+/*                                                                        */ 
+/*    new_oem_name                          Pointer to new OEM name       */ 
+/*                                                                        */ 
+/*  OUTPUT                                                                */ 
+/*                                                                        */ 
+/*    Completion Status                                                   */ 
+/*                                                                        */ 
+/*  CALLS                                                                 */ 
+/*                                                                        */ 
+/*    None                                                                */ 
+/*                                                                        */ 
+/*  CALLED BY                                                             */ 
+/*                                                                        */ 
+/*    Application Code                                                    */ 
+/*                                                                        */ 
+/*  RELEASE HISTORY                                                       */ 
+/*                                                                        */ 
 /*    DATE              NAME                      DESCRIPTION             */
 /*                                                                        */
 /*  05-19-2020     William E. Lamie         Initial Version 6.0           */
@@ -79,7 +79,7 @@ UINT  fx_media_format_oem_name_set(UCHAR new_oem_name[8]);
 UINT  fx_media_format_oem_name_set(UCHAR new_oem_name[8])
 {
 
-UINT i;
+UINT    i;
 
 
     /* Simply copy the new OEM name into the default location.  */

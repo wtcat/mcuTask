@@ -113,6 +113,15 @@ UCHAR        destination_shortname[13];
         return(FX_MEDIA_NOT_OPEN);
     }
 
+#ifdef FX_ENABLE_EXFAT
+    /* Check if media format is exFAT.  */
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+
+        /* Return the not implemented error.  */
+        return(FX_NOT_IMPLEMENTED);
+    }
+#endif
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     FX_TRACE_IN_LINE_INSERT(FX_TRACE_UNICODE_FILE_CREATE, media_ptr, source_unicode_name, source_unicode_length, short_name, FX_TRACE_FILE_EVENTS, 0, 0)

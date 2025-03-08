@@ -94,11 +94,11 @@ ULONG64           ending_sector;
 ULONG             valid_bit_map;
 
 
-/* Extended port-specific processing macro, which is by default defined to white space.  */
-FX_UTILITY_LOGICAL_SECTOR_FLUSH_EXTENSION
+    /* Extended port-specific processing macro, which is by default defined to white space.  */
+    FX_UTILITY_LOGICAL_SECTOR_FLUSH_EXTENSION
 
-/* Calculate the ending sector.  */
-                  ending_sector =  starting_sector + sectors - 1;
+    /* Calculate the ending sector.  */
+    ending_sector =  starting_sector + sectors - 1;
 
     /* Pickup the number of dirty sectors currently in the cache.  */
     remaining_dirty =  media_ptr -> fx_media_sector_cache_dirty_count;

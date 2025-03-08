@@ -64,6 +64,7 @@
 /*  CALLED BY                                                             */
 /*                                                                        */
 /*    _fx_directory_entry_write                                           */
+/*    _fx_directory_exFAT_unicode_entry_write                             */
 /*                                                                        */
 /*  RELEASE HISTORY                                                       */
 /*                                                                        */

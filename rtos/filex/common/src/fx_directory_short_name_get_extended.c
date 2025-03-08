@@ -124,7 +124,7 @@ FX_DIR_ENTRY dir_entry;
 
         /* Ensure the short file name is NULL terminated.  */
         short_file_name[i] =  FX_NULL;
-
+        
         /* Check if the buffer is too short for the name.  */
         if ((i == (short_file_name_length - 1)) && (dir_entry.fx_dir_entry_short_name[i]))
         {

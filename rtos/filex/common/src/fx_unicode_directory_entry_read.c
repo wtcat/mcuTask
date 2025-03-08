@@ -293,7 +293,7 @@ UINT   u;
             /* Number of LFN cannot is 1-based.  Therefore it cannot be zero. */
             return(FX_FILE_CORRUPT);
         }
-        else
+        else 
         {
             /* Pickup the file name length.  */
             i = (number_of_lfns - 1) * FX_LONG_NAME_ENTRY_LEN;

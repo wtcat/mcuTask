@@ -163,9 +163,21 @@ FX_DIR_ENTRY dir_entry;
 #endif /* FX_ENABLE_FAULT_TOLERANT */
 
     /* Now write out the directory entry.  */
+#ifdef FX_ENABLE_EXFAT
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
 
-    status = _fx_directory_entry_write(media_ptr, &dir_entry);
+        status = _fx_directory_exFAT_entry_write(media_ptr, &dir_entry, UPDATE_FILE);
+    }
+    else
+    {
+#endif /* FX_ENABLE_EXFAT */
 
+        status = _fx_directory_entry_write(media_ptr, &dir_entry);
+
+#ifdef FX_ENABLE_EXFAT
+    }
+#endif /* FX_ENABLE_EXFAT */
 
 #ifdef FX_ENABLE_FAULT_TOLERANT
     /* Check for a bad status.  If the return status is not FX_SUCCESS, finish

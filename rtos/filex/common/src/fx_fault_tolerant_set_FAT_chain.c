@@ -92,8 +92,16 @@ FX_FAULT_TOLERANT_FAT_CHAIN *FAT_chain;
     /* Set FAT chain pointer. */
     FAT_chain = (FX_FAULT_TOLERANT_FAT_CHAIN *)(media_ptr -> fx_media_fault_tolerant_memory_buffer + FX_FAULT_TOLERANT_FAT_CHAIN_OFFSET);
 
+#ifdef FX_ENABLE_EXFAT
+    /* Check flag for bitmap. */
+    if (use_bitmap == FX_TRUE)
+    {
+        flag |= FX_FAULT_TOLERANT_FLAG_BITMAP_USED;
+    }
+#else
     /* Parameters not used. Avoid compiler warnings. */
     FX_PARAMETER_NOT_USED(use_bitmap);
+#endif /* FX_ENABLE_EXFAT */
 
 
     /* Reset checksum first. */

@@ -112,6 +112,15 @@ UCHAR        alpha, beta;
         return(FX_MEDIA_NOT_OPEN);
     }
 
+#ifdef FX_ENABLE_EXFAT
+    /* Check if media format is exFAT.  */
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+
+        /* Return the not implemented error.  */
+        return(FX_NOT_IMPLEMENTED);
+    }
+#endif
 
     /* Get the old short name.  */
     status = _fx_unicode_short_name_get(media_ptr, old_unicode_name, old_unicode_length, &old_dir_short_name[0]);

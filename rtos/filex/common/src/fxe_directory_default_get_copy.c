@@ -76,7 +76,7 @@ FX_CALLER_CHECKING_EXTERNS
 UINT  _fxe_directory_default_get_copy(FX_MEDIA *media_ptr, CHAR *return_path_name_buffer, UINT return_path_name_buffer_size)
 {
 
-UINT status;
+UINT    status;
 
 
     /* Check for a null media pointer or name buffer pointer.  */

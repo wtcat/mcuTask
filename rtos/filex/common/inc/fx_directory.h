@@ -110,6 +110,21 @@ UINT _fxe_directory_short_name_get_extended(FX_MEDIA *media_ptr, CHAR *long_file
 
 
 /* Define the internal Directory component function prototypes.  */
+#ifdef FX_ENABLE_EXFAT
+#define UPDATE_DELETE (0)
+#define UPDATE_FILE   (1)
+#define UPDATE_STREAM (2)
+#define UPDATE_NAME   (3)
+#define UPDATE_FULL   (4)
+
+UINT _fx_directory_entry_read_ex(FX_MEDIA *media_ptr, FX_DIR_ENTRY *source_dir, ULONG *entry, FX_DIR_ENTRY *destination_ptr, UINT hash);
+UINT _fx_directory_exFAT_entry_read(FX_MEDIA *media_ptr, FX_DIR_ENTRY *source_dir, ULONG *entry_ptr, FX_DIR_ENTRY *destination_ptr, UINT hash, UINT skip, UCHAR *unicode_name, UINT *unicode_len);
+UINT _fx_directory_exFAT_entry_write(FX_MEDIA *media_ptr, FX_DIR_ENTRY *entry_ptr, UCHAR update_level);
+UINT _fx_directory_exFAT_unicode_entry_write(FX_MEDIA *media_ptr, FX_DIR_ENTRY *entry_ptr, UCHAR update_level, USHORT *unicode_name,
+                                             UINT unicode_len);
+UINT _fx_directory_exFAT_free_search(FX_MEDIA *media_ptr, FX_DIR_ENTRY *directory_ptr, FX_DIR_ENTRY *entry_ptr);
+
+#endif /* FX_ENABLE_EXFAT */
 
 UINT  _fx_directory_entry_read(FX_MEDIA *media_ptr, FX_DIR_ENTRY *source_dir, ULONG *entry, FX_DIR_ENTRY *destination_ptr);
 UINT  _fx_directory_entry_write(FX_MEDIA *media_ptr, FX_DIR_ENTRY *entry_ptr);

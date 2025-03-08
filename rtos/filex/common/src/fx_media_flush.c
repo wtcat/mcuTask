@@ -150,7 +150,19 @@ FX_INT_SAVE_AREA
                 file_ptr -> fx_file_current_file_size;
 
             /* Write the directory entry to the media.  */
-            status = _fx_directory_entry_write(media_ptr, &(file_ptr -> fx_file_dir_entry));
+#ifdef FX_ENABLE_EXFAT
+            if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+            {
+                status = _fx_directory_exFAT_entry_write(
+                        media_ptr, &(file_ptr -> fx_file_dir_entry), UPDATE_STREAM);
+            }
+            else
+            {
+#endif /* FX_ENABLE_EXFAT */
+                status = _fx_directory_entry_write(media_ptr, &(file_ptr -> fx_file_dir_entry));
+#ifdef FX_ENABLE_EXFAT
+            }
+#endif /* FX_ENABLE_EXFAT */
 
             /* Check for a good status.  */
             if (status != FX_SUCCESS)
@@ -178,6 +190,15 @@ FX_INT_SAVE_AREA
     /* Flush changed sector(s) in the primary FAT to secondary FATs.  */
     _fx_utility_FAT_map_flush(media_ptr);
 
+#ifdef FX_ENABLE_EXFAT
+    if ((media_ptr -> fx_media_FAT_type == FX_exFAT) &&
+        (FX_TRUE == media_ptr -> fx_media_exfat_bitmap_cache_dirty))
+    {
+
+        /* Flush bitmap.  */
+        _fx_utility_exFAT_bitmap_flush(media_ptr);
+    }
+#endif /* FX_ENABLE_EXFAT */
 
     /* Flush the internal logical sector cache.  */
     status =  _fx_utility_logical_sector_flush(media_ptr, ((ULONG64) 1), (ULONG64) (media_ptr -> fx_media_total_sectors), FX_FALSE);

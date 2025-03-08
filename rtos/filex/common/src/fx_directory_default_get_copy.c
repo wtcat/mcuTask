@@ -78,9 +78,9 @@
 UINT  _fx_directory_default_get_copy(FX_MEDIA *media_ptr, CHAR *return_path_name_buffer, UINT return_path_name_buffer_size)
 {
 
-UINT  status;
-CHAR *return_path_name;
-UINT  path_name_length_with_null_terminator;
+UINT    status;
+CHAR    *return_path_name;
+UINT    path_name_length_with_null_terminator;
 
 
     /* Get the pointer to the path.  */

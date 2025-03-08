@@ -383,7 +383,7 @@ ULONG  changed_offset;
 #ifdef FX_ENABLE_FAULT_TOLERANT
     }
 #endif /* FX_ENABLE_FAULT_TOLERANT */
-
+    
     return(status);
 }
 

@@ -99,6 +99,15 @@ ULONG                  trace_timestamp;
         return(FX_MEDIA_NOT_OPEN);
     }
 
+#ifdef FX_ENABLE_EXFAT
+    /* Check if media format is exFAT.  */
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+
+        /* Return the not implemented error.  */
+        return(FX_NOT_IMPLEMENTED);
+    }
+#endif
 
     /* Set the destination unicode length to zero to indicate there is nothing in terms of a match.  */
     *destination_unicode_length =  0;

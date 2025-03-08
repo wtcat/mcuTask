@@ -125,7 +125,18 @@ FX_DIR_ENTRY dir_entry;
     dir_entry.fx_dir_entry_date =  ((year - FX_BASE_YEAR) << FX_YEAR_SHIFT) | (month << FX_MONTH_SHIFT) | day;
 
     /* Write the directory entry to the media.  */
-    status = _fx_directory_entry_write(media_ptr, &dir_entry);
+#ifdef FX_ENABLE_EXFAT
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+        status = _fx_directory_exFAT_entry_write(media_ptr, &dir_entry, UPDATE_FILE);
+    }
+    else
+    {
+#endif /* FX_ENABLE_EXFAT */
+        status = _fx_directory_entry_write(media_ptr, &dir_entry);
+#ifdef FX_ENABLE_EXFAT
+    }
+#endif /* FX_ENABLE_EXFAT */
 
     /* Release media protection.  */
     FX_UNPROTECT

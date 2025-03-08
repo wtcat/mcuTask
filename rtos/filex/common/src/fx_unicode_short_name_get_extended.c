@@ -95,6 +95,15 @@ FX_DIR_ENTRY dir_entry;
         return(FX_MEDIA_NOT_OPEN);
     }
 
+#ifdef FX_ENABLE_EXFAT
+    /* Check if media format is exFAT.  */
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+
+        /* Return the not implemented error.  */
+        return(FX_NOT_IMPLEMENTED);
+    }
+#endif
 
     /* Null terminate the short return name.  */
     destination_short_name[0] =  (UCHAR)0;

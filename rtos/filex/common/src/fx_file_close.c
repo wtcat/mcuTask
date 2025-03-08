@@ -162,7 +162,19 @@ FX_INT_SAVE_AREA
             file_ptr -> fx_file_current_file_size;
 
         /* Write the directory entry to the media.  */
-        status = _fx_directory_entry_write(media_ptr, &(file_ptr -> fx_file_dir_entry));
+#ifdef FX_ENABLE_EXFAT
+        if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+        {
+            status = _fx_directory_exFAT_entry_write(
+                    media_ptr, &(file_ptr -> fx_file_dir_entry), UPDATE_STREAM);
+        }
+        else
+        {
+#endif /* FX_ENABLE_EXFAT */
+            status = _fx_directory_entry_write(media_ptr, &(file_ptr -> fx_file_dir_entry));
+#ifdef FX_ENABLE_EXFAT
+        }
+#endif /* FX_ENABLE_EXFAT */
 
         /* Check for a good status.  */
         if (status != FX_SUCCESS)

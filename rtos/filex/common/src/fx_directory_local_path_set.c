@@ -200,23 +200,23 @@ FX_DIR_ENTRY dir_entry;
                         /* Copy from previous local to new local path.  */
                         local_path_ptr -> fx_path_string[i] =
                             ((FX_LOCAL_PATH *)_tx_thread_current_ptr -> tx_thread_filex_ptr) -> fx_path_string[i];
-
+                            
                         /* Determine if we are done.  */
                         if (local_path_ptr -> fx_path_string[i] == 0)
                         {
-
+                        
                             /* Are we not at the end of the string?  */
                             if (i < (FX_MAXIMUM_PATH - 1))
                             {
-
+                            
                                 /* Yes, break the loop.  */
                                 break;
                             }
                         }
-
+                        
                         /* Move to the next character.  */
                         i++;
-
+                        
                     } while (i < FX_MAXIMUM_PATH);
                 }
                 else
@@ -231,15 +231,15 @@ FX_DIR_ENTRY dir_entry;
                         /* Copy from the media default to new local path.  */
                         local_path_ptr -> fx_path_string[i] =
                             media_ptr -> fx_media_default_path.fx_path_string[i];
-
+                            
                         /* Determine if we are done.  */
                         if (local_path_ptr -> fx_path_string[i] == 0)
                         {
-
+                        
                             /* Are we not at the end of the string?  */
                             if (i < (FX_MAXIMUM_PATH - 1))
                             {
-
+                            
                                 /* Yes, break the loop.  */
                                 break;
                             }

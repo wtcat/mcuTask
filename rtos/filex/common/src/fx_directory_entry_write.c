@@ -328,11 +328,11 @@ ULONG  changed_offset;
             l++;
         }
 
-        /* Check if there is a dot in the name, but no extension in the short name.  In this case,
+        /* Check if there is a dot in the name, but no extension in the short name.  In this case, 
            we should create a mangled short name.  */
         if ((dotpos) && (shortname[8] == ' '))
         {
-
+        
             /* Something left.. the names do not match!  */
             match =  FX_FALSE;
         }
@@ -369,7 +369,7 @@ ULONG  changed_offset;
             /* Loop to build the numeric part of the name.  */
             for (l = 0; l < 4; l++)
             {
-
+                
                 /* Shift down the entry number based on the numeric position.  */
                 if (l == 0)
                 {
@@ -377,17 +377,17 @@ ULONG  changed_offset;
                 }
                 else if (l == 1)
                 {
-                    temp = ((entry >> 8) & 0xf);
+                     temp = ((entry >> 8) & 0xf);
                 }
                 else if (l == 2)
                 {
-                    temp = ((entry >> 4) & 0xf);
+                     temp = ((entry >> 4) & 0xf);
                 }
                 else
                 {
-                    temp = ((entry) & 0xf);
+                     temp = ((entry) & 0xf);
                 }
-
+                
                 /* Now build hex value.  */
                 if (temp > 9)
                     shortname[i++] =  (CHAR)('A' + (temp - 10));

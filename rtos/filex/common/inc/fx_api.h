@@ -680,6 +680,104 @@ VOID _fx_trace_event_update(TX_TRACE_BUFFER_ENTRY *event, ULONG timestamp, ULONG
 #endif
 
 
+#ifdef FX_ENABLE_EXFAT
+
+
+/* Define exFAT specific constants.  */
+
+#define FX_EF_MUST_BE_ZERO                     11       /* Must be Zero Area                  053 bytes */
+#define FX_EF_PARTITION_OFFSET                 64       /* Partition Offset                   008 bytes */
+#define FX_EF_VOLUME_LENGTH                    72       /* Number of sectors on the Partition 008 bytes */
+#define FX_EF_FAT_OFFSET                       80       /* Number of sectors before exFAT     004 bytes */
+#define FX_EF_FAT_LENGTH                       84       /* Each FAT length in Sectors         004 bytes */
+#define FX_EF_CLUSTER_HEAP_OFFSET              88       /* Number of Sectors Before Cluster   004 bytes
+                                                           Heap */
+#define FX_EF_CLUSTER_COUNT                    92       /* Number of Clusters in the Cluster  004 bytes
+                                                           Heap */
+#define FX_EF_FIRST_CLUSTER_OF_ROOT_DIR        96       /* Cluster index of the First         004 bytes
+                                                           Cluster of the ROOT Directory                */
+#define FX_EF_VOLUME_SERIAL_NUMBER             100      /* Volume Serial Number               004 bytes */
+#define FX_EF_FILE_SYSTEM_REVISION             104      /* File System  Revision              002 bytes */
+#define FX_EF_VOLUME_FLAGS                     106      /* Status of exFAT structures         002 bytes */
+#define FX_EF_BYTE_PER_SECTOR_SHIFT            108      /* log2(N),where N is the Number of   001 byte
+                                                           Bytes per Sector */
+#define FX_EF_SECTOR_PER_CLUSTER_SHIFT         109      /* log2(N),where N is the Number of   001 byte
+                                                           Sectors per Cluster */
+#define FX_EF_NUMBER_OF_FATS                   110      /* Number of FATs                     001 byte */
+#define FX_EF_DRIVE_SELECT                     111      /* Extended INT13h driver number      001 byte */
+#define FX_EF_PERCENT_IN_USE                   112      /* Percentage of Allocated Clusters   001 byte */
+#define FX_EF_RESERVED                         113      /* Reserved                           007 bytes */
+#define FX_EF_BOOT_CODE                        120      /* Boot code area                     390 bytes */
+
+#define FX_RESERVED_1_exFAT                    0xFFFFFFF8
+#define FX_RESERVED_2_exFAT                    0xFFFFFFFE
+#define FX_BAD_CLUSTER_exFAT                   0xFFFFFFF7
+#define FX_LAST_CLUSTER_exFAT                  0xFFFFFFFF
+
+#ifndef FX_MAX_EX_FAT_NAME_LEN
+#define FX_MAX_EX_FAT_NAME_LEN                 255      /* Only allowed value is 255 */
+#endif
+
+#ifndef BITS_PER_BYTE
+#define BITS_PER_BYTE                          8
+#endif
+#define BITS_PER_BYTE_SHIFT                    3
+
+
+#define FX_EXFAT_MAX_DIRECTORY_SIZE            (256 * 1024 * 1024)  /* 256 MB */
+#define FX_EXFAT_SIZE_OF_FAT_ELEMENT_SHIFT     2
+
+#define FX_EXFAT_BIT_MAP_NUM_OF_CACHED_SECTORS 1
+
+#define FX_EXFAT_BITMAP_CLUSTER_FREE           0
+#define FX_EXFAT_BITMAP_CLUSTER_OCCUPIED       1
+
+#ifndef FX_EXFAT_MAX_CACHE_SIZE
+#define FX_EXFAT_MAX_CACHE_SIZE                512
+#endif
+#define FX_EXFAT_BITMAP_CACHE_SIZE             FX_EXFAT_MAX_CACHE_SIZE
+
+/* exFAT System Area Layout */
+
+#define FX_EXFAT_FAT_MAIN_SYSTEM_AREA_SIZE     12
+
+#define FX_EXFAT_FAT_MAIN_BOOT_SECTOR_OFFSET   0
+#define FX_EXFAT_FAT_BACKUP_BOOT_SECTOR_OFFSET FX_EXFAT_FAT_MAIN_SYSTEM_AREA_SIZE
+
+#define FX_EXFAT_FAT_EXT_BOOT_SECTOR_OFFSET    1
+#define FX_EXFAT_FAT_OEM_PARAM_OFFSET          9
+#define FX_EXFAT_FAT_CHECK_SUM_OFFSET          11
+
+#define FX_EXFAT_FAT_NUM_OF_SYSTEM_AREAS       2
+
+
+/* Define exFAT format parameters.  */
+
+#define  EXFAT_MIN_NUM_OF_RESERVED_SECTORS     1
+#define  EXFAT_BOOT_REGION_SIZE                24
+#define  EXFAT_FAT_BITS                        32
+#define  EXFAT_FAT_FILE_SYS_REVISION           0x100
+#define  EXFAT_FAT_VOLUME_FLAG                 0x000
+#define  EXFAT_FAT_NUM_OF_FATS                 0x001
+#define  EXFAT_FAT_DRIVE_SELECT                0x080
+#define  EXFAT_FAT_VOLUME_NAME_FIELD_SIZE      11
+#define  EXFAT_BIT_MAP_FIRST_TABLE             0
+#define  EXFAT_LAST_CLUSTER_MASK               0xFFFFFFFF
+#define  EXFAT_DEFAULT_BOUNDARY_UNIT           128
+#define  EXFAT_NUM_OF_DIR_ENTRIES              2
+
+
+#define DIVIDE_TO_CEILING(a, b)                (((a) + (b) - 1) / (b))
+#define ALIGN_UP(a, b)                         (DIVIDE_TO_CEILING(a, b) * (b))
+
+#define FX_FAT12                               0x01
+#define FX_FAT16                               0x04
+#define FX_BIGDOS                              0x06
+#define FX_exFAT                               0x07
+#define FX_FAT32                               0x0B
+#define FX_NO_FAT                              0xFF
+
+#endif /* FX_ENABLE_EXFAT */
 
 
 /* Define the control block definitions for all system objects.  */
@@ -726,6 +824,13 @@ typedef struct FX_DIR_ENTRY_STRUCT
     ULONG   fx_dir_entry_last_search_byte_offset;                           /* Last offset in logical sector searched            */
     ULONG64 fx_dir_entry_next_log_sector;
 
+#ifdef FX_ENABLE_EXFAT
+    /* for exFAT */
+    CHAR    fx_dir_entry_dont_use_fat;                                      /* 0 bit - for current, 1st bit - for parent         */
+    UCHAR   fx_dir_entry_type;
+    ULONG64 fx_dir_entry_available_file_size;
+    ULONG   fx_dir_entry_secondary_count;
+#endif /* FX_ENABLE_EXFAT */
 } FX_DIR_ENTRY;
 
 typedef FX_DIR_ENTRY  *FX_DIR_ENTRY_PTR;
@@ -847,6 +952,38 @@ typedef struct FX_MEDIA_STRUCT
     ULONG64             fx_media_total_sectors;
     ULONG               fx_media_total_clusters;
 
+#ifdef FX_ENABLE_EXFAT
+    /* Define exFAT media information.  */
+    ULONG               fx_media_exfat_volume_serial_number;
+    UINT                fx_media_exfat_file_system_revision;
+    UINT                fx_media_exfat_volume_flag;
+    USHORT              fx_media_exfat_drive_select;
+    USHORT              fx_media_exfat_percent_in_use;
+    UINT                fx_media_exfat_bytes_per_sector_shift;
+    UINT                fx_media_exfat_sector_per_clusters_shift;
+
+    /* exFAT: Bitmap cache */
+    /* Pointer to Bitmap cache */
+    UCHAR               fx_media_exfat_bitmap_cache[FX_EXFAT_BITMAP_CACHE_SIZE];
+
+    /* Define beginning sector of Bitmap table.  */
+    ULONG               fx_media_exfat_bitmap_start_sector;
+
+    /* Define the cache size in sectors. Used for flash operation.  */
+    ULONG               fx_media_exfat_bitmap_cache_size_in_sectors;
+
+    /* Define the number of first cached cluster.  */
+    ULONG               fx_media_exfat_bitmap_cache_start_cluster;
+
+    /* Define the number of last cached cluster.  */
+    ULONG               fx_media_exfat_bitmap_cache_end_cluster;
+
+    /* Define how many clusters mapped in one sector.  */
+    UINT                fx_media_exfat_bitmap_clusters_per_sector_shift;
+
+    /* Define is Bitmap table was changed or not.  */
+    UINT                fx_media_exfat_bitmap_cache_dirty;
+#endif /* FX_ENABLE_EXFAT */
 
     UINT                fx_media_reserved_sectors;
     UINT                fx_media_root_sector_start;
@@ -1253,6 +1390,9 @@ typedef FX_FILE  *FX_FILE_PTR;
 #define fx_media_close                        _fx_media_close
 #define fx_media_flush                        _fx_media_flush
 #define fx_media_format                       _fx_media_format
+#ifdef FX_ENABLE_EXFAT
+#define fx_media_exFAT_format                 _fx_media_exFAT_format
+#endif /* FX_ENABLE_EXFAT */
 #define fx_media_open                         _fx_media_open
 #define fx_media_read                         _fx_media_read
 #define fx_media_space_available              _fx_media_space_available
@@ -1349,6 +1489,9 @@ typedef FX_FILE  *FX_FILE_PTR;
 #define fx_media_close                        _fxe_media_close
 #define fx_media_flush                        _fxe_media_flush
 #define fx_media_format                       _fxe_media_format
+#ifdef FX_ENABLE_EXFAT
+#define fx_media_exFAT_format                 _fxe_media_exFAT_format
+#endif /* FX_ENABLE_EXFAT */
 #define fx_media_open(m, n, d, i, p, s)       _fxe_media_open(m, n, d, i, p, s, sizeof(FX_MEDIA))
 #define fx_media_read                         _fxe_media_read
 #define fx_media_space_available              _fxe_media_space_available
@@ -1462,6 +1605,11 @@ UINT fx_media_format(FX_MEDIA *media_ptr, VOID (*driver)(FX_MEDIA *media), VOID 
                      CHAR *volume_name, UINT number_of_fats, UINT directory_entries, UINT hidden_sectors,
                      ULONG total_sectors, UINT bytes_per_sector, UINT sectors_per_cluster,
                      UINT heads, UINT sectors_per_track);
+#ifdef FX_ENABLE_EXFAT
+UINT fx_media_exFAT_format(FX_MEDIA *media_ptr, VOID (*driver)(FX_MEDIA *media), VOID *driver_info_ptr, UCHAR *memory_ptr, UINT memory_size,
+                           CHAR *volume_name, UINT number_of_fats, ULONG64 hidden_sectors, ULONG64 total_sectors,
+                           UINT bytes_per_sector, UINT sectors_per_cluster, UINT volume_serial_number, UINT boundary_unit);
+#endif /* FX_ENABLE_EXFAT */
 #ifdef FX_DISABLE_ERROR_CHECKING
 UINT _fx_media_open(FX_MEDIA *media_ptr, CHAR *media_name,
                     VOID (*media_driver)(FX_MEDIA *), VOID *driver_info_ptr,

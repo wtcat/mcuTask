@@ -58,6 +58,8 @@
 /*                                                                        */
 /*  CALLED BY                                                             */
 /*                                                                        */
+/*    _fx_directory_exFAT_unicode_entry_write                             */
+/*    _fx_directory_exFAT_free_search                                     */
 /*    _fx_utility_absolute_path_get         Get absolute path             */
 /*                                                                        */
 /*  RELEASE HISTORY                                                       */

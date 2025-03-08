@@ -367,6 +367,13 @@ UINT _fx_fault_tolerant_add_FAT_log(FX_MEDIA *media_ptr, ULONG cluster, ULONG va
 /* This function adds a directory log entry. */
 UINT _fx_fault_tolerant_add_dir_log(FX_MEDIA *media_ptr, ULONG64 logical_sector, ULONG offset,
                                     UCHAR *data, ULONG data_size);
+#ifdef FX_ENABLE_EXFAT
+/* This function adds a bitmap log entry. */
+UINT _fx_fault_tolerant_add_bitmap_log(FX_MEDIA *media_ptr, ULONG cluster, ULONG value);
+
+/* This function adds a checksum log entry. */
+UINT _fx_fault_tolerant_add_checksum_log(FX_MEDIA *media_ptr, ULONG64 logical_sector, ULONG offset, USHORT checksum);
+#endif /* FX_ENABLE_EXFAT */
 
 /* This function sets the FAT chain. */
 UINT _fx_fault_tolerant_set_FAT_chain(FX_MEDIA *media_ptr, UINT use_bitmap, ULONG insertion_front,

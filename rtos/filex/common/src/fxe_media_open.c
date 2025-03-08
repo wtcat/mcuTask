@@ -140,7 +140,7 @@ UINT       old_threshold;
 
 #ifndef FX_SINGLE_THREAD
 
-    /* Pickup current thread pointer. At this point we know the current thread pointer is non-null since
+    /* Pickup current thread pointer. At this point we know the current thread pointer is non-null since 
        it was checked by code in FX_CALLER_CHECKING_CODE macro.  */
     current_thread =  tx_thread_identify();
 

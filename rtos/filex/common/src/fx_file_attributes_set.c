@@ -114,7 +114,18 @@ UCHAR        not_a_file_attr;
         /* Return the media not opened error.  */
         return(FX_MEDIA_NOT_OPEN);
     }
-    not_a_file_attr = FX_DIRECTORY | FX_VOLUME;
+#ifdef FX_ENABLE_EXFAT
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+        not_a_file_attr = FX_DIRECTORY;
+    }
+    else
+    {
+#endif /* FX_ENABLE_EXFAT */
+        not_a_file_attr = FX_DIRECTORY | FX_VOLUME;
+#ifdef FX_ENABLE_EXFAT
+    }
+#endif /* FX_ENABLE_EXFAT */
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     FX_TRACE_IN_LINE_INSERT(FX_TRACE_FILE_ATTRIBUTES_SET, media_ptr, file_name, attributes, 0, FX_TRACE_FILE_EVENTS, 0, 0)
@@ -191,7 +202,18 @@ UCHAR        not_a_file_attr;
 #endif /* FX_ENABLE_FAULT_TOLERANT */
 
     /* Now write out the directory entry.  */
-    status = _fx_directory_entry_write(media_ptr, &dir_entry);
+#ifdef FX_ENABLE_EXFAT
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+        status = _fx_directory_exFAT_entry_write(media_ptr, &dir_entry, UPDATE_FILE);
+    }
+    else
+    {
+#endif /* FX_ENABLE_EXFAT */
+        status = _fx_directory_entry_write(media_ptr, &dir_entry);
+#ifdef FX_ENABLE_EXFAT
+    }
+#endif /* FX_ENABLE_EXFAT */
 
 #ifdef FX_ENABLE_FAULT_TOLERANT
     /* Check for a bad status.  */

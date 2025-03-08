@@ -109,7 +109,18 @@ UCHAR                  not_a_file_attr;
         return(FX_MEDIA_NOT_OPEN);
     }
 
-    not_a_file_attr = FX_DIRECTORY | FX_VOLUME;
+#ifdef FX_ENABLE_EXFAT
+    if (media_ptr -> fx_media_FAT_type == FX_exFAT)
+    {
+        not_a_file_attr = FX_DIRECTORY;
+    }
+    else
+    {
+#endif /* FX_ENABLE_EXFAT */
+        not_a_file_attr = FX_DIRECTORY | FX_VOLUME;
+#ifdef FX_ENABLE_EXFAT
+    }
+#endif /* FX_ENABLE_EXFAT */
 
     /* If trace is enabled, insert this event into the trace buffer.  */
     FX_TRACE_IN_LINE_INSERT(FX_TRACE_FILE_ATTRIBUTES_READ, media_ptr, file_name, 0, 0, FX_TRACE_FILE_EVENTS, &trace_event, &trace_timestamp)

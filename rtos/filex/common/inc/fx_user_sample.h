@@ -144,6 +144,26 @@
 /*#define FX_NO_LOCAL_PATH   */
 
 
+/* Defined, FileX is able to access exFAT file system. 
+
+   FileX supports the Microsoft exFAT file system format. 
+   Your use of exFAT technology in your products requires a separate 
+   license from Microsoft. Please see the following link for further 
+   details on exFAT licensing:
+
+   https://www.microsoft.com/en-us/legal/intellectualproperty/mtl/exfat-licensing.aspx
+*/
+
+/* #define FX_ENABLE_EXFAT */
+
+
+/* Define bitmap cache size for exFAT. Size should be minimum one sector size and maximum 4096. 
+   For applications using muliple media devices with varing sector size, the value should be set to the 
+   size of largest sector size */
+
+/* #define FX_EXFAT_MAX_CACHE_SIZE      512 */
+
+
 /* Define FileX internal protection macros.  If FX_SINGLE_THREAD is defined,
    these protection macros are effectively disabled.  However, for multi-thread
    uses, the macros are setup to utilize a ThreadX mutex for multiple thread

@@ -29,6 +29,9 @@
 #include "fx_directory.h"
 #include "fx_media.h"
 #include "fx_utility.h"
+#ifdef FX_ENABLE_EXFAT
+#include "fx_directory_exFAT.h"
+#endif /* FX_ENABLE_EXFAT */
 
 
 /**************************************************************************/
