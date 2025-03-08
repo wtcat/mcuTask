@@ -44,31 +44,33 @@ endif()
 # endif()
 
 # A place for generated/copied include files (no need to change)
-set(CUSTOM_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_inc)
+set(CUSTOM_INC_DIR ${PROJECT_BINARY_DIR})
 
 # Pick up the common stuff
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/common)
 
 # Include the user's override file if required
 if (NOT LX_USER_FILE)
-    message(STATUS "Using default lx_user.h file")
+    message(STATUS "Using default lx_user_config.h file")
     set(LX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/lx_user_config.h)
 else()
     message(STATUS "Using custom lx_user.h file from ${LX_USER_FILE}")
 endif()
 configure_file(${LX_USER_FILE} ${CUSTOM_INC_DIR}/lx_user.h COPYONLY)
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC 
-    ${CUSTOM_INC_DIR}
-)
+# target_include_directories(${PROJECT_NAME} 
+#     PUBLIC 
+#     ${CUSTOM_INC_DIR}
+# )
 
-if(NOT LX_STANDALONE_ENABLE)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "LX_INCLUDE_USER_DEFINE_FILE" )
-else()
-    # Enable LevelX and FileX standalone support (No Azure RTOS support)
-    set(FX_STANDALONE_ENABLE ON CACHE BOOL "Standalone enable")
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "LX_INCLUDE_USER_DEFINE_FILE" -DLX_STANDALONE_ENABLE -DFX_STANDALONE_ENABLE)
-endif()
+compile_definitions(LX_INCLUDE_USER_DEFINE_FILE)
+
+# if(NOT LX_STANDALONE_ENABLE)
+#     target_compile_definitions(${PROJECT_NAME} PUBLIC "LX_INCLUDE_USER_DEFINE_FILE" )
+# else()
+#     # Enable LevelX and FileX standalone support (No Azure RTOS support)
+#     set(FX_STANDALONE_ENABLE ON CACHE BOOL "Standalone enable")
+#     target_compile_definitions(${PROJECT_NAME} PUBLIC "LX_INCLUDE_USER_DEFINE_FILE" -DLX_STANDALONE_ENABLE -DFX_STANDALONE_ENABLE)
+# endif()
 
 # Enable a build target that produces a ZIP file of all sources
 # set(CPACK_SOURCE_GENERATOR "ZIP")

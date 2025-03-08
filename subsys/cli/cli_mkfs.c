@@ -15,7 +15,8 @@ static int cli_cmd_mkfat(struct cli_process *cli, int argc, char *argv[]) {
     if (argc != 2)
         return -EINVAL;
 
-    int err = fs_mkfs(FS_EXFATFS, argv[1], NULL, 0);
+    int err = fs_mkfs(FS_EXFATFS, argv[1], 
+    "vol=exfat fats=1 dirs=8192 spc=8", 0);
     cli_println(cli, "Format filex with result(%d)\n", err);
     return err;
 }
@@ -28,12 +29,10 @@ static int cli_cmd_mountfat(struct cli_process *cli, int argc, char *argv[]) {
     if (argc != 2)
         return -EINVAL;
 
-    static FX_MEDIA fs_media;
     static struct fs_class main_fs = {
         .mnt_point = "/c",
         .type = FS_EXFATFS,
-        .storage_dev = "sdblk0",
-        .fs_data = &fs_media
+        .storage_dev = "sdblk0"
     };
     return fs_mount(&main_fs);
 }

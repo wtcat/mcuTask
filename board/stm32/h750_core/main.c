@@ -19,12 +19,10 @@
 
 static TX_THREAD main_pid;
 static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)] __rte_section(".dtcm");
-static FX_MEDIA fs_media;
 static struct fs_class main_fs = {
     .mnt_point = "/home",
     .type = FS_EXFATFS,
-    .storage_dev = "sdblk0",
-    .fs_data = &fs_media
+    .storage_dev = "sdblk0"
 };
 
 static void file_test(void) {
@@ -86,6 +84,7 @@ static void file_test(void) {
         pr_out("new-dir: %s size: %d\n", entry.name, entry.size);
     }
     fs_closedir(&dir);
+    fs_flush("/home");
 
 _unmount:
     err = fs_unmount("/home");

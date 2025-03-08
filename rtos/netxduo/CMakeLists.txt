@@ -44,7 +44,7 @@ if(NXD_ENABLE_AZURE_IOT)
 endif()
 
 # A place for generated/copied include files (no need to change)
-set(CUSTOM_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_inc)
+set(CUSTOM_INC_DIR ${PROJECT_BINARY_DIR})
 
 # Pick up the port specific stuff first
 if(DEFINED NETXDUO_CUSTOM_PORT)
@@ -71,17 +71,20 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/tsn)
 
 # If the user provided an override, copy it to the custom directory
 if (NOT NX_USER_FILE)
-    message(STATUS "Using default nx_user.h file")
+    message(STATUS "Using default nx_user_config.h file")
     set(NX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/nx_user_config.h)
 else()
     message(STATUS "Using custom nx_user.h file from ${NX_USER_FILE}")
 endif()
 configure_file(${NX_USER_FILE} ${CUSTOM_INC_DIR}/nx_user.h COPYONLY)
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC 
-    ${CUSTOM_INC_DIR}
-)
-target_compile_definitions(${PROJECT_NAME} PUBLIC "NX_INCLUDE_USER_DEFINE_FILE" )
+# target_include_directories(${PROJECT_NAME} 
+#     PUBLIC 
+#     ${CUSTOM_INC_DIR}
+# )
+
+compile_definitions(NX_INCLUDE_USER_DEFINE_FILE)
+
+# target_compile_definitions(${PROJECT_NAME} PUBLIC "NX_INCLUDE_USER_DEFINE_FILE" )
 
 # Enable a build target that produces a ZIP file of all sources
 # set(CPACK_SOURCE_GENERATOR "ZIP")

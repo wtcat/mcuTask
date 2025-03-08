@@ -98,7 +98,7 @@ config FX_RENAME_PATH_INHERIT
 
 config FX_NO_LOCAL_PATH
     bool "Local path logic is disabled"
-    default y
+    default n
 
 config FX_SINGLE_THREAD
     bool "Enable single thread model"

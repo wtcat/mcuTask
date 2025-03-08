@@ -369,6 +369,8 @@ static int filex_fs_mkdir(struct fs_class *fs, const char *abs_path) {
     UINT err;
 
     err = fx_directory_create(fs->fs_data, FX_PATH(abs_path));
+    if (err == FX_ALREADY_CREATED)
+        return 0;
     return FX_ERR(err);
 }
 
@@ -419,7 +421,7 @@ static int filex_fs_statvfs(struct fs_class *fs, const char *abs_path,
 /*
  * cfg: vol=exfat fats=1 dirs=32 spc=32
  */
-static void copy_digitals(const char *cfg, const char *key, char *dst, 
+static void parse_param(const char *cfg, const char *key, char *dst, 
     size_t maxsize, UINT *pval) {
     const char *src = strstr(cfg, key);
     if (src != NULL) {
@@ -470,9 +472,9 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
         char *p = strstr(cfg, "vol=");
         if (p)
             strlcpy(volume_name, &p[4], sizeof(volume_name));
-        copy_digitals(cfg, "fats=", numbuf, sizeof(numbuf), &number_of_fats);
-        copy_digitals(cfg, "dirs=", numbuf, sizeof(numbuf), &directory_entries);
-        copy_digitals(cfg, "spc=", numbuf, sizeof(numbuf), &directory_entries);
+        parse_param(cfg, "fats=", numbuf, sizeof(numbuf), &number_of_fats);
+        parse_param(cfg, "dirs=", numbuf, sizeof(numbuf), &directory_entries);
+        parse_param(cfg, "spc=", numbuf, sizeof(numbuf), &directory_entries);
     }
 
     pr_info("format media(%s): volume_name(%s) number_of_fats(%u) directory_entries(%s)"

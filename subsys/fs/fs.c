@@ -309,7 +309,7 @@ int fs_opendir(struct fs_dir *dp, const char *abs_path) {
 	if (rc < 0) {
 		dp->vfs = NULL;
 		dp->dirp = NULL;
-		pr_err("directory open error (%d)", rc);
+		pr_err("directory(%s) open error (%d)", abs_path, rc);
 	}
 
 	return rc;

@@ -33,7 +33,7 @@ endif()
 # endif()
 
 # A place for generated/copied include files (no need to change)
-set(CUSTOM_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_inc)
+set(CUSTOM_INC_DIR ${PROJECT_BINARY_DIR})
 
 # Pick up the port specific stuff first
 if(DEFINED FILEX_CUSTOM_PORT)
@@ -50,22 +50,24 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/common)
 
 # Include the user's override file if required
 if (NOT FX_USER_FILE)
-message(STATUS "Using default fx_user.h file")
+message(STATUS "Using default fx_user_config.h file")
 set(FX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/fx_user_config.h)
 else()
     message(STATUS "Using custom fx_user.h file from ${FX_USER_FILE}")
 endif()
 configure_file(${FX_USER_FILE} ${CUSTOM_INC_DIR}/fx_user.h COPYONLY)
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC 
-    ${CUSTOM_INC_DIR}
-)
+# target_include_directories(${PROJECT_NAME} 
+#     PUBLIC 
+#     ${CUSTOM_INC_DIR}
+# )
 
-if(NOT FX_STANDALONE_ENABLE)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "FX_INCLUDE_USER_DEFINE_FILE" )
-else()
-    target_compile_definitions(${PROJECT_NAME} PUBLIC "FX_INCLUDE_USER_DEFINE_FILE" -DFX_STANDALONE_ENABLE)
-endif()
+compile_definitions(FX_INCLUDE_USER_DEFINE_FILE)
+
+# if(NOT FX_STANDALONE_ENABLE)
+#     target_compile_definitions(${PROJECT_NAME} PUBLIC "FX_INCLUDE_USER_DEFINE_FILE" )
+# else()
+#     target_compile_definitions(${PROJECT_NAME} PUBLIC "FX_INCLUDE_USER_DEFINE_FILE" -DFX_STANDALONE_ENABLE)
+# endif()
 
 # Enable a build target that produces a ZIP file of all sources
 # set(CPACK_SOURCE_GENERATOR "ZIP")

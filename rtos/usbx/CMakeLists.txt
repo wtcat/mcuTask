@@ -34,7 +34,7 @@ endif()
 # )
 
 # A place for generated/copied include files
-set(CUSTOM_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/custom_inc)
+set(CUSTOM_INC_DIR ${PROJECT_BINARY_DIR})
 
 # Pick up the port specific stuff first
 if(DEFINED USBX_CUSTOM_PORT)
@@ -51,17 +51,20 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/common)
 
 # If the user provided an override, copy it to the custom directory
 if (NOT UX_USER_FILE)
-    message(STATUS "Using default ux_user.h file")
+    message(STATUS "Using default ux_user_config.h file")
     set(UX_USER_FILE ${CMAKE_CURRENT_LIST_DIR}/../configs/ux_user_config.h)
 else()
     message(STATUS "Using custom ux_user.h file from ${UX_USER_FILE}")
 endif()
 configure_file(${UX_USER_FILE} ${CUSTOM_INC_DIR}/ux_user.h COPYONLY)
-target_include_directories(${PROJECT_NAME} 
-    PUBLIC 
-    ${CUSTOM_INC_DIR}
-)
-target_compile_definitions(${PROJECT_NAME} PUBLIC "UX_INCLUDE_USER_DEFINE_FILE" )
+# target_include_directories(${PROJECT_NAME} 
+#     PUBLIC 
+#     ${CUSTOM_INC_DIR}
+# )
+
+compile_definitions(UX_INCLUDE_USER_DEFINE_FILE)
+
+# target_compile_definitions(${PROJECT_NAME} PUBLIC "UX_INCLUDE_USER_DEFINE_FILE" )
 
 # Enable a build target that produces a ZIP file of all sources
 # set(CPACK_SOURCE_GENERATOR "ZIP")
