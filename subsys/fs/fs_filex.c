@@ -482,6 +482,23 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
         volume_name, number_of_fats, directory_entries, sectors_per_cluster);
 
     memset(&fx->media, 0, sizeof(fx->media));
+
+#ifdef FX_ENABLE_EXFAT
+    err = fx_media_exFAT_format(&fx->media,
+                          filex_fs_driver,         // Driver entry
+                          dev,        // RAM disk memory pointer
+                          (UCHAR *)fx->buffer,           // Media buffer pointer
+                          sizeof(fx->buffer),   // Media buffer size
+                          volume_name,          // Volume Name
+                          1,                      // Number of FATs
+                          0,                      // Hidden sectors
+                          blkcnt,                    // Total sectors
+                          blksz,                    // Sector size
+                          sectors_per_cluster,                      // exFAT Sectors per cluster
+                          12345,                  // Volume ID
+                          1);                     // Boundary unit
+
+#else /* !FX_ENABLE_EXFAT */
     err = fx_media_format(&fx->media,
                     filex_fs_driver,               // Driver entry
                     dev, // RAM disk memory pointer
@@ -496,6 +513,8 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
                     sectors_per_cluster,              // Sectors per cluster
                     1,                            // Heads
                     1);               // Sectors per track
+#endif /* FX_ENABLE_EXFAT */
+
     if (err == FX_SUCCESS)
         err = fx_media_flush(&fx->media);
 

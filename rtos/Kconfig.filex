@@ -100,6 +100,10 @@ config FX_NO_LOCAL_PATH
     bool "Local path logic is disabled"
     default n
 
+config FX_ENABLE_EXFAT
+    bool "Enable exFat filesystem support"
+    default n
+
 config FX_SINGLE_THREAD
     bool "Enable single thread model"
     default n

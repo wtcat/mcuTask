@@ -133,6 +133,11 @@
 #define FX_NO_LOCAL_PATH
 #endif
 
+/* Defined, FileX is able to access exFAT file system. */
+#ifdef CONFIG_FX_ENABLE_EXFAT
+#define FX_ENABLE_EXFAT
+#endif
+
 /* Define FileX internal protection macros.  If FX_SINGLE_THREAD is defined,
    these protection macros are effectively disabled.  However, for multi-thread
    uses, the macros are setup to utilize a ThreadX mutex for multiple thread
