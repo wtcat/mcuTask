@@ -4,6 +4,7 @@
  * Virtual Filesystem (borrowed from zephyr)
  */
 
+#include <stdlib.h>
 #define pr_fmt(fmt) "[fs]: " fmt"\n"
 #include <errno.h>
 #include <string.h>
@@ -669,6 +670,24 @@ unmount_err:
 	return rc;
 }
 
+int fs_flush(const char *mnt_point) {
+	struct fs_class *fs;
+
+	if (mnt_point == NULL)
+		return -EINVAL;
+
+	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
+	fs = fs_mounted_get(mnt_point);
+	tx_mutex_put(&fs_manager.mtx);
+
+	if (fs == NULL) {
+		pr_err("fs not mounted (fs == %p)", fs);
+		return -ENODATA;
+	}
+	
+	return fs->fs_ops.flush(fs);
+}
+
 /* Register File system */
 int fs_register(int type, const struct fs_operations *fs_ops) {
 	struct fs_class *iter;
@@ -677,18 +696,7 @@ int fs_register(int type, const struct fs_operations *fs_ops) {
 	if (fs_ops == NULL)
 		return -EINVAL;
 
-	/* Check filesystem operations */
-	// void **p_ops = (void **)&fs_ops;
-	// size_t n_ops = sizeof(*fs_ops) / sizeof(void *);
-	// size_t n = 0;
-	// while (n < n_ops) {
-	// 	if (p_ops[n] == NULL)
-	// 		return -EINVAL;
-	// 	n++;
-	// }
-
 	tx_mutex_get(&fs_manager.mtx, TX_WAIT_FOREVER);
-
 	rte_list_foreach_entry(iter, &fs_manager.list, node) {
 		if (iter->type == type) {
 			rc = -EALREADY;

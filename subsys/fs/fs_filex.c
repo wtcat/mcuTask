@@ -416,6 +416,28 @@ static int filex_fs_statvfs(struct fs_class *fs, const char *abs_path,
     return -ENOTSUP;
 }
 
+/*
+ * cfg: vol=exfat fats=1 dirs=32 spc=32
+ */
+static void copy_digitals(const char *cfg, const char *key, char *dst, 
+    size_t maxsize, UINT *pval) {
+    const char *src = strstr(cfg, key);
+    if (src != NULL) {
+        src += strlen(key);
+        while (*src && *src == ' ') src++;
+
+        const char *start = src;
+        while (maxsize > 1 && *src && *src != ' ') {
+            *dst++ = *src++;
+            maxsize--;
+        }
+        if (dst - start > 0) {
+            *dst = '\0';
+            *pval = (UINT)strtoul(dst, NULL, 10);
+        }
+    }
+}
+
 static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
     struct device *dev;
     UINT blkcnt = 0;
@@ -436,19 +458,40 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
     if (fx == NULL)
         return -ENOMEM;
 
+    /* 
+     * Parse format options 
+     */
+    UINT directory_entries = 32;
+    UINT sectors_per_cluster = 32; 
+    UINT number_of_fats = 1;
+    CHAR volume_name[64] = "exfat";
+    if (cfg) {
+        char numbuf[12];
+        char *p = strstr(cfg, "vol=");
+        if (p)
+            strlcpy(volume_name, &p[4], sizeof(volume_name));
+        copy_digitals(cfg, "fats=", numbuf, sizeof(numbuf), &number_of_fats);
+        copy_digitals(cfg, "dirs=", numbuf, sizeof(numbuf), &directory_entries);
+        copy_digitals(cfg, "spc=", numbuf, sizeof(numbuf), &directory_entries);
+    }
+
+    pr_info("format media(%s): volume_name(%s) number_of_fats(%u) directory_entries(%s)"
+        "sectors_per_cluster(%u)\n", devname,
+        volume_name, number_of_fats, directory_entries, sectors_per_cluster);
+
     memset(&fx->media, 0, sizeof(fx->media));
     err = fx_media_format(&fx->media,
                     filex_fs_driver,               // Driver entry
                     dev, // RAM disk memory pointer
                     (UCHAR *)fx->buffer,     // Media buffer pointer
                     sizeof(fx->buffer),   // Media buffer size
-                    "exfat",                // Volume Name
-                    1,                   // Number of FATs
-                    32,               // Directory Entries
+                    volume_name,                // Volume Name
+                    number_of_fats,                   // Number of FATs
+                    directory_entries,               // Directory Entries
                     0,                   // Hidden sectors
                     blkcnt,               // Total sectors
                     blksz,             // Sector size
-                    32,              // Sectors per cluster
+                    sectors_per_cluster,              // Sectors per cluster
                     1,                            // Heads
                     1);               // Sectors per track
     if (err == FX_SUCCESS)
@@ -456,6 +499,11 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
 
     object_free(&filex_inst_pool, fx);
 
+    return FX_ERR(err);
+}
+
+static int filex_flush(struct fs_class *fs) {
+    UINT err = fx_media_flush(fs->fs_data);
     return FX_ERR(err);
 }
 
@@ -478,7 +526,8 @@ static const struct fs_operations fs_ops = {
     .mkdir    = filex_fs_mkdir,
     .stat     = filex_fs_stat,
     .statvfs  = filex_fs_statvfs,
-    .mkfs     = filex_fs_mkfs
+    .mkfs     = filex_fs_mkfs,
+    .flush    = filex_flush
 };
 
 static int fs_filex_init(void) {

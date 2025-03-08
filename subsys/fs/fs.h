@@ -249,6 +249,14 @@ struct fs_operations {
 	 * @note This operation destroys existing data on the target device.
 	 */
 	int (*mkfs)(const char *dev, void *cfg, int flags);
+
+	/**
+	 * Flush filesystem cache.
+	 *
+	 * @param mountp Mount point.
+	 * @return 0 on success, negative errno code on fail.
+	 */
+	int (*flush)(struct fs_class *mountp);
 };
 
 /**
@@ -842,6 +850,18 @@ int fs_statvfs(const char *path, struct fs_statvfs *stat);
  * @retval <0 negative errno code on error.
  */
 int fs_mkfs(int fs_type, const char *dev, void *cfg, int flags);
+
+/**
+ * @brief Flush filesystem cache
+ *
+ * Write filesystem cache to storage media 
+ *
+ * @param mp Pointer to the fs_class structure
+ *
+ * @retval 0 on success;
+ * @retval <0 an other negative errno code on error.
+ */
+int fs_flush(const char *mp);
 
 /**
  * @brief Register a file system
