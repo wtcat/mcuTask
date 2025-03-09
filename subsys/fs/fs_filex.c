@@ -6,6 +6,7 @@
 #define pr_fmt(fmt) "[filex]: "fmt
 
 #include <errno.h>
+#include <ctype.h>
 
 #include <fx_api.h>
 #include <basework/log.h>
@@ -161,8 +162,14 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
 
     FX_FILE *fxp = object_allocate(&filex_fds_pool);
     if (fxp) {
+        UINT open_type;
+#ifndef FX_DISABLE_FAST_OPEN
+        open_type = (rw_flags == FS_O_READ)? FX_OPEN_FOR_READ_FAST: FX_OPEN_FOR_WRITE;
+#else
+        open_type = (rw_flags == FS_O_READ)? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE;
+#endif
         err = fx_file_open(fs->fs_data, fxp, FX_PATH(file_name), 
-            rw_flags == FS_O_READ? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE);
+            open_type);
         if (err == FX_SUCCESS) {
             if ((rw_flags & FS_O_TRUNC) || ((rw_flags & FS_O_WRITE) && !created))
                 fx_file_truncate(fxp, 0);
@@ -226,7 +233,7 @@ static int filex_fs_lseek(struct fs_file *fp, off_t offset, int whence) {
         if (offset >= 0)
             err = fx_file_relative_seek(fxp, offset, FX_SEEK_FORWARD);
         else
-            err = fx_file_relative_seek(fxp, -offset, FX_SEEK_BACK);
+            err = fx_file_relative_seek(fxp, offset, FX_SEEK_BACK);
         break;
     case FS_SEEK_END:
         err = fx_file_relative_seek(fxp, offset, FX_SEEK_END);
@@ -252,10 +259,8 @@ static int filex_fs_truncate(struct fs_file *fp, off_t length) {
 }
 
 static int filex_fs_sync(struct fs_file *fp) {
-    UINT err; 
-    
-    err = fx_media_flush(fp->vfs->fs_data);
-    return FX_ERR(err);
+    (void) fp;
+    return -ENOSYS;
 }
 
 static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
@@ -424,17 +429,19 @@ static int filex_fs_statvfs(struct fs_class *fs, const char *abs_path,
 static void parse_param(const char *cfg, const char *key, char *dst, 
     size_t maxsize, UINT *pval) {
     const char *src = strstr(cfg, key);
+    char *pdst = dst;
+
     if (src != NULL) {
         src += strlen(key);
         while (*src && *src == ' ') src++;
 
         const char *start = src;
         while (maxsize > 1 && *src && *src != ' ') {
-            *dst++ = *src++;
+            *pdst++ = *src++;
             maxsize--;
         }
-        if (dst - start > 0) {
-            *dst = '\0';
+        if (pdst - start > 0 && isdigit((int)(*dst))) {
+            *pdst = '\0';
             *pval = (UINT)strtoul(dst, NULL, 10);
         }
     }
@@ -469,20 +476,17 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
     CHAR volume_name[64] = "exfat";
     if (cfg) {
         char numbuf[12];
-        char *p = strstr(cfg, "vol=");
-        if (p)
-            strlcpy(volume_name, &p[4], sizeof(volume_name));
+        parse_param(cfg, "vol=", volume_name, sizeof(volume_name), NULL);
         parse_param(cfg, "fats=", numbuf, sizeof(numbuf), &number_of_fats);
         parse_param(cfg, "dirs=", numbuf, sizeof(numbuf), &directory_entries);
-        parse_param(cfg, "spc=", numbuf, sizeof(numbuf), &directory_entries);
+        parse_param(cfg, "spc=", numbuf, sizeof(numbuf), &sectors_per_cluster);
     }
 
-    pr_info("format media(%s): volume_name(%s) number_of_fats(%u) directory_entries(%s)"
+    pr_info("format media(%s): volume_name(%s) number_of_fats(%u) directory_entries(%u)"
         "sectors_per_cluster(%u)\n", devname,
         volume_name, number_of_fats, directory_entries, sectors_per_cluster);
 
     memset(&fx->media, 0, sizeof(fx->media));
-
 #ifdef FX_ENABLE_EXFAT
     err = fx_media_exFAT_format(&fx->media,
                           filex_fs_driver,         // Driver entry
@@ -514,10 +518,6 @@ static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
                     1,                            // Heads
                     1);               // Sectors per track
 #endif /* FX_ENABLE_EXFAT */
-
-    if (err == FX_SUCCESS)
-        err = fx_media_flush(&fx->media);
-
     object_free(&filex_inst_pool, fx);
 
     return FX_ERR(err);

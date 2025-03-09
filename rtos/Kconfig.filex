@@ -19,7 +19,7 @@ config FS_FILEX_NUM_FILES
     default 3
 
 config FS_FILEX_MEDIA_BUFFER_SIZE
-    int "The cache size for filesystem"
+    int "The media buffer size for filesystem"
     default 4096
 
 config FX_MAX_LONG_NAME_LEN

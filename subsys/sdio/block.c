@@ -149,7 +149,6 @@ static int mmcsd_req_blk(struct mmcsd_card *card, uint32_t sector, void *buf, si
 	struct mmcsd_host *host = card->host;
 	uint32_t r_cmd, w_cmd;
 
-	mmcsd_host_lock(host);
 	req.cmd = &cmd;
 	req.data = &data;
 	cmd.arg = sector;
@@ -175,6 +174,7 @@ static int mmcsd_req_blk(struct mmcsd_card *card, uint32_t sector, void *buf, si
 		w_cmd = WRITE_BLOCK;
 	}
 
+	mmcsd_host_lock(host);
 	if (!controller_is_spi(card->host) && (card->flags & 0x8000)) {
 		/* last request is WRITE,need check busy */
 		card_busy_detect(card, 10000, NULL);

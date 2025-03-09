@@ -685,7 +685,10 @@ int fs_flush(const char *mnt_point) {
 		return -ENODATA;
 	}
 	
-	return fs->fs_ops.flush(fs);
+	int err = fs->fs_ops.flush(fs);
+	if (err < 0)
+		pr_err("fs flush error(%s)\n", err);
+	return err;
 }
 
 /* Register File system */
