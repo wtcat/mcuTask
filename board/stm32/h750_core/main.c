@@ -25,8 +25,31 @@ static struct fs_class main_fs = {
     .storage_dev = "sdblk0"
 };
 
+static int file_dump(const char *filename) {
+    struct fs_file fd = {0};
+    char buffer[257];
+    int err;
+
+    err = fs_open(&fd, filename, FS_O_READ);
+    if (err)
+        return err;
+    
+    do {
+        int ret = fs_read(&fd, buffer, sizeof(buffer) - 1);
+        if (ret < 0)
+            break;
+
+        buffer[ret] = '\0';
+        printk("%s", buffer);
+    } while (1);
+
+    fs_close(&fd);
+    return 0;
+}
+
 static void file_test(void) {
     int err;
+    char path[128] = {"/home/X"};
 
     err = fs_mkdir("/home/a");
     if (err)
@@ -82,6 +105,10 @@ static void file_test(void) {
     
     while ((err = fs_readdir(&dir, &entry)) == 0) {
         pr_out("new-dir: %s size: %d\n", entry.name, entry.size);
+        if (entry.type == FS_DIR_ENTRY_FILE) {
+            strlcpy(path + 6, entry.name, 120);
+            file_dump(path);
+        }
     }
     fs_closedir(&dir);
     fs_flush("/home");
