@@ -7,7 +7,7 @@
 #include "basework/lib/iovpr.h"
 
 struct printk_buffer {
-#define BUF_SIZE 128
+#define BUF_SIZE 256
 	char buf[BUF_SIZE + 2];
 	uint16_t len;
 };
@@ -26,13 +26,11 @@ console_getc_t __console_getc = empty_getc;
 
 static void __fastcode put_char(int c, void *arg) {
 	struct printk_buffer *p = (struct printk_buffer *)arg;
-	if (rte_unlikely(p->len >= BUF_SIZE)) {
-		__console_puts(p->buf, p->len);
-		p->len = 0;
+	if (rte_likely(p->len < BUF_SIZE)) {
+		if (c == '\n')
+			p->buf[p->len++] = '\r';
+		p->buf[p->len++] = (char)c;
 	}
-	if (c == '\n')
-		p->buf[p->len++] = '\r';
-	p->buf[p->len++] = (char)c;
 }
 
 int vprintk(const char *fmt, va_list ap) {

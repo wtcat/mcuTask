@@ -114,6 +114,7 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
             err = _fx_partition_offset_calculate(media_ptr->fx_media_driver_buffer, 0,
                 &partition_start, &partition_size);
             if (err) {
+                pr_err("failed(%u) to read bootrec\n", err);
                 media_ptr->fx_media_driver_status = FX_IO_ERROR;
                 break;
             }

@@ -142,8 +142,7 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd,
     SDMMC_TypeDef *reg = sd->reg;
     void *pbuffer = NULL;
     uint32_t regcmd;
-    uint32_t bytes;
-    bool upload;
+    uint32_t bytes = 0;
 
     pr_dbg(" CMD:%ld ARG:0x%08lx RES:%s%s%s%s%s%s%s%s%s rw:%c len:%ld blksize:%ld\n",
           cmd->cmd_code,
@@ -170,22 +169,23 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd,
     if (data != NULL) {
         bytes = data->blks * data->blksize;
         rte_assert(bytes <= SDIO_BUFF_SIZE);
-
-        upload = !!(data->flags & DATA_DIR_READ);
         pbuffer = data->buf;
-        if ((uint32_t)pbuffer & (RTE_CACHE_LINE_SIZE - 1)) {
+        if ((uintptr_t)pbuffer & (RTE_CACHE_LINE_SIZE - 1)) {
             pbuffer = dma_buffer;
-            if (!upload) 
+            if (data->flags & DATA_DIR_WRITE)
                 memcpy(pbuffer, data->buf, bytes);
         }
-
-        SCB_InvalidateDCache_by_Addr(pbuffer, bytes);
+    
+        if (data->flags & DATA_DIR_WRITE)
+            SCB_CleanDCache_by_Addr(pbuffer, bytes);
+        else
+            SCB_InvalidateDCache_by_Addr(pbuffer, bytes);
         regcmd |= SDMMC_CMD_CMDTRANS;
         reg->MASK &= ~(SDMMC_MASK_CMDRENDIE | SDMMC_MASK_CMDSENTIE);
         reg->DTIMER = UINT32_MAX;
         reg->DLEN = bytes;
-        reg->DCTRL = ((ffs(data->blksize) - 1) << SDMMC_DCTRL_DBLOCKSIZE_Pos) 
-                    | (upload ? SDMMC_DCTRL_DTDIR : 0);
+        reg->DCTRL = ((ffs(data->blksize) - 1) << 4) 
+                | ((data->flags & DATA_DIR_READ) ? SDMMC_DCTRL_DTDIR : 0);
         reg->IDMABASE0 = (uint32_t)pbuffer;
         reg->IDMACTRL = SDMMC_IDMA_IDMAEN;
     }
@@ -211,7 +211,7 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd,
             tx_thread_sleep(TX_MSEC(1));
         }
 
-        if (upload) 
+        if (pbuffer == dma_buffer && (data->flags & DATA_DIR_READ)) 
             memcpy(data->buf, pbuffer, bytes);
     }
 
