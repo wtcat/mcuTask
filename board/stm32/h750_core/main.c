@@ -47,7 +47,7 @@ static int file_dump(const char *filename) {
     return 0;
 }
 
-static void file_test(void) {
+static void __rte_unused file_test(void) {
     int err;
     char path[128] = {"/home/X"};
 
