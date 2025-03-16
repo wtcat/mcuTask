@@ -11,3 +11,6 @@ config MAIN_THREAD_PRIO
 config MAIN_THREAD_STACK_SIZE   
     int "The stack size of main thread"
     default 2048
+
+
+rsource "Kconfig.compile"

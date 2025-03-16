@@ -1,0 +1,8 @@
+menu "Compile options"
+
+config COMPILER_OPTIMIZE
+    string "Custom compiler optimize option"
+    default "-Os"
+
+
+endmenu

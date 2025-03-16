@@ -35,7 +35,8 @@ static const uint8_t tacc_value[] = {
 	0, 10, 12, 13, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80,
 };
 
-inline uint32_t GET_BITS(uint32_t *resp, uint32_t start, uint32_t size) {
+static inline uint32_t 
+GET_BITS(uint32_t *resp, uint32_t start, uint32_t size) {
 	const int32_t __size = size;
 	const uint32_t __mask = (__size < 32 ? 1 << __size : 0) - 1;
 	const int32_t __off = 3 - ((start) / 32);
@@ -690,6 +691,9 @@ err2:
 /*
  * Starting point for SD card init.
  */
+#if defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 int init_sd(struct mmcsd_host *host, uint32_t ocr) {
 	int32_t err = -EINVAL;
 	uint32_t current_ocr;

@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0...3.8.0 FATAL_ERROR)
 
+
 # Setup toolchain
 set(CROSS_COMPILER arm-none-eabi-)
 set(WKSAPCE_PATH   ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
@@ -7,7 +8,6 @@ set(BOARD          "stm32/h750_core")
 include(${WKSAPCE_PATH}/cmake/cortex_m7.cmake)
 include(${WKSAPCE_PATH}/cmake/utils.cmake)
 include(${WKSAPCE_PATH}/cmake/zephyr.cmake)
-set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 # Declare project
 project(mcutask
@@ -20,9 +20,9 @@ cmake_policy(SET CMP0003 NEW)
 
 # Add configure files
 set(TX_USER_FILE        ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
-set(FILEX_CUSTOM_PORT   ${CMAKE_CURRENT_SOURCE_DIR}/port)
-set(NETXDUO_CUSTOM_PORT ${CMAKE_CURRENT_SOURCE_DIR}/port)
-set(USBX_CUSTOM_PORT    ${CMAKE_CURRENT_SOURCE_DIR}/port)
+set(FILEX_CUSTOM_PORT   ${WKSAPCE_PATH}/board/shared/port)
+set(NETXDUO_CUSTOM_PORT ${WKSAPCE_PATH}/board/shared/port)
+set(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
 
 
 # Add compile options
@@ -30,10 +30,10 @@ include_dirs(
     ${WKSAPCE_PATH}
     ${WKSAPCE_PATH}/basework/arch/arm
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/port
 )
 add_compile_options(
     -imacros ${AUTOCONF_H}
+    ${CONFIG_COMPILER_OPTIMIZE}
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1
