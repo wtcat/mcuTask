@@ -443,7 +443,7 @@ static bool parse_param(const char *cfg, const char *key, char *dst,
         }
         if (pdst - dst > 0) {
             *pdst = '\0';
-            if (isdigit((int)(*dst) && pval))
+            if (isdigit((int)(*dst)) && pval)
                 *pval = (UINT)strtoul(dst, NULL, 10);
         }
         return true;
