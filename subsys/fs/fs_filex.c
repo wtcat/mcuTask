@@ -427,25 +427,28 @@ static int filex_fs_statvfs(struct fs_class *fs, const char *abs_path,
 /*
  * cfg: vol=exfat fats=1 dirs=32 spc=32
  */
-static void parse_param(const char *cfg, const char *key, char *dst, 
+static bool parse_param(const char *cfg, const char *key, char *dst, 
     size_t maxsize, UINT *pval) {
     const char *src = strstr(cfg, key);
-    char *pdst = dst;
-
+    
     if (src != NULL) {
+        char *pdst = dst;
+
         src += strlen(key);
         while (*src && *src == ' ') src++;
 
-        const char *start = src;
         while (maxsize > 1 && *src && *src != ' ') {
             *pdst++ = *src++;
             maxsize--;
         }
-        if (pdst - start > 0 && isdigit((int)(*dst))) {
+        if (pdst - dst > 0) {
             *pdst = '\0';
-            *pval = (UINT)strtoul(dst, NULL, 10);
+            if (isdigit((int)(*dst) && pval))
+                *pval = (UINT)strtoul(dst, NULL, 10);
         }
+        return true;
     }
+    return false;
 }
 
 static int filex_fs_mkfs(const char *devname, void *cfg, int flags) {
