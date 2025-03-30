@@ -10,6 +10,7 @@
 
 #include "basework/rte_cpu.h"
 #include "basework/os/osapi.h"
+#include "basework/log.h"
 
 #include "subsys/cli/cli.h"
 #include "subsys/fs/fs.h"
@@ -22,7 +23,7 @@ static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)] __rte_section(".dtcm"
 static struct fs_class main_fs = {
     .mnt_point = "/home",
     .type = FS_EXFATFS,
-    .storage_dev = "sdblk0"
+    .storage_dev = "mmcblk0"
 };
 
 static int file_dump(const char *filename) {
@@ -145,17 +146,9 @@ static void main_thread(void *arg) {
         "[task]# ", &_cli_ifdev_uart);
 
     file_test();
-    //TODO: Test code
-    // int count = 0;
-    // uint32_t prevalue = 0;
-    for ( ; ; ) {
-        // uint32_t now = HRTIMER_JIFFIES;
-        // uint32_t diff = HRTIMER_CYCLE_TO_US(now - prevalue);
-        // prevalue = now;
-        // printk("Thread-2: count(%d) time_diff(%ld)\n", count++, diff);
-        tx_thread_sleep(TX_MSEC(10000));
-        // tx_os_nanosleep(1000000000);
-    }
+
+    extern int main(void);
+    main();
 }
 
 void tx_application_define(void *unused) {

@@ -256,7 +256,7 @@ static int mmcsd_blkdev_control(struct device *dev, unsigned int cmd, void *buf)
 int mmcsd_blkdev_probe(struct mmcsd_card *card) {
     static uint8_t devno;
     struct block_device *bdev;
-    char name[] = {"sdblk0"};
+    char name[] = {"mmcblk0"};
     char *p;
     int err;
 
@@ -270,7 +270,7 @@ int mmcsd_blkdev_probe(struct mmcsd_card *card) {
     if (bdev == NULL)
         return -ENOMEM;
     
-    name[5] += devno;
+    name[6] += devno;
     p = (char *)(bdev + 1);
     strcpy(p, name);
 

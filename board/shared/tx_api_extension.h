@@ -32,6 +32,8 @@ extern "C"{
 #define TX_USE_USE_SYSINIT_API_EXTENSION 1
 #endif
 
+#define __externC extern"C"
+
 /*
  * Thread extension API
  */
@@ -58,6 +60,7 @@ UINT tx_os_delay(uint64_t nano_sec);
 /*
  * Define lock guard
  */
+#ifndef __cplusplus
 #ifdef TX_DISABLE_ERROR_CHECKING
 DEFINE_GUARD(os_mutex, TX_MUTEX *, _tx_mutex_get(_T, 0xFFFFFFFFUL), _tx_mutex_put(_T))
 #else
@@ -73,6 +76,7 @@ DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = _tx_thread_interrupt_disable(), \
 DEFINE_LOCK_GUARD_0(os_irq, (_T)->key = __disable_interrupts(), \
     __restore_interrupt((_T)->key), unsigned int key)
 #endif /* __linux__ */
+#endif /* __cplusplus */
 #endif /* TX_USE_KERNEL_API_EXTENSION */
 
 /*

@@ -18,7 +18,7 @@ if (CONFIG_KMALLOC)
 endif()
 
 if (CONFIG_CPLUSPLUS)
-    list(APPEND TARGET_SRCS cppnew.c)
+    list(APPEND TARGET_SRCS cppnew.cc)
 endif()
 
 if (CONFIG_MALLOC)

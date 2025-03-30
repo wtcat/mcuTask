@@ -49,3 +49,7 @@ int _isatty(int fd) {
     (void) fd;
     return -ENOSYS;
 }
+
+void *_sbrk(ptrdiff_t incr) {
+    return NULL;
+}

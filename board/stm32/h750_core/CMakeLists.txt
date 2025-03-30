@@ -76,7 +76,9 @@ add_executable(${PROJECT_NAME}
 )
 
 # Add subdirectory
+add_subdirectory(${WKSAPCE_PATH}/application application)
 add_subdirectory(${WKSAPCE_PATH}/rtos rtos)
+add_subdirectory(${WKSAPCE_PATH}/base base)
 add_subdirectory(${WKSAPCE_PATH}/basework basework)
 add_subdirectory(${WKSAPCE_PATH}/subsys subsys)
 add_subdirectory(${WKSAPCE_PATH}/board/shared shared)
