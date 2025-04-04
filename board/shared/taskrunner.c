@@ -101,8 +101,8 @@ int __delayed_task_post(struct task_runner *runner, struct delayed_task *task,
     if (ticks == TX_NO_WAIT)
         return __task_post(runner, &task->base);
 
-    tx_timer_deactivate(&task->timer);
     scoped_guard(os_irq) {
+        tx_timer_deactivate(&task->timer);
         if (task->base.node.next != NULL)
             rte_list_del(&task->base.node);
         task->base.runner = runner;
