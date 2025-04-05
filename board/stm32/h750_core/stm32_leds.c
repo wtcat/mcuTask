@@ -5,7 +5,7 @@
 #define TX_USE_BOARD_PRIVATE
 
 #include "tx_api.h"
-#include "basework/bitops.h"
+#include "base/bitops.h"
 
 
 enum led_node {

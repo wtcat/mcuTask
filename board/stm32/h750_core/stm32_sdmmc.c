@@ -10,9 +10,9 @@
 #include <inttypes.h>
 
 #include <tx_api.h>
-#include <basework/assert.h>
-#include <basework/log.h>
-#include <basework/assert.h>
+#include <base/assert.h>
+#include <base/log.h>
+#include <base/assert.h>
 #include <drivers/sdio/mmcsd_core.h>
 
 #include <subsys/cli/cli.h>

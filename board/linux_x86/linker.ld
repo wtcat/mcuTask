@@ -75,7 +75,7 @@ SECTIONS
   . = SEGMENT_START("rodata-segment", ALIGN(CONSTANT (MAXPAGESIZE)) + (. & (CONSTANT (MAXPAGESIZE) - 1)));
   .rodata         : { 
     *(.rodata .rodata.* .gnu.linkonce.r.*) 
-    KEEP(*(SORT(.basework.roset*)))
+    KEEP(*(SORT(.base.roset*)))
   }
   .rodata1        : { *(.rodata1) }
   .eh_frame_hdr   : { *(.eh_frame_hdr) *(.eh_frame_entry .eh_frame_entry.*) }
@@ -156,7 +156,7 @@ SECTIONS
   .data           :
   {
     *(.data .data.* .gnu.linkonce.d.*)
-    KEEP(*(SORT(.basework.rwset*)))
+    KEEP(*(SORT(.base.rwset*)))
     SORT(CONSTRUCTORS)
   }
   .data1          : { *(.data1) }

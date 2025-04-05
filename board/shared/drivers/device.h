@@ -11,11 +11,15 @@
 
 #include "tx_user.h"
 
-#include "basework/bitops.h"
-#include "basework/container/queue.h"
+#include <base/bitops.h>
+#include <base/container/queue.h>
 
 #ifdef __cplusplus
 extern "C"{
+#endif
+
+#ifndef __syscall
+#define __syscall
 #endif
 
 struct device;

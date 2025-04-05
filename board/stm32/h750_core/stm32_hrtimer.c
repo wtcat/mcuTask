@@ -2,7 +2,7 @@
  * Copyright 2024 wtcat
  */
 
-#include "basework/compiler_types.h"
+
 #define HRTIMER_SOURCE_CODE
 #define TX_USE_BOARD_PRIVATE
 
@@ -10,7 +10,7 @@
 #include <inttypes.h>
 
 #include "tx_api.h"
-#include "basework/hrtimer_.h"
+#include "base/hrtimer_.h"
 
 struct stm32_hrtimer {
     struct hrtimer_context base;

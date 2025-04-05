@@ -8,8 +8,8 @@
 #include <stdbool.h>
 
 #include "tx_api.h"
-#include "basework/bitops.h"
-#include "basework/container/list.h"
+#include "base/bitops.h"
+#include "base/container/list.h"
 
 
 struct stm32_extiline {

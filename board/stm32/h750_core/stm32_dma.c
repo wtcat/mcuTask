@@ -7,7 +7,7 @@
 #include <errno.h>
 #include "tx_api.h"
 
-#include "basework/bitops.h"
+#include "base/bitops.h"
 #include "stm32_dma.h"
 
 

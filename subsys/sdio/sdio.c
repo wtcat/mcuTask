@@ -17,9 +17,9 @@
 #include <tx_api.h>
 #include <tx_timer.h>
 
-#include <basework/assert.h>
-#include <basework/container/list.h>
-#include <basework/log.h>
+#include <base/assert.h>
+#include <base/container/list.h>
+#include <base/log.h>
 
 #include <drivers/sdio/mmcsd_core.h>
 #include <drivers/sdio/sd.h>

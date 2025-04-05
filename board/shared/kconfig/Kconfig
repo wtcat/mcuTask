@@ -1,0 +1,6 @@
+menu "Device Driver"
+
+rsource "Kconfig.dma"
+rsource "Kconfig.uart"
+
+endmenu

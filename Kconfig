@@ -1,8 +1,9 @@
 
 rsource "rtos/Kconfig"
-rsource "subsys/Kconfig"
-rsource "basework/Kconfig"
 rsource "board/shared/Kconfig"
+rsource "subsys/Kconfig"
+rsource "base/Kconfig"
+
 
 config MAIN_THREAD_PRIO
     int "The priority of main thread"

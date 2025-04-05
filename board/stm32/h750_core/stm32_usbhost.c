@@ -15,7 +15,7 @@
 #include "ux_host_class_cdc_acm.h"
 #include "ux_utility.h"
 
-#include "basework/log.h"
+#include "base/log.h"
 
 #include "stm32h7xx_hal_hcd.h"
 

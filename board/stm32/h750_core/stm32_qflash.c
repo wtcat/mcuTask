@@ -7,7 +7,7 @@
 
 #include <errno.h>
 #include "tx_user.h"
-#include "basework/log.h"
+#include "base/log.h"
 
 #define QSPI_FLASH_FastReadQuad_IO 0xEB
 #define QSPI_FLASH_ReadStatus_REG1 0X05

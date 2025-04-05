@@ -1,0 +1,21 @@
+menuconfig BASE
+    bool "Low level Base library"
+    default y
+
+if BASE
+
+config HFSM_SUPPORT
+    bool "Enable hierarchical support for FSM"
+    default n
+
+config SMALL_MEM_MODEL
+    bool "Enable small memory model"
+    default n
+
+config FTRACE
+    bool "Enable function trace"
+
+rsource "lib/Kconfig"
+
+endif #BASE
+

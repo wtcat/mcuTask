@@ -1,3 +1,7 @@
+
+
+rsource "kconfig/Kconfig"
+
 config KMALLOC
     bool "Enable kernel malloc"
     default y

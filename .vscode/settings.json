@@ -15,6 +15,7 @@
   "--pch-storage=disk",
   "--function-arg-placeholders=false",
   "--compile-commands-dir=${workspaceFolder}/board/stm32/h750_core/build",
+  // "--compile-commands-dir=${workspaceFolder}/board/linux_x86/build",
   "--query-driver=/opt/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin/arm-none-eabi-*"
 ],
   "git.ignoreLimitWarning": true

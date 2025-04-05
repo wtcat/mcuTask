@@ -81,7 +81,7 @@ SECTIONS
         *(.fixup)
         *(.gnu.warning)
         *(.rodata .rodata.*)
-        KEEP(*(SORT(.basework.roset*)))
+        KEEP(*(SORT(.base.roset*)))
         *(.gnu.linkonce.t.*)
         *(.glue_7)
         *(.glue_7t)
@@ -116,7 +116,7 @@ SECTIONS
     {
         _sdata = ABSOLUTE(.);
         *(.data .data.*)
-        KEEP(*(SORT(.basework.rwset*)))
+        KEEP(*(SORT(.base.rwset*)))
         *(.gnu.linkonce.d.*)
         CONSTRUCTORS
         . = ALIGN(4);

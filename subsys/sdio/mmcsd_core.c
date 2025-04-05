@@ -14,8 +14,8 @@
 #include <string.h>
 #include <tx_api.h>
 
-#include <basework/assert.h>
-#include <basework/log.h>
+#include <base/assert.h>
+#include <base/log.h>
 #include <drivers/sdio/mmc.h>
 #include <drivers/sdio/mmcsd_core.h>
 #include <drivers/sdio/sd.h>

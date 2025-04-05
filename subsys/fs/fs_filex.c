@@ -9,7 +9,7 @@
 #include <ctype.h>
 
 #include <fx_api.h>
-#include <basework/log.h>
+#include <base/log.h>
 #include <subsys/fs/fs.h>
 #include <drivers/blkdev.h>
 

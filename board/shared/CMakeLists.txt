@@ -1,5 +1,7 @@
 # Boards shared 
 
+static_library(board_shared)
+
 include_dirs(.)
 
 set(TARGET_SRCS
@@ -33,7 +35,7 @@ if (NOT CONFIG_SIMULATOR)
     list(APPEND TARGET_SRCS cstub.c irq.c)
 endif()
 
-target_sources(${PROJECT_NAME}
+target_sources(board_shared
     PRIVATE
     ${TARGET_SRCS}
 )

@@ -12,8 +12,8 @@
 #include "tx_api.h"
 #include "subsys/fs/fs.h"
 
-#include "basework/container/list.h"
-#include "basework/log.h"
+#include "base/container/list.h"
+#include "base/log.h"
 
 
 struct fs_manager {

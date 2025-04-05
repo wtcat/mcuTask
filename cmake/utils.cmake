@@ -62,12 +62,6 @@ function(add_subdirectory_ifdef feature_toggle)
   endif()
 endfunction()
 
-function(add_subdirectory_ifndef feature_toggle)
-  if(${${feature_toggle}})
-    add_subdirectory(${ARGN})
-  endif()
-endfunction()
-
 function(add_subdirectory_ifndef feature_toggle source_dir)
   if(NOT ${feature_toggle})
     add_subdirectory(${source_dir} ${ARGN})

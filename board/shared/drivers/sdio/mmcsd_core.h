@@ -12,7 +12,7 @@
 #define __DEV_MMCSD_CORE_H__
 
 #include <tx_api.h>
-#include <basework/bitops.h>
+#include <base/bitops.h>
 
 #include <subsys/sdio/mmcsd_host.h>
 #include <subsys/sdio/mmcsd_card.h>

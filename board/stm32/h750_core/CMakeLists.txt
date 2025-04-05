@@ -28,12 +28,13 @@ set(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
 # Add compile options
 include_dirs(
     ${WKSAPCE_PATH}
-    ${WKSAPCE_PATH}/basework/arch/arm
+    ${WKSAPCE_PATH}/base/arch/arm
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_compile_options(
     -imacros ${AUTOCONF_H}
     ${CONFIG_COMPILER_OPTIMIZE}
+    
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1
@@ -47,7 +48,8 @@ set (BOARD_SOURCES
     stm32_startup.c
     stm32_qflash.c
     stm32_dma.c
-    stm32_uart.c
+    # stm32_uart.c
+    stm32_serial.c
     stm32_pins.c
     stm32_gpio.c
     stm32_leds.c
@@ -71,19 +73,13 @@ if (CONFIG_USBX)
     )
 endif()
 
+add_subdirectory(${WKSAPCE_PATH} wksapce)
+add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
+add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared/h7/Drivers drivers)
+
 add_executable(${PROJECT_NAME}
     ${BOARD_SOURCES}
 )
-
-# Add subdirectory
-add_subdirectory(${WKSAPCE_PATH}/application application)
-add_subdirectory(${WKSAPCE_PATH}/rtos rtos)
-add_subdirectory(${WKSAPCE_PATH}/base base)
-add_subdirectory(${WKSAPCE_PATH}/basework basework)
-add_subdirectory(${WKSAPCE_PATH}/subsys subsys)
-add_subdirectory(${WKSAPCE_PATH}/board/shared shared)
-add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
-add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared/h7/Drivers drivers)
 
 # Link target
 collect_link_libraries(libs ${PROJECT_NAME})

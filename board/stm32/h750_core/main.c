@@ -8,9 +8,9 @@
 #include "tx_api.h"
 #include "fx_api.h"
 
-#include "basework/rte_cpu.h"
-#include "basework/os/osapi.h"
-#include "basework/log.h"
+#include "base/rte_cpu.h"
+#include "base/os/osal.h"
+#include "base/log.h"
 
 #include "subsys/cli/cli.h"
 #include "subsys/fs/fs.h"
@@ -141,9 +141,7 @@ static void main_thread(void *arg) {
     /*
      * Create command line interface
      */
-    static ULONG stack[1024];
-    cli_run("uart1", 15, stack, sizeof(stack), 
-        "[task]# ", &_cli_ifdev_uart);
+
 
     file_test();
 

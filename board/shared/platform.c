@@ -2,9 +2,9 @@
  * Copyright 2024 wtcat
  */
 #include <stdarg.h>
-#include "tx_api.h"
+#include <tx_api.h>
 
-#include "basework/lib/iovpr.h"
+#include <base/lib/iovpr.h>
 
 struct printk_buffer {
 #define BUF_SIZE 256

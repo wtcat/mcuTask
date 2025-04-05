@@ -15,8 +15,8 @@
 #include <tx_api.h>
 #include <tx_timer.h>
 
-#include <basework/lib/string.h>
-#include <basework/log.h>
+#include <base/lib/string.h>
+#include <base/log.h>
 
 #include <drivers/blkdev.h>
 #include <drivers/blkdev.h>

@@ -8,12 +8,12 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-#include "basework/compiler_attributes.h"
-#include "basework/generic.h"
-#include "basework/linker.h"
-#include "basework/container/queue.h"
-#include "basework/container/list.h"
-#include "basework/hrtimer_.h"
+#include <base/compiler_attributes.h>
+#include <base/generic.h>
+#include <base/linker.h>
+#include <base/container/queue.h>
+#include <base/container/list.h>
+#include <base/hrtimer_.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -38,7 +38,7 @@ extern "C"{
  * Thread extension API
  */
 #if TX_USE_KERNEL_API_EXTENSION
-#include "basework/cleanup.h"
+#include <base/cleanup.h>
 
 #define tx_thread_spawn(a, b, c, d, e, f, g, h, i, j) \
     tx_thread_create((a), (CHAR *)(b), (VOID(*)(ULONG))(void *)(c), (ULONG)(d), (e), (f), (g), (h), (i), (j))
