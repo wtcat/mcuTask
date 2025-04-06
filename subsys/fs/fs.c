@@ -4,16 +4,15 @@
  * Virtual Filesystem (borrowed from zephyr)
  */
 
-#include <stdlib.h>
 #define pr_fmt(fmt) "[fs]: " fmt"\n"
+
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "tx_api.h"
-#include "subsys/fs/fs.h"
-
-#include "base/container/list.h"
-#include "base/log.h"
+#include <tx_api.h>
+#include <subsys/fs/fs.h>
+#include <base/log.h>
 
 
 struct fs_manager {

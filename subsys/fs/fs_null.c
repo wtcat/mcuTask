@@ -4,7 +4,7 @@
  */
 
 #include <errno.h>
-#include "subsys/fs/fs.h"
+#include <subsys/fs/fs.h>
 
 /* File operations */
 static int _fs_null_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
