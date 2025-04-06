@@ -32,7 +32,7 @@ extern "C" {
 
 #define LINKER_SET_BEGIN(set) _linker__set_##set##_begin
 #define LINKER_SET_END(set) _linker__set_##set##_end
-#define LINKER_SET_ALIGN(type) //__rte_aligned(sizeof(type))
+#define LINKER_SET_ALIGN(type) __rte_aligned(__alignof(type))
 
 /*
  * Readonly section

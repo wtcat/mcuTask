@@ -7,14 +7,13 @@
 
 #include "tx_api.h"
 
-
-static STAILQ_HEAD(, device) dev_list;	
+static STAILQ_HEAD(device_list, device) __device_head;	
 static TX_MUTEX dev_mutex;
 
 static struct device *device_find_locked(const char *name) {
     struct device *dev;
 
-    STAILQ_FOREACH(dev, &dev_list, link) {
+    STAILQ_FOREACH(dev, &__device_head, link) {
         if (!strcmp(name, dev->name))
             return dev;
     }
@@ -40,7 +39,7 @@ int device_register(struct device *dev) {
     if (device_find_locked(dev->name))
         return -EEXIST;
 
-    STAILQ_INSERT_TAIL(&dev_list, dev, link);
+    STAILQ_INSERT_TAIL(&__device_head, dev, link);
     return 0;
 }
 
@@ -53,7 +52,7 @@ int device_unregister(struct device *dev) {
         return -EINVAL;
 
     if (device_find_locked(dev->name)) {
-        STAILQ_REMOVE(&dev_list, dev, device, link);
+        STAILQ_REMOVE(&__device_head, dev, device, link);
         return 0;
     }
 
@@ -67,14 +66,14 @@ void device_foreach(bool (*iterator)(struct device *, void *), void *user) {
         return;
 
     guard(os_mutex)(&dev_mutex);
-    STAILQ_FOREACH(dev, &dev_list, link) {
+    STAILQ_FOREACH(dev, &__device_head, link) {
         if (iterator(dev, user))
             break;
     }
 }
 
 static int device_init(void) {
-    STAILQ_INIT(&dev_list);
+    STAILQ_INIT(&__device_head);
     tx_mutex_create(&dev_mutex, "device", TX_INHERIT);
     return 0;
 }

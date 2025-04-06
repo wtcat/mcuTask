@@ -20,6 +20,7 @@
 
 #include <stddef.h>
 #include <drivers/device.h>
+#include <base/bitops.h>
 
 
 #ifdef __cplusplus

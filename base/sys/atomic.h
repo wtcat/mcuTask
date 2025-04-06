@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <base/sys/atomic_types.h> /* IWYU pragma: export */
-#include <base/bitops.h>
+#include <base/sys/util.h>
 #include <base/compiler.h>
 
 
@@ -34,7 +34,7 @@ extern "C" {
 
 #else
 /* Default.  See this file for the Doxygen reference: */
-#include <sys/atomic_builtin.h>
+#include <base/sys/atomic_builtin.h>
 #endif
 
 /* Portable higher-level utilities: */

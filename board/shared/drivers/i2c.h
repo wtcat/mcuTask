@@ -23,8 +23,9 @@
 
 #include <errno.h>
 
-#include "drivers/device.h"
-#include "base/container/list.h"
+#include <drivers/device.h>
+#include <base/container/list.h>
+#include <base/bitops.h>
 
 #ifdef __cplusplus
 extern "C" {

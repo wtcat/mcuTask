@@ -39,3 +39,5 @@ target_sources(board_shared
     PRIVATE
     ${TARGET_SRCS}
 )
+
+add_subdirectory(drivers)

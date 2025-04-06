@@ -4,13 +4,15 @@
 #ifndef BASE__BITOPS_H_
 #define BASE__BITOPS_H_
 
+#include <base/sys/util.h>
+
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-#undef BIT_MASK
-#undef BITS_PER_LONG
-#undef GENMASK
+// #undef BIT_MASK
+// #undef BITS_PER_LONG
+// #undef GENMASK
 
 #ifndef BIT
 #define	BIT(nr)			(1UL << (nr))
@@ -19,19 +21,17 @@ extern "C"{
 #define UL(nr)  (nr ## UL)
 #define ULL(nr) (nr ## ULL)
 
-#define	BITS_PER_LONG	   (sizeof(long) * BITS_PER_BYTE)
-#define BITS_PER_LONG_LONG (sizeof(long long) * BITS_PER_BYTE)
-#define BITS_PER_BYTE		8
+// #define	BITS_PER_LONG	   (sizeof(long) * BITS_PER_BYTE)
 
 #define BIT_ULL(nr)			(ULL(1) << (nr))
-#define BIT_MASK(nr)		(UL(1) << ((nr) % BITS_PER_LONG))
+// #define BIT_MASK(nr)		(UL(1) << ((nr) % BITS_PER_LONG))
 #define BIT_WORD(nr)		((nr) / BITS_PER_LONG)
 #define BIT_ULL_MASK(nr)	(ULL(1) << ((nr) % BITS_PER_LONG_LONG))
 #define BIT_ULL_WORD(nr)	((nr) / BITS_PER_LONG_LONG)
 #define	BITMAP_FIRST_WORD_MASK(start)	(~UL(0) << ((start) % BITS_PER_LONG))
 #define	BITMAP_LAST_WORD_MASK(n)	(~UL(0) >> (BITS_PER_LONG - (n)))
 
-#define	GENMASK(hi, lo)	(((~UL(0)) << (lo)) & (~UL(0) >> (BITS_PER_LONG - 1 - (hi))))
+// #define	GENMASK(hi, lo)	(((~UL(0)) << (lo)) & (~UL(0) >> (BITS_PER_LONG - 1 - (hi))))
 
 #define __bf_shf(x) (__builtin_ffsll(x) - 1)
 	 
@@ -67,10 +67,12 @@ extern "C"{
  * FIELD_PREP() masks and shifts up the value.  The result should
  * be combined with other fields of the bitfield using logical OR.
  */
+#ifndef FIELD_PREP
 #define FIELD_PREP(_mask, _val)						\
 	({								\
 		((typeof(_mask))(_val) << __bf_shf(_mask)) & (_mask);	\
 	})
+#endif
 
 /**
  * FIELD_GET() - extract a bitfield element
@@ -80,11 +82,12 @@ extern "C"{
  * FIELD_GET() extracts the field specified by @_mask from the
  * bitfield passed in as @_reg by masking and shifting it down.
  */
+#ifndef FIELD_GET
 #define FIELD_GET(_mask, _reg)						\
 	({								\
 		(typeof(_mask))(((_reg) & (_mask)) >> __bf_shf(_mask));	\
 	})
-
+#endif
 
 #ifndef ffs
 #define	ffs(_x)	  __builtin_ffs((unsigned int)(_x))

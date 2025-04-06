@@ -1,0 +1,313 @@
+# Shell backends configuration options
+
+# Copyright (c) 2018 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+menuconfig SHELL_BACKENDS
+	bool "Shell backends"
+	default y
+	help
+	  Enable shell backends.
+
+if SHELL_BACKENDS
+
+# Workaround for not being able to have commas in macro arguments
+
+config SHELL_BACKEND_SERIAL
+	bool "Serial backend"
+	default y
+	help
+	  Enable serial backend.
+
+if SHELL_BACKEND_SERIAL
+
+config SHELL_PROMPT_UART
+	string "Displayed prompt name"
+	default "uart:~$ "
+	help
+	  Displayed prompt name for UART backend. If prompt is set, the shell will
+	  send two newlines during initialization.
+
+config SHELL_BACKEND_SERIAL_INTERRUPT_DRIVEN
+	bool "Interrupt driven"
+	default y
+	depends on SERIAL_SUPPORT_INTERRUPT
+
+config SHELL_ASYNC_API
+	bool "Asynchronous shell API"
+	default n
+	depends on UART_ASYNC_API
+	help
+	  This option enables asynchronous shell API.
+
+choice SHELL_BACKEND_SERIAL_API
+	prompt "Mode"
+	default SHELL_BACKEND_SERIAL_API_ASYNC if SHELL_ASYNC_API
+	default SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN if SHELL_BACKEND_SERIAL_INTERRUPT_DRIVEN
+	default SHELL_BACKEND_SERIAL_API_POLLING
+
+config SHELL_BACKEND_SERIAL_API_POLLING
+	prompt "Polling"
+
+config SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN
+	bool "Interrupt driven"
+	depends on SERIAL_SUPPORT_INTERRUPT
+	select UART_INTERRUPT_DRIVEN
+
+
+config SHELL_BACKEND_SERIAL_API_ASYNC
+	bool "Asynchronous"
+	depends on SERIAL_SUPPORT_ASYNC
+	select UART_ASYNC_RX_HELPER
+
+endchoice
+
+config SHELL_BACKEND_SERIAL_FORCE_TX_BLOCKING_MODE
+	bool "Force blocking mode for TX"
+	help
+	  Force blocking mode for TX.
+
+config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
+	int "Set TX ring buffer size"
+	default 8
+	depends on SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN
+	help
+	  If UART is utilizing DMA transfers then increasing ring buffer size
+	  increases transfers length and reduces number of interrupts.
+
+config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
+	int "Set RX ring buffer size"
+	depends on SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN || SHELL_BACKEND_SERIAL_API_POLLING
+	default 256 if MCUMGR_TRANSPORT_SHELL
+	default 64
+	help
+	  RX ring buffer size impacts accepted latency of handling incoming
+	  bytes by shell. If shell input is coming from the keyboard then it is
+	  usually enough if ring buffer is few bytes (more than one due to
+	  escape sequences). However, if bulk data is transferred it may be
+	  required to increase it.
+
+if SHELL_BACKEND_SERIAL_API_ASYNC
+
+config SHELL_BACKEND_SERIAL_ASYNC_RX_TIMEOUT
+	int "RX inactivity timeout (in microseconds)"
+	default 10000
+	help
+	  Inactivity timeout after which received data is reported.
+
+config SHELL_BACKEND_SERIAL_ASYNC_RX_BUFFER_COUNT
+	int "Number of RX buffers"
+	default 4
+	range 2 64
+	help
+	  Number of RX buffers. Some UART driver implementations changes buffers
+	  on timeout so this number should be big enough to cover handling on
+	  time incoming data. 4 should be enough for almost all the cases unless
+	  CPU load is high and there is very high shell thread latency.
+
+config SHELL_BACKEND_SERIAL_ASYNC_RX_BUFFER_SIZE
+	int "Size of the RX buffer"
+	default 16
+	help
+	  Size of a single RX buffer. Together with buffer count it defines the
+	  space that can hold RX data. It may be decreased if shell input is
+	  slow and may need to be increased if long messages are pasted directly
+	  to the shell prompt.
+
+endif # SHELL_BACKEND_SERIAL_API_ASYNC
+
+config SHELL_BACKEND_SERIAL_RX_POLL_PERIOD
+	int "RX polling period (in milliseconds)"
+	default 10
+	depends on SHELL_BACKEND_SERIAL_API_POLLING
+	help
+	  Determines how often UART is polled for RX byte.
+
+config SHELL_BACKEND_SERIAL_CHECK_DTR
+	bool "Check DTR signal before TX"
+	depends on SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN
+	depends on UART_LINE_CTRL
+	help
+	  Check DTR signal before TX.
+
+
+choice
+	prompt "Initial log level limit"
+	default SHELL_BACKEND_SERIAL_LOG_LEVEL_DEFAULT
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL_DEFAULT
+	bool "System limit (LOG_MAX_LEVEL)"
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL_DBG
+	bool "Debug"
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL_INF
+	bool "Info"
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL_WRN
+	bool "Warning"
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL_ERR
+	bool "Error"
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL_NONE
+	bool "None"
+
+endchoice
+
+config SHELL_BACKEND_SERIAL_LOG_LEVEL
+	int
+	default 0 if SHELL_BACKEND_SERIAL_LOG_LEVEL_NONE
+	default 1 if SHELL_BACKEND_SERIAL_LOG_LEVEL_ERR
+	default 2 if SHELL_BACKEND_SERIAL_LOG_LEVEL_WRN
+	default 3 if SHELL_BACKEND_SERIAL_LOG_LEVEL_INF
+	default 4 if SHELL_BACKEND_SERIAL_LOG_LEVEL_DBG
+	default 5 if SHELL_BACKEND_SERIAL_LOG_LEVEL_DEFAULT
+
+endif # SHELL_BACKEND_SERIAL
+
+config SHELL_BACKEND_RTT
+	bool "RTT backend"
+	select CONSOLE
+	select RTT_CONSOLE
+	select SEGGER_RTT_CUSTOM_LOCKING
+	depends on USE_SEGGER_RTT
+	# RTT backend can only be called from thread context.
+	depends on !(SHELL_LOG_BACKEND && LOG_MODE_IMMEDIATE)
+	help
+	  Enable RTT backend.
+
+if SHELL_BACKEND_RTT
+
+config SHELL_PROMPT_RTT
+	string "Displayed prompt name"
+	default "rtt:~$ "
+	help
+	  Displayed prompt name for RTT backend. If prompt is set, the shell will
+	  send two newlines during initialization.
+
+config SHELL_BACKEND_RTT_BUFFER
+	int "Buffer number used for shell input and output."
+#	range 0 SEGGER_RTT_MAX_NUM_UP_BUFFERS
+	default 0
+	help
+	  Select index of up-buffer used for shell output, by default it uses
+	  terminal up-buffer and its settings.
+
+config SHELL_BACKEND_RTT_RETRY_CNT
+	int "Number of retries"
+	default 4
+	help
+	  Number of TX retries before dropping the data and assuming that
+	  RTT session is inactive.
+
+config SHELL_BACKEND_RTT_RETRY_DELAY_MS
+	int "Delay between TX retries in milliseconds"
+	default 5
+	help
+	  Sleep period between TX retry attempts. During RTT session, host pulls
+	  data periodically. Period starts from 1-2 milliseconds and can be
+	  increased if traffic on RTT increases (also from host to device). In
+	  case of heavy traffic data can be lost and it may be necessary to
+	  increase delay or number of retries.
+
+config SHELL_RTT_RX_POLL_PERIOD
+	int "RX polling period (in milliseconds)"
+	default 10
+	help
+	  Determines how often RTT is polled for RX byte.
+
+choice
+	prompt "Initial log level limit"
+	default SHELL_RTT_INIT_LOG_LEVEL_DEFAULT
+
+config SHELL_RTT_INIT_LOG_LEVEL_DEFAULT
+	bool "System limit (LOG_MAX_LEVEL)"
+
+config SHELL_RTT_INIT_LOG_LEVEL_DBG
+	bool "Debug"
+
+config SHELL_RTT_INIT_LOG_LEVEL_INF
+	bool "Info"
+
+config SHELL_RTT_INIT_LOG_LEVEL_WRN
+	bool "Warning"
+
+config SHELL_RTT_INIT_LOG_LEVEL_ERR
+	bool "Error"
+
+config SHELL_RTT_INIT_LOG_LEVEL_NONE
+	bool "None"
+
+endchoice
+
+config SHELL_RTT_INIT_LOG_LEVEL
+	int
+	default 0 if SHELL_RTT_INIT_LOG_LEVEL_NONE
+	default 1 if SHELL_RTT_INIT_LOG_LEVEL_ERR
+	default 2 if SHELL_RTT_INIT_LOG_LEVEL_WRN
+	default 3 if SHELL_RTT_INIT_LOG_LEVEL_INF
+	default 4 if SHELL_RTT_INIT_LOG_LEVEL_DBG
+	default 5 if SHELL_RTT_INIT_LOG_LEVEL_DEFAULT
+
+endif # SHELL_BACKEND_RTT
+
+config SHELL_BACKEND_DUMMY
+	bool "Dummy backend."
+	help
+	  Enable dummy backend which can be used to execute commands with no
+	  need for physical transport interface.
+
+if SHELL_BACKEND_DUMMY
+
+config SHELL_PROMPT_DUMMY
+	string "Displayed prompt name"
+	default "~$ "
+	help
+	  Displayed prompt name for DUMMY backend. If prompt is set, the shell will
+	  send two newlines during initialization.
+
+config SHELL_BACKEND_DUMMY_BUF_SIZE
+	int "Size of dummy buffer size"
+	default 400 if LOG_PRINTK
+	default 300
+	help
+	  This is size of output buffer that will be used by dummy backend, this limits number of
+	  characters that will be captured from command output.
+
+choice
+	prompt "Initial log level limit"
+	default SHELL_DUMMY_INIT_LOG_LEVEL_INF
+
+config SHELL_DUMMY_INIT_LOG_LEVEL_DEFAULT
+	bool "System limit (LOG_MAX_LEVEL)"
+
+config SHELL_DUMMY_INIT_LOG_LEVEL_DBG
+	bool "Debug"
+
+config SHELL_DUMMY_INIT_LOG_LEVEL_INF
+	bool "Info"
+
+config SHELL_DUMMY_INIT_LOG_LEVEL_WRN
+	bool "Warning"
+
+config SHELL_DUMMY_INIT_LOG_LEVEL_ERR
+	bool "Error"
+
+config SHELL_DUMMY_INIT_LOG_LEVEL_NONE
+	bool "None"
+
+endchoice
+
+config SHELL_DUMMY_INIT_LOG_LEVEL
+	int
+	default 0 if SHELL_DUMMY_INIT_LOG_LEVEL_NONE
+	default 1 if SHELL_DUMMY_INIT_LOG_LEVEL_ERR
+	default 2 if SHELL_DUMMY_INIT_LOG_LEVEL_WRN
+	default 3 if SHELL_DUMMY_INIT_LOG_LEVEL_INF
+	default 4 if SHELL_DUMMY_INIT_LOG_LEVEL_DBG
+	default 5 if SHELL_DUMMY_INIT_LOG_LEVEL_DEFAULT
+
+endif # SHELL_BACKEND_DUMMY
+
+endif # SHELL_BACKENDS

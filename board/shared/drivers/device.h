@@ -8,19 +8,14 @@
 #include <errno.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <base/container/queue.h>
 
 #include "tx_user.h"
-
-#include <base/bitops.h>
-#include <base/container/queue.h>
 
 #ifdef __cplusplus
 extern "C"{
 #endif
 
-#ifndef __syscall
-#define __syscall
-#endif
 
 struct device;
 

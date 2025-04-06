@@ -32,7 +32,9 @@
 #define CONFIG_SDIO_THREAD_PRIORITY 28
 #endif
 
+#ifndef MIN
 #define MIN(a, b) rte_min(a, b)
+#endif
 
 struct sdio_card {
 	struct mmcsd_card *card;
