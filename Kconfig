@@ -1,9 +1,10 @@
+comment "MCU Task configure"
 
 rsource "rtos/Kconfig"
-rsource "board/shared/Kconfig"
 rsource "subsys/Kconfig"
 rsource "base/Kconfig"
-
+rsource "board/shared/Kconfig"
+rsource "Kconfig.compile"
 
 config MAIN_THREAD_PRIO
     int "The priority of main thread"
@@ -13,5 +14,3 @@ config MAIN_THREAD_STACK_SIZE
     int "The stack size of main thread"
     default 2048
 
-
-rsource "Kconfig.compile"
