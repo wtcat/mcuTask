@@ -526,6 +526,8 @@ static int enable_shell_uart(void) {
 		// smp_shell_init();
 	}
 
+	printk("shell_uart(%p) shell_uart[0]=%p shell_uart[1]=%p\n",
+		&shell_uart, *((void **)&shell_uart), *(((void **)&shell_uart) + 1));
 	shell_init(&shell_uart, dev, cfg_flags, log_backend, level);
 
 	return 0;
