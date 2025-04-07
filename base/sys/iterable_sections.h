@@ -44,7 +44,7 @@ extern "C" {
  * @param[in]  section_postfix postfix to use in section name
  */
 #define TYPE_SECTION_ITERABLE(type, varname, secname, section_postfix) \
-	LINKER_ROSET_ITEM_ORDERED(secname, type, varname, 1)
+	LINKER_ROSET_ITEM_ORDERED(secname, type, varname, section_postfix)
 
 /**
  * @brief iterable section start symbol for a generic type

@@ -6,7 +6,7 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/bitops.h"
+#include <base/bitops.h>
 
 unsigned long find_first_bit(unsigned long *addr, unsigned long size) {
 	long mask;

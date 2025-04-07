@@ -30,13 +30,14 @@ zephyr_library_compile_options(
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wno-unused-parameter>
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wno-implicit-fallthrough>
     $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wno-missing-field-initializers>
-#    $<$<CXX_COMPILER_ID:GNU>:-Wno-cast-function-type>
 )
 
 zephyr_library_sources( 
+    bitops.c
     log.c
     fsm.c
 )
 
 add_subdirectory(container)
 add_subdirectory(lib)
+add_subdirectory(sys)

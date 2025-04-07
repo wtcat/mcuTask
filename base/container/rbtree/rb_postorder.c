@@ -38,7 +38,7 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/container/rbtree/rb.h"
+#include <base/container/rbtree/rb.h>
 
 static void *_RBTree_Postorder_dive_left(
   const RBTree_Node *the_node,

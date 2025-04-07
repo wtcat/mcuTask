@@ -16,7 +16,7 @@
 #define __RTE_PASTE(a,b) ___RTE_PASTE(a,b)
 
 /* Attributes */
-#include "base/compiler_attributes.h"
+#include <base/compiler_attributes.h>
 
 /* Builtins */
 
@@ -31,12 +31,12 @@
 
 /* Compiler specific macros. */
 #ifdef __clang__
-#include "base/compiler-clang.h"
+#include <base/compiler-clang.h>
 #elif defined(__INTEL_COMPILER)
-#include "base/compiler-intel.h"
+#include <base/compiler-intel.h>
 #elif defined(__GNUC__)
 /* The above compilers also define __GNUC__, so order is important here. */
-#include "base/compiler-gcc.h"
+#include <base/compiler-gcc.h>
 #else
 #error "Unknown compiler"
 #endif

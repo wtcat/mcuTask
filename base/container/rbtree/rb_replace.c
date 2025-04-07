@@ -38,7 +38,7 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/container/rbtree/rb.h"
+#include <base/container/rbtree/rb.h>
 
 void _RBTree_Replace_node(
   RBTree_Control *the_rbtree,

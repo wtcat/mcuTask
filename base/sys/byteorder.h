@@ -6,7 +6,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <assert.h>
+#include <base/assert.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -395,7 +395,7 @@ static inline void rte_memcpy_swap(void *dst, const void *src, size_t length)
 	uint8_t *pdst = (uint8_t *)dst;
 	const uint8_t *psrc = (const uint8_t *)src;
 
-	assert(((psrc < pdst && (psrc + length) <= pdst) ||
+	rte_assert(((psrc < pdst && (psrc + length) <= pdst) ||
 		  (psrc > pdst && (pdst + length) <= psrc)));
 	psrc += length - 1;
 	for (; length > 0; length--) 

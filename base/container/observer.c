@@ -9,8 +9,8 @@
 #include <errno.h>
 #include <stddef.h>
 
-#include "base/compiler.h"
-#include "base/container/observer.h"
+#include <base/compiler.h>
+#include <base/container/observer.h>
 
 int __rte_notrace observer_register(struct observer_base **nl,
 		struct observer_base *n)

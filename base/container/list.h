@@ -8,7 +8,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "base/generic.h"
+#include <base/generic.h>
 
 #ifdef __cplusplus
 extern "C"{

@@ -9,9 +9,9 @@
 #include <errno.h>
 #include <stdint.h>
 
-#include "base/generic.h"
-#include "base/log.h"
-#include "base/lib/printer.h"
+#include <base/generic.h>
+#include <base/log.h>
+#include <base/lib/printer.h>
 
 #ifndef RTE_WRITE_ONCE
 #define RTE_WRITE_ONCE(x, val) (x) = (val)

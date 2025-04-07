@@ -961,7 +961,7 @@ extern void z_shell_print_stream(const void *user_ctx, const char *data,
 	Z_SHELL_STATS_DEFINE(_name);                                                               \
 	static ULONG _name##_stack[CONFIG_SHELL_STACK_SIZE / sizeof(ULONG)];                      \
 	static TX_THREAD _name##_thread;                                                     \
-	static const STRUCT_SECTION_ITERABLE(shell, _name) = {                                     \
+	static /*const*/ STRUCT_SECTION_ITERABLE(shell, _name) = {                                     \
 		.default_prompt = _prompt,                                                         \
 		.iface = _transport_iface,                                                         \
 		.ctx = &UTIL_CAT(_name, _ctx),                                                     \

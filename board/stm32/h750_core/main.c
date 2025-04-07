@@ -5,15 +5,15 @@
 #define TX_USE_BOARD_PRIVATE
 #define TX_USE_SECTION_INIT_API_EXTENSION 1
 
-#include "tx_api.h"
-#include "fx_api.h"
+#include <tx_api.h>
+#include <fx_api.h>
 
-#include "base/rte_cpu.h"
-#include "base/os/osal.h"
-#include "base/log.h"
+#include <base/rte_cpu.h>
+#include <base/osal.h>
+#include <base/log.h>
 
-#include "subsys/cli/cli.h"
-#include "subsys/fs/fs.h"
+#include <subsys/cli/cli.h>
+#include <subsys/fs/fs.h>
 
 #define MAIN_THREAD_PRIO  11
 #define MAIN_THREAD_STACK 4096

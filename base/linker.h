@@ -4,7 +4,7 @@
 #ifndef BASE_LINKER_H_
 #define BASE_LINKER_H_
 
-#include "base/generic.h"
+#include <base/generic.h>
 
 #ifdef __cplusplus
 extern "C" {

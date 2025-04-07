@@ -38,7 +38,7 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/container/rbtree/rb_impl.h"
+#include <base/container/rbtree/rb_impl.h>
 
 RBTree_Node *_RBTree_Maximum( const RBTree_Control *tree )
 {

@@ -14,11 +14,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "base/container/kfifo.h"
-#include "base/malloc.h"
-#include "base/bitops.h"
-#include "base/minmax.h"
-#include "base/rte_atomic.h"
+#include <base/container/kfifo.h>
+#include <base/malloc.h>
+#include <base/bitops.h>
+#include <base/minmax.h>
+#include <base/rte_atomic.h>
 
 #ifndef roundup_pow_of_two
 #define roundup_pow_of_two(n)   (1UL << fls((n) - 1))

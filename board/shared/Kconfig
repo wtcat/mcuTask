@@ -1,7 +1,9 @@
 
 
+
 rsource "kconfig/Kconfig"
 
+menu "Board Shared library"
 config KMALLOC
     bool "Enable kernel malloc"
     default y
@@ -22,3 +24,4 @@ config TASK_RUNNER
     bool "Enable task runner queue"
     default y
 
+endmenu

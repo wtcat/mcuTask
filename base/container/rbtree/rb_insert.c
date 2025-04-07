@@ -38,7 +38,7 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/container/rbtree/rb_impl.h"
+#include <base/container/rbtree/rb_impl.h>
 
 RB_GENERATE_INSERT_COLOR( RBTree_Control, RBTree_Node, Node, static inline )
 

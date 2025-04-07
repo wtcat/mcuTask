@@ -14,8 +14,8 @@
 extern "C"{
 #endif
 
-#include "base/generic.h"
-#include "base/rte_atomic.h"
+#include <base/generic.h>
+#include <base/rte_atomic.h>
 
 
 

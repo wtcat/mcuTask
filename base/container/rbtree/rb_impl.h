@@ -37,7 +37,7 @@
 #ifndef BASE_CONTAINER_RBTREEIMPL_H
 #define BASE_CONTAINER_RBTREEIMPL_H
 
-#include "base/container/rbtree/rb.h"
+#include <base/container/rbtree/rb.h>
 
 #ifdef __cplusplus
 extern "C" {

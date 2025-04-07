@@ -38,7 +38,7 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/container/rbtree/rb_impl.h"
+#include <base/container/rbtree/rb_impl.h>
 
 void _RBTree_Append( RBTree_Control *the_rbtree, RBTree_Node *the_node )
 {

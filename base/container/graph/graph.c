@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "base/os/osal.h"
+#include "base/osal.h"
 #include "base/lib/fnmatch.h"
 #include "base/errno.h"
 #include "base/assert.h"

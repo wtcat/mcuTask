@@ -28,8 +28,8 @@
 #ifndef BASE_RBTREE_H
 #define BASE_RBTREE_H
 
-#include "base/generic.h"
-#include "base/container/rbtree/rb.h"
+#include <base/generic.h>
+#include <base/container/rbtree/rb.h>
 
 #ifdef __cplusplus
 extern "C" {

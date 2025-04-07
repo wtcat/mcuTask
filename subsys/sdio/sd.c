@@ -15,7 +15,7 @@
 
 #include <tx_api.h>
 #include <base/log.h>
-#include <base/byteorder.h>
+#include <base/sys/byteorder.h>
 
 #include <drivers/sdio/mmcsd_core.h>
 #include <drivers/sdio/sd.h>

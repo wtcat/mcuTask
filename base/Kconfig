@@ -1,8 +1,4 @@
-menuconfig BASE
-    bool "Low level Base library"
-    default y
-
-if BASE
+menu "Base library"
 
 config HFSM_SUPPORT
     bool "Enable hierarchical support for FSM"
@@ -15,7 +11,8 @@ config SMALL_MEM_MODEL
 config FTRACE
     bool "Enable function trace"
 
+rsource "sys/Kconfig"
 rsource "lib/Kconfig"
 
-endif #BASE
+endmenu
 

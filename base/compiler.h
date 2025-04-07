@@ -4,8 +4,8 @@
 
 #if !defined(_MSC_VER)
 
-#include "base/rte_cpu.h"
-#include "base/compiler_types.h"
+#include <base/rte_cpu.h>
+#include <base/compiler_types.h>
 
 #define RTE_BUILD_BUG(e) ((int)(sizeof(struct { int:(-!!(e)); })))
 
@@ -58,7 +58,7 @@
 #define __rte_must_be_array(a)	RTE_BUILD_BUG(__rte_same_type((a), &(a)[0]))
 
 
-#include "base/rwonce.h"
+#include <base/rwonce.h>
 
 #else /* !_MSC_VER */
 
