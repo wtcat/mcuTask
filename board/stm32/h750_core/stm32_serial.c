@@ -1475,6 +1475,7 @@ static int uart_stm32_registers_configure(struct stm32_uart *uart) {
 }
 
 static struct device *uart_console;
+static struct stm32_uart stm32_console;
 
 static void stm32_uart_puts(const char *s, size_t len) {
    USART_TypeDef *reg = to_uart(uart_console)->reg;
@@ -1500,8 +1501,14 @@ static int stm32_uart_init(void) {
 
         uart_console = device_find("uart1");
         err = uart_configure(uart_console, &cfg);
-        if (!err)
+        if (!err) {
             __console_puts = stm32_uart_puts;
+
+			/* Register console device */
+			memcpy(&stm32_console, uart_console, sizeof(struct stm32_uart));
+			stm32_console.class.name = "console";
+			device_register((struct device *)&stm32_console.class);
+		}
     }
 
     return err;

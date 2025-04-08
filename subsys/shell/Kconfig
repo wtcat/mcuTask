@@ -169,7 +169,7 @@ config SHELL_VT100_COMMANDS
 config SHELL_VT100_COLORS
 	bool "Colors in shell"
 	depends on SHELL_VT100_COMMANDS
-	default y if !SHELL_MINIMAL
+	default n
 	help
 	  If enabled VT100 colors are used in shell (e.g. print errors in red).
 

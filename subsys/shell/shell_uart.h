@@ -91,7 +91,7 @@ struct shell_uart_polling {
 	static SHELL_UART_STRUCT _name##_shell_uart;                                               \
 	struct shell_transport _name = {                                                           \
 		.api = &shell_uart_transport_api,                                                  \
-		.ctx = (struct shell_telnet *)&_name##_shell_uart,                                 \
+		.ctx = (SHELL_UART_STRUCT *)&_name##_shell_uart,                                 \
 	}
 
 /**

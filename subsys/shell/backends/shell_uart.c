@@ -9,6 +9,7 @@
 
 #include <subsys/shell/shell.h>
 #include <subsys/shell/shell_uart.h>
+#include <subsys/shell/shell_ops.h>
 
 #include <drivers/uart.h>
 #include <drivers/uart_async_rx.h>
@@ -390,11 +391,12 @@ static int write_uart(const struct shell_transport *transport, const void *data,
 					  size_t length, size_t *cnt) {
 	struct shell_uart_common *sh_uart = (struct shell_uart_common *)transport->ctx;
 
-	if (IS_ENABLED(CONFIG_SHELL_BACKEND_SERIAL_API_POLLING) || sh_uart->blocking_tx) {
-		return polling_write(sh_uart, data, length, cnt);
-	} else if (IS_ENABLED(CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN)) {
+	if (IS_ENABLED(CONFIG_SHELL_BACKEND_SERIAL_API_INTERRUPT_DRIVEN)) {
 		return irq_write((struct shell_uart_int_driven *)transport->ctx, data, length,
 						 cnt);
+	} else if (IS_ENABLED(CONFIG_SHELL_BACKEND_SERIAL_API_POLLING) || sh_uart->blocking_tx) {
+		return polling_write(sh_uart, data, length, cnt);
+
 	} else {
 		return async_write((struct shell_uart_async *)transport->ctx, data, length, cnt);
 	}
@@ -518,16 +520,11 @@ static int enable_shell_uart(void) {
 	static const struct shell_backend_config_flags cfg_flags =
 		SHELL_DEFAULT_BACKEND_CONFIG_FLAGS;
 
-	// if (!device_is_ready(dev)) {
-	// 	return -ENODEV;
-	// }
-
 	if (IS_ENABLED(CONFIG_MCUMGR_TRANSPORT_SHELL)) {
 		// smp_shell_init();
 	}
 
-	printk("shell_uart(%p) shell_uart[0]=%p shell_uart[1]=%p\n",
-		&shell_uart, *((void **)&shell_uart), *(((void **)&shell_uart) + 1));
+	rte_assert(dev != NULL);
 	shell_init(&shell_uart, dev, cfg_flags, log_backend, level);
 
 	return 0;

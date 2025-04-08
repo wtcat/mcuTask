@@ -1279,6 +1279,7 @@ void shell_thread(void *arg) {
 int shell_init(const struct shell *sh, const void *transport_config,
 			   struct shell_backend_config_flags cfg_flags, bool log_backend,
 			   uint32_t init_log_level) {
+	static struct shell_threadparam param;
 	rte_assert(sh);
 	rte_assert(sh->ctx && sh->iface && sh->default_prompt);
 
@@ -1291,10 +1292,11 @@ int shell_init(const struct shell *sh, const void *transport_config,
 		return err;
 	}
 
-	struct shell_threadparam param = {
-		.shell = (void *)sh, .log_level = init_log_level, .log_backend = log_backend};
-
+	param.shell = (void *)sh;
+	param.log_level = init_log_level;
+	param.log_backend = log_backend;
 	sh->ctx->tid = sh->thread;
+
 	return tx_thread_spawn(sh->thread, "shell", shell_thread, &param, sh->stack,
 						   CONFIG_SHELL_STACK_SIZE, SHELL_THREAD_PRIORITY,
 						   SHELL_THREAD_PRIORITY, TX_NO_TIME_SLICE, TX_TRUE);

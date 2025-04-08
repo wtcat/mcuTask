@@ -494,7 +494,6 @@ void z_shell_fprintf(const struct shell *sh, enum shell_vt100_color color,
 	rte_assert(sh->ctx);
 	rte_assert(sh->fprintf_ctx);
 	rte_assert(fmt);
-	rte_assert(z_flag_sync_mode_get(sh));
 
 	va_list args;
 
