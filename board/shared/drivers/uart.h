@@ -1171,10 +1171,6 @@ static inline int uart_fifo_fill(const struct device *dev, const uint8_t *tx_dat
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	const struct uart_device *api = (const struct uart_device *)dev;
 
-	if (api->fifo_fill == NULL) {
-		return -ENOSYS;
-	}
-
 	return api->fifo_fill(dev, tx_data, size);
 #else
 	(void)(dev);
@@ -1188,10 +1184,6 @@ static inline int uart_fifo_fill_u16(const struct device *dev, const uint16_t *t
 									 int size) {
 #if defined(CONFIG_UART_INTERRUPT_DRIVEN) && defined(CONFIG_UART_WIDE_DATA)
 	const struct uart_device *api = (const struct uart_device *)dev;
-
-	if (api->fifo_fill_u16 == NULL) {
-		return -ENOSYS;
-	}
 
 	return api->fifo_fill_u16(dev, tx_data, size);
 #else
@@ -1207,10 +1199,6 @@ static inline int uart_fifo_read(const struct device *dev, uint8_t *rx_data,
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	const struct uart_device *api = (const struct uart_device *)dev;
 
-	if (api->fifo_read == NULL) {
-		return -ENOSYS;
-	}
-
 	return api->fifo_read(dev, rx_data, size);
 #else
 	(void)(dev);
@@ -1224,10 +1212,6 @@ static inline int uart_fifo_read_u16(const struct device *dev, uint16_t *rx_data
 									 const int size) {
 #if defined(CONFIG_UART_INTERRUPT_DRIVEN) && defined(CONFIG_UART_WIDE_DATA)
 	const struct uart_device *api = (const struct uart_device *)dev;
-
-	if (api->fifo_read_u16 == NULL) {
-		return -ENOSYS;
-	}
 
 	return api->fifo_read_u16(dev, rx_data, size);
 #else
@@ -1266,10 +1250,6 @@ static inline int uart_irq_tx_ready(const struct device *dev) {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	const struct uart_device *api = (const struct uart_device *)dev;
 
-	if (api->irq_tx_ready == NULL) {
-		return -ENOSYS;
-	}
-
 	return api->irq_tx_ready(dev);
 #else
 	(void)(dev);
@@ -1305,9 +1285,6 @@ static inline int uart_irq_tx_complete(const struct device *dev) {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	const struct uart_device *api = (const struct uart_device *)dev;
 
-	if (api->irq_tx_complete == NULL) {
-		return -ENOSYS;
-	}
 	return api->irq_tx_complete(dev);
 #else
 	(void)(dev);
@@ -1319,9 +1296,6 @@ static inline int uart_irq_rx_ready(const struct device *dev) {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	const struct uart_device *api = (const struct uart_device *)dev;
 
-	if (api->irq_rx_ready == NULL) {
-		return -ENOSYS;
-	}
 	return api->irq_rx_ready(dev);
 #else
 	(void)(dev);
@@ -1357,9 +1331,6 @@ static inline int uart_irq_is_pending(const struct device *dev) {
 #ifdef CONFIG_UART_INTERRUPT_DRIVEN
 	const struct uart_device *api = (const struct uart_device *)dev;
 
-	if (api->irq_is_pending == NULL) {
-		return -ENOSYS;
-	}
 	return api->irq_is_pending(dev);
 #else
 	(void)(dev);
