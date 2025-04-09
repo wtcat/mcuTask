@@ -12,6 +12,10 @@ menuconfig SHELL
 
 if SHELL
 
+config SHELL_DEVICE
+	string "Shell device name"
+	default "console"
+
 config SHELL_MINIMAL
 	bool "Default config to reduce flash and memory requirements"
 	help

@@ -196,12 +196,6 @@ uart_stm32_cfg2ll_stopbits(struct stm32_uart *uart, enum uart_config_stop_bits s
 /* Some MCU's don't support 0.5 stop bits */
 #ifdef LL_USART_STOPBITS_0_5
 	case UART_CFG_STOP_BITS_0_5:
-#if HAS_LPUART
-		if (IS_LPUART_INSTANCE(uart->reg)) {
-			/* return the default */
-			return LL_USART_STOPBITS_1;
-		}
-#endif /* HAS_LPUART */
 		return LL_USART_STOPBITS_0_5;
 #endif /* LL_USART_STOPBITS_0_5 */
 	case UART_CFG_STOP_BITS_1:
@@ -209,12 +203,6 @@ uart_stm32_cfg2ll_stopbits(struct stm32_uart *uart, enum uart_config_stop_bits s
 /* Some MCU's don't support 1.5 stop bits */
 #ifdef LL_USART_STOPBITS_1_5
 	case UART_CFG_STOP_BITS_1_5:
-#if HAS_LPUART
-		if (IS_LPUART_INSTANCE(uart->reg)) {
-			/* return the default */
-			return LL_USART_STOPBITS_2;
-		}
-#endif
 		return LL_USART_STOPBITS_1_5;
 #endif /* LL_USART_STOPBITS_1_5 */
 	case UART_CFG_STOP_BITS_2:
@@ -1475,7 +1463,6 @@ static int uart_stm32_registers_configure(struct stm32_uart *uart) {
 }
 
 static struct device *uart_console;
-static struct stm32_uart stm32_console;
 
 static void stm32_uart_puts(const char *s, size_t len) {
    USART_TypeDef *reg = to_uart(uart_console)->reg;
@@ -1503,11 +1490,6 @@ static int stm32_uart_init(void) {
         err = uart_configure(uart_console, &cfg);
         if (!err) {
             __console_puts = stm32_uart_puts;
-
-			/* Register console device */
-			memcpy(&stm32_console, uart_console, sizeof(struct stm32_uart));
-			stm32_console.class.name = "console";
-			device_register((struct device *)&stm32_console.class);
 		}
     }
 

@@ -513,7 +513,7 @@ struct smp_shell_data *shell_uart_smp_shell_data_get_ptr(void) {
 #endif
 
 static int enable_shell_uart(void) {
-	const struct device *const dev = device_find("console");
+	const struct device *const dev = device_find(CONFIG_SHELL_DEVICE);
 	bool log_backend = CONFIG_SHELL_BACKEND_SERIAL_LOG_LEVEL > 0;
 	uint32_t level = CONFIG_SHELL_BACKEND_SERIAL_LOG_LEVEL;
 
