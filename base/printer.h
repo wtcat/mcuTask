@@ -6,8 +6,9 @@
 
 #include <stddef.h>
 #include <stdarg.h>
+#include <inttypes.h>
 
-#include "base/compiler.h"
+#include <base/compiler.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -25,7 +26,8 @@ struct printer {
  * @fmt: format string
  * return the number of bytes that has been output
  */
-static inline int virt_format(struct printer *printer, const char *fmt, ...) {
+static inline int __rte_printf_like(2, 3)
+virt_format(struct printer *printer, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     int len = printer->format(printer->context, fmt, ap);

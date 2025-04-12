@@ -6,7 +6,7 @@
 #ifndef BASE_LOG_H_
 #define BASE_LOG_H_
 
-#include <base/lib/printer.h>
+#include <base/printer.h>
 #ifdef __cplusplus
 extern "C"{
 #endif
@@ -30,11 +30,14 @@ extern "C"{
 #define pr_fmt(fmt) fmt
 #endif
 
-extern struct printer *__log_default_printer;
-extern struct printer *__log_disk_printer;
+#ifndef _USE_LOG_DEFINE
+extern 
+#endif
+struct printer _log_printer;
 
-#define PRINTER_NAME(name) __log_##name##_printer
-#define get_printer(name) PRINTER_NAME(name)
+
+#define _LOG_DEFAULT_PRINTER (&_log_printer)
+#define _LOG_PRINTER_NAME(name) (name)
 
 /**
  * pr_out - Print an generic message without log-level and pr_fmt 
@@ -43,7 +46,7 @@ extern struct printer *__log_disk_printer;
  *
  */
 #define pr_out(fmt, ...) \
-    pr_vout(__log_default_printer, fmt, ##__VA_ARGS__)
+    pr_vout(_LOG_DEFAULT_PRINTER, fmt, ##__VA_ARGS__)
 #define pr_vout(_printer, fmt, ...) \
     virt_format(_printer, fmt, ##__VA_ARGS__)
 
@@ -83,9 +86,9 @@ extern struct printer *__log_disk_printer;
  * generate the format string.
  */
 #define pr_emerg(fmt, ...) \
-    __pr_generic(__log_default_printer, LOGLEVEL_EMERG, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_DEFAULT_PRINTER, LOGLEVEL_EMERG, fmt, ##__VA_ARGS__)
 #define npr_emerg(printer, fmt, ...) \
-    __pr_generic(PRINTER_NAME(printer), LOGLEVEL_EMERG, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_PRINTER_NAME(printer), LOGLEVEL_EMERG, fmt, ##__VA_ARGS__)
 
 /**
  * pr_err - Print an error-level message
@@ -96,9 +99,9 @@ extern struct printer *__log_disk_printer;
  * generate the format string.
  */
 #define pr_err(fmt, ...) \
-    __pr_generic(__log_default_printer, LOGLEVEL_ERR, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_DEFAULT_PRINTER, LOGLEVEL_ERR, fmt, ##__VA_ARGS__)
 #define npr_err(printer, fmt, ...) \
-    __pr_generic(PRINTER_NAME(printer), LOGLEVEL_ERR, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_PRINTER_NAME(printer), LOGLEVEL_ERR, fmt, ##__VA_ARGS__)
 
 /**
  * pr_warn - Print a warning-level message
@@ -109,9 +112,9 @@ extern struct printer *__log_disk_printer;
  * to generate the format string.
  */
 #define pr_warn(fmt, ...) \
-    __pr_generic(__log_default_printer, LOGLEVEL_WARNING, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_DEFAULT_PRINTER, LOGLEVEL_WARNING, fmt, ##__VA_ARGS__)
 #define npr_warn(printer, fmt, ...) \
-    __pr_generic(PRINTER_NAME(printer), LOGLEVEL_WARNING, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_PRINTER_NAME(printer), LOGLEVEL_WARNING, fmt, ##__VA_ARGS__)
 
 /**
  * pr_notice - Print a notice-level message
@@ -122,9 +125,9 @@ extern struct printer *__log_disk_printer;
  * generate the format string.
  */
 #define pr_notice(fmt, ...) \
-    __pr_generic(__log_default_printer, LOGLEVEL_NOTICE, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_DEFAULT_PRINTER, LOGLEVEL_NOTICE, fmt, ##__VA_ARGS__)
 #define npr_notice(printer, fmt, ...) \
-    __pr_generic(PRINTER_NAME(printer), LOGLEVEL_NOTICE, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_PRINTER_NAME(printer), LOGLEVEL_NOTICE, fmt, ##__VA_ARGS__)
 
 /**
  * pr_info - Print an info-level message
@@ -135,9 +138,9 @@ extern struct printer *__log_disk_printer;
  * generate the format string.
  */
 #define pr_info(fmt, ...) \
-    __pr_generic(__log_default_printer, LOGLEVEL_INFO, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_DEFAULT_PRINTER, LOGLEVEL_INFO, fmt, ##__VA_ARGS__)
 #define npr_info(printer, fmt, ...) \
-    __pr_generic(PRINTER_NAME(printer), LOGLEVEL_INFO, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_PRINTER_NAME(printer), LOGLEVEL_INFO, fmt, ##__VA_ARGS__)
 
 /**
  * pr_info - Print an debug-level message
@@ -148,9 +151,9 @@ extern struct printer *__log_disk_printer;
  * generate the format string.
  */
 #define pr_dbg(fmt, ...) \
-    __pr_generic(__log_default_printer, LOGLEVEL_DEBUG, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_DEFAULT_PRINTER, LOGLEVEL_DEBUG, fmt, ##__VA_ARGS__)
 #define npr_dbg(printer, fmt, ...) \
-    __pr_generic(PRINTER_NAME(printer), LOGLEVEL_DEBUG, fmt, ##__VA_ARGS__)
+    __pr_generic(_LOG_PRINTER_NAME(printer), LOGLEVEL_DEBUG, fmt, ##__VA_ARGS__)
 
 
 /**
@@ -193,27 +196,17 @@ int rte_syslog_redirect(struct printer *printer);
  * @pr: default log printer
  * return 0 if success
  */
-static inline int pr_log_init(struct printer *pr) {
-    if (pr && pr->format) {
-        __log_default_printer = pr;
+static inline 
+int pr_log_redirect(int (*format)(void *ctx, const char *fmt, va_list ap), void *ctx) {
+    if (format) {
+        _log_printer.format = format;
+        _log_printer.context = ctx;
         return 0;
     }
     return -1;
 }
 
-/*
- * log_init - Initialize disklog component
- * @pr: disklog printer
- * return 0 if success
- */
-static inline int pr_disklog_init(struct printer *pr) {
-    if (pr && pr->format) {
-        __log_disk_printer = pr;
-        rte_syslog_redirect(pr);
-        return 0;
-    }
-    return -1;
-}
+
 #ifdef __cplusplus
 }
 #endif

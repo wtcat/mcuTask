@@ -10,8 +10,9 @@
 #include <stdint.h>
 
 #include <base/generic.h>
+
+#define _USE_LOG_DEFINE
 #include <base/log.h>
-#include <base/lib/printer.h>
 
 #ifndef RTE_WRITE_ONCE
 #define RTE_WRITE_ONCE(x, val) (x) = (val)

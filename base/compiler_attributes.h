@@ -382,4 +382,6 @@
  */
 #define __rte_weak                          __attribute__((__weak__))
 
+#define __rte_printf_like(f, a)             __attribute__((format (printf, f, a)))
+
 #endif /* BASE_COMPILER_ATTRIBUTES_H_ */

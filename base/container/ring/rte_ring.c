@@ -83,7 +83,7 @@ static TAILQ_HEAD(rte_ring_list, rte_tailq_entry) ring_tailq =
 	TAILQ_HEAD_INITIALIZER(ring_tailq);
 
 
-#define RTE_LOG(level, type, fmt, args...) pr_notice(fmt, __func__, ## args)
+#define RTE_LOG(level, type, fmt, ...) pr_notice(fmt, ##__VA_ARGS__)
 	
 /* mask of all valid flag values to ring_create() */
 #define RING_F_MASK (RING_F_SP_ENQ | RING_F_SC_DEQ | RING_F_EXACT_SZ | \
