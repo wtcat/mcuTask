@@ -289,4 +289,9 @@
 /*  Override options for byte pool search delay to avoid thrashing. */
 #define TX_BYTE_POOL_DELAY_VALUE              CONFIG_TX_BYTE_POOL_DELAY_VALUE
 
+/* Enable thread profile */
+#ifdef CONFIG_TX_EXECUTION_PROFILE_ENABLE
+#define TX_EXECUTION_PROFILE_ENABLE           CONFIG_TX_EXECUTION_PROFILE_ENABLE
+#endif
+
 #endif /* TX_USER_CONFIG_H */

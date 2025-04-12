@@ -22,7 +22,7 @@
 #define RTE_READ_ONCE(x) (x)
 #endif
 
-static struct printer *log_printer;
+static struct printer *log_printer = &_log_printer;
 static int log_prio = LOGLEVEL_INFO;
 
 void rte_syslog(int prio, const char *fmt, ...) {

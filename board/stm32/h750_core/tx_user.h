@@ -8,7 +8,6 @@
 #include "rtos/configs/tx_user_config.h"
 
 /* Profile thread execution state */
-#define TX_EXECUTION_PROFILE_ENABLE
 #define TX_EXECUTION_TIME_SOURCE   (EXECUTION_TIME_SOURCE_TYPE) HRTIMER_CYCLE_TO_US(HRTIMER_JIFFIES)
 
 

@@ -1,1 +1,3 @@
-1> 增加dma buffer 分配释放接口
+1> Add gpio driver interface
+2> Fix cpu exception information
+3> Fix modbus

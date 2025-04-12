@@ -1,10 +1,5 @@
 zephyr_library_named(base)
 
-zephyr_include_directories(
-    cpu/cortexm
-    ${CMAKE_CURRENT_SOURCE_DIR}/../
-)
-
 if (CONFIG_KASAN)
     add_library(kasan INTERFACE )
     target_compile_options(kasan
@@ -23,14 +18,6 @@ if (CONFIG_FTRACE)
     )
     target_link_libraries(base PRIVATE fntrace)
 endif()
-
-zephyr_library_compile_options(
-    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wextra>
-    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wextra>
-    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wno-unused-parameter>
-    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wno-implicit-fallthrough>
-    $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-Wno-missing-field-initializers>
-)
 
 zephyr_library_sources( 
     bitops.c
