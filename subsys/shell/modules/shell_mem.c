@@ -185,6 +185,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(memory_cmds,
 	SHELL_CMD_ARG(mww, NULL, "mww <address> <value> [count]", cli_cmd_mww, 3, 1),
 	SHELL_CMD_ARG(mwh, NULL, "mwh <address> <value> [count]", cli_cmd_mwh, 3, 1),
 	SHELL_CMD_ARG(mwb, NULL, "mwb <address> <value> [count]", cli_cmd_mwb, 3, 1),
+	SHELL_SUBCMD_SET_END
 );
 
 SHELL_CMD_REGISTER(mem, &memory_cmds, "Memory read/write commands", NULL);
