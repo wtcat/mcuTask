@@ -88,30 +88,58 @@
 #define CONSOLE_DEFAULT_SPEED 2000000
 
 /* GPIO */
-extern GPIO_TypeDef *stm32_gpio_ports[];
+#define STM32_AF0     0x0
+#define STM32_AF1     0x1
+#define STM32_AF2     0x2
+#define STM32_AF3     0x3
+#define STM32_AF4     0x4
+#define STM32_AF5     0x5
+#define STM32_AF6     0x6
+#define STM32_AF7     0x7
+#define STM32_AF8     0x8
+#define STM32_AF9     0x9
+#define STM32_AF10    0xa
+#define STM32_AF11    0xb
+#define STM32_AF12    0xc
+#define STM32_AF13    0xd
+#define STM32_AF14    0xe
+#define STM32_AF15    0xf
+#define STM32_ANALOG  0x10
+#define STM32_GPIO    0x11
 
-#define STM32_GPIO(_p, _n, _pull)     (((_pull) << 16) | (((_p) - 'A') << 8) | (_n))
-#define STM32_GPIO_PIN(_gpio)  ((_gpio) & 0xFF)
-#define STM32_GPIO_PORT(_gpio) (((_gpio) >> 8) & 0xFF)
-#define STM32_GPIO_PULL(_gpio) (((_gpio) >> 16) & 0xFF)
+/**
+ * @brief Macro to generate pinmux int using port, pin number and mode arguments
+ * This is inspired from Linux equivalent st,stm32f429-pinctrl binding
+ */
 
-#define STM32_PINS_SET(_port, _mask) \
-   stm32_gpio_ports[(_port)]->BSRR |= (_mask)
+#define STM32_MODE_SHIFT 0U
+#define STM32_MODE_MASK  0x1FU
+#define STM32_LINE_SHIFT 5U
+#define STM32_LINE_MASK  0xFU
+#define STM32_PORT_SHIFT 9U
+#define STM32_PORT_MASK  0x1FU
 
-#define STM32_PINS_CLR(_port, _mask) \
-   stm32_gpio_ports[(_port)]->BSRR |= ((_mask) << 16)
+/**
+ * @brief Pin configuration configuration bit field.
+ *
+ * Fields:
+ *
+ * - mode [ 0 : 4 ]
+ * - line [ 5 : 8 ]
+ * - port [ 9 : 13 ]
+ *
+ * @param port Port ('A'..'Q')
+ * @param line Pin (0..15)
+ * @param mode Mode (ANALOG, GPIO_IN, ALTERNATE).
+ */
+#define STM32_PINMUX(port, line, mode)					       \
+		(((((port) - 'A') & STM32_PORT_MASK) << STM32_PORT_SHIFT) |    \
+		(((line) & STM32_LINE_MASK) << STM32_LINE_SHIFT) |	       \
+		(((STM32_ ## mode) & STM32_MODE_MASK) << STM32_MODE_SHIFT))
 
-
-static inline void stm32_pin_set(uint32_t gpio, int value) {
-   int shift = STM32_GPIO_PIN(gpio) + (!value << 4);
-   STM32_PINS_SET(STM32_GPIO_PORT(gpio), 1 << shift);
-}
-
-static inline int stm32_pin_get(uint32_t gpio) {
-   uint32_t inp = stm32_gpio_ports[STM32_GPIO_PORT(gpio)]->IDR;
-   int pin = STM32_GPIO_PIN(gpio);
-   return !!(inp & (1 << pin));
-}
+#define STM32_PINMUX_PORT(mux) (((mux) >> STM32_PORT_SHIFT) & STM32_PORT_MASK)
+#define STM32_PINMUX_PIN(mux)  (((mux) >> STM32_LINE_SHIFT) & STM32_LINE_MASK)
+#define STM32_PINMUX_ALT(mux)  (((mux) >> STM32_MODE_SHIFT) & STM32_MODE_MASK)
 
 void cortexm_systick_handler(void);
 

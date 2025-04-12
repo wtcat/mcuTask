@@ -287,7 +287,8 @@ static void esf_dump(const struct excep_frame *esf, const struct callee_saved *c
 	PR_EXC("Faulting instruction address (r15/pc): 0x%08x", esf->r15);
 }
 
-static void __rte_used stm32_fault_process(void *msp, void *psp, __u32 exec_ret, 
+static void __rte_noreturn __rte_used
+stm32_fault_process(void *msp, void *psp, __u32 exec_ret, 
     const struct callee_saved *callee) {
     int fault = SCB->ICSR & SCB_ICSR_VECTACTIVE_Msk;
     struct excep_frame *esf;
@@ -299,6 +300,8 @@ static void __rte_used stm32_fault_process(void *msp, void *psp, __u32 exec_ret,
 
     fault_handle(esf, fault);
     esf_dump(esf, callee, exec_ret);
+
+	for ( ; ; );
 }
 
 void __rte_naked _stm32_exception_handler(void) {

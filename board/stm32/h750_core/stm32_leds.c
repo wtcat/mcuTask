@@ -4,8 +4,10 @@
 
 #define TX_USE_BOARD_PRIVATE
 
-#include "tx_api.h"
-#include "base/bitops.h"
+#include <tx_api.h>
+#include <drivers/gpio.h>
+#include <base/bitops.h>
+#include <base/log.h>
 
 
 enum led_node {
@@ -14,6 +16,7 @@ enum led_node {
 };
 
 struct led_info {
+    struct device *port;
     uint32_t gpio;
     uint16_t ontime;
     uint16_t offtime;
@@ -22,25 +25,25 @@ struct led_info {
 static struct delayed_task led_task;
 static uint8_t led_node = GREEN;
 static bool led_active;
-static const struct led_info led_array[] = {
+static struct led_info led_array[] = {
     [RED] = {
-        .gpio    = STM32_GPIO('C', 0, 0),
+        .gpio    = STM32_PINMUX('C', 0, GPIO),
         .ontime  = TX_MSEC(1000),
         .offtime = TX_MSEC(1000),
     },
     [GREEN] = {
-        .gpio    = STM32_GPIO('C', 1, 0),
+        .gpio    = STM32_PINMUX('C', 1, GPIO),
         .ontime  = TX_MSEC(100),
         .offtime = TX_MSEC(1500),
     }
 };
 
-static inline void stm32_led_on(uint32_t gpio) {
-    stm32_pin_set(gpio, 0);
+static inline void stm32_led_on(struct device *gpio, uint32_t pinmux) {
+    gpio_pin_set_raw(gpio, STM32_PINMUX_PIN(pinmux), 0);
 }
 
-static inline void stm32_led_off(uint32_t gpio) {
-    stm32_pin_set(gpio, 1);
+static inline void stm32_led_off(struct device *gpio, uint32_t pinmux) {
+    gpio_pin_set_raw(gpio, STM32_PINMUX_PIN(pinmux), 1);
 }
 
 static void led_flash_task(struct task *led) {
@@ -48,10 +51,10 @@ static void led_flash_task(struct task *led) {
     struct delayed_task *task = to_delayedtask(led);
 
     if (!led_active) {
-        stm32_led_on(info->gpio);
+        stm32_led_on(info->port, info->gpio);
         delayed_ktask_post(task, info->ontime);
     } else {
-        stm32_led_off(info->gpio);
+        stm32_led_off(info->port, info->gpio);
         delayed_ktask_post(task, info->offtime);
     }
 
@@ -59,16 +62,24 @@ static void led_flash_task(struct task *led) {
 }
 
 static int stm32_leds_init(void) {
-    LL_GPIO_InitTypeDef GPIO_InitStruct;
+    for (size_t i = 0; i < rte_array_size(led_array); i++) {
+        struct device *gpio;
+        char name[] = {"GPIOA"};
+        int pin;
 
-    LL_GPIO_StructInit(&GPIO_InitStruct);
-    GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
-    GPIO_InitStruct.Pin = BIT(STM32_GPIO_PIN(led_array[RED].gpio)) |
-                        BIT(STM32_GPIO_PIN(led_array[GREEN].gpio));
-    LL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+        name[4] += STM32_PINMUX_PORT(led_array[i].gpio);
+        gpio = device_find(name);
+        rte_assert(gpio != NULL);
 
-    for (size_t i = 0; i < rte_array_size(led_array); i++)
-        stm32_led_off(led_array[i].gpio);
+        int err = gpio_pin_configure(gpio, STM32_PINMUX_PIN(led_array[i].gpio), 
+            GPIO_OUTPUT|GPIO_OUTPUT_INIT_HIGH);
+        if (err) {
+            pr_err("configure gpio(%s: %d) failed\n", name, pin);
+            continue;
+        }
+
+        led_array[i].port = gpio;
+    }
 
     init_delayed_task(&led_task, led_flash_task);
     delayed_ktask_post(&led_task, TX_MSEC(1000));
