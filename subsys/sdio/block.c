@@ -196,7 +196,7 @@ static int mmcsd_req_blk(struct mmcsd_card *card, uint32_t sector, void *buf, si
 	mmcsd_send_request(host, &req);
 	mmcsd_host_unlock(host);
 	if (cmd.err || data.err || stop.err) {
-		pr_err("mmcsd request blocks error %d,%d,%d, 0x%08x,0x%08x\n", 
+		pr_err("mmcsd request blocks error %"PRId32",%"PRId32",%"PRId32", 0x%08"PRIx32",0x%08"PRIx32"\n", 
             cmd.err, data.err, stop.err, data.flags, sector);
 		return -EINVAL;
 	}
@@ -219,7 +219,7 @@ int mmcsd_set_blksize(struct mmcsd_card *card) {
 	err = mmcsd_send_cmd(card->host, &cmd, 5);
 	mmcsd_host_unlock(card->host);
 	if (err) {
-		pr_err("MMCSD: unable to set block size to %d: %d", cmd.arg, err);
+		pr_err("MMCSD: unable to set block size to %"PRIu32": %d", cmd.arg, err);
 		return -EINVAL;
 	}
 

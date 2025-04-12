@@ -1,6 +1,5 @@
 menu "Subsystem"
 
-rsource "cli/Kconfig"
 rsource "fs/Kconfig"
 rsource "sdio/Kconfig"
 rsource "shell/Kconfig"

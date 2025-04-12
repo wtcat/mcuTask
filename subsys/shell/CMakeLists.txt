@@ -2,7 +2,7 @@
 
 zephyr_library_named(shell)
 
-# add_subdirectory(modules)
+add_subdirectory(modules)
 add_subdirectory(backends)
 
 zephyr_library_sources_ifdef(

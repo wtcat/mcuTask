@@ -12,7 +12,6 @@
 #include <base/osal.h>
 #include <base/log.h>
 
-#include <subsys/cli/cli.h>
 #include <subsys/fs/fs.h>
 
 #define MAIN_THREAD_PRIO  11

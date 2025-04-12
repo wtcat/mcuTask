@@ -347,7 +347,7 @@ static int32_t sdio_read_cccr(struct mmcsd_card *card) {
 
 	cccr_version = data & 0x0f;
 	if (cccr_version > SDIO_CCCR_REV_3_00) {
-		pr_err("unrecognised CCCR structure version %d", cccr_version);
+		pr_err("unrecognised CCCR structure version %"PRId32, cccr_version);
 		return -EINVAL;
 	}
 
@@ -808,9 +808,9 @@ err1:
 		kfree(host->card);
 		host->card = NULL;
 	}
+	
 err:
-	pr_err("error %d while initialising SDIO card", err);
-
+	pr_err("error %"PRId32" while initialising SDIO card", err);
 	return err;
 }
 

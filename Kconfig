@@ -1,5 +1,19 @@
 comment "MCU Task configure"
 
+config MULTITHREADING
+    bool
+    default n
+
+choice
+    prompt "CPU Endian"
+
+config LITTLE_ENDIAN
+    bool "Little Endian"
+config BIG_ENDIAN
+    bool "Big Endian"
+endchoice
+
+
 rsource "rtos/Kconfig"
 rsource "subsys/Kconfig"
 rsource "base/Kconfig"
@@ -13,4 +27,3 @@ config MAIN_THREAD_PRIO
 config MAIN_THREAD_STACK_SIZE   
     int "The stack size of main thread"
     default 2048
-

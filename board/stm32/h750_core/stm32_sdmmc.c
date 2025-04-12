@@ -13,9 +13,8 @@
 #include <base/assert.h>
 #include <base/log.h>
 #include <base/assert.h>
+#include <subsys/shell/shell.h>
 #include <drivers/sdio/mmcsd_core.h>
-
-#include <subsys/cli/cli.h>
 
 struct stm32_sdmmc_config {
     uint32_t fmax;
@@ -50,48 +49,37 @@ struct stm32_sdmmc {
      SDMMC_MASK_CMDSENTIE | SDMMC_MASK_DATAENDIE | SDMMC_MASK_ACKTIMEOUTIE)
 
 #ifdef STM32_SDMMC_DEBUG
-static void stm32_sdmmc_dumpreg(SDMMC_TypeDef *sdmmc,
+static void stm32_sdmmc_dumpreg(const struct shell *sh, SDMMC_TypeDef *sdmmc,
     struct sdhc_command *cmd, struct sdhc_data *data) {
-    printk("\n\n@send command: %ld (data: %p)\n", cmd->opcode, data);
-    // printk("SDMMC BASE: %p\n", sdmmc);
-    printk("\tPOWER = 0x%lx\n", sdmmc->POWER);
-    printk("\tCLKCR = 0x%lx\n", sdmmc->CLKCR);
-    printk("\tARG = 0x%lx\n", sdmmc->ARG);
-    printk("\tCMD = 0x%lx\n", sdmmc->CMD);
-    // printk("\tRESPCMD = 0x%lx\n", sdmmc->RESPCMD);
-    // printk("\tRESP1 = 0x%lx\n", sdmmc->RESP1);
-    // printk("\tRESP2 = 0x%lx\n", sdmmc->RESP2);
-    // printk("\tRESP3 = 0x%lx\n", sdmmc->RESP3);
-    // printk("\tRESP4 = 0x%lx\n", sdmmc->RESP4);
-    // printk("\tDTIMER = 0x%lx\n", sdmmc->DTIMER);
-    printk("\tDLEN = 0x%lx\n", sdmmc->DLEN);
-    printk("\tDCTRL = 0x%lx\n", sdmmc->DCTRL);
-    printk("\tDCOUNT = 0x%lx\n", sdmmc->DCOUNT);
-    printk("\tSTA = 0x%lx\n", sdmmc->STA);
-    printk("\tICR = 0x%lx\n", sdmmc->ICR);
-    printk("\tMASK = 0x%lx\n", sdmmc->MASK);
-    // printk("\tACKTIME = 0x%lx\n", sdmmc->ACKTIME);
-    printk("\tIDMACTRL = 0x%lx\n", sdmmc->IDMACTRL);
-    printk("\tIDMABSIZE = 0x%lx\n", sdmmc->IDMABSIZE);
-    printk("\tIDMABASE0 = 0x%lx\n", sdmmc->IDMABASE0);
-    // printk("\tIDMABASE1 = 0x%lx\n", sdmmc->IDMABASE1);
-    // printk("\tFIFO = 0x%lx\n", sdmmc->FIFO);
-    // printk("\tIPVR = 0x%lx\n\n", sdmmc->IPVR);
+    shell_fprintf(sh, SHELL_NORMAL, "\n\n@send command: %ld (data: %p)\n", 
+        cmd->opcode, data);
+    shell_fprintf(sh, SHELL_NORMAL, "SDMMC BASE: %p\n", sdmmc);
+    shell_fprintf(sh, SHELL_NORMAL, "\tPOWER = 0x%lx\n", sdmmc->POWER);
+    shell_fprintf(sh, SHELL_NORMAL, "\tCLKCR = 0x%lx\n", sdmmc->CLKCR);
+    shell_fprintf(sh, SHELL_NORMAL, "\tARG = 0x%lx\n", sdmmc->ARG);
+    shell_fprintf(sh, SHELL_NORMAL, "\tCMD = 0x%lx\n", sdmmc->CMD);
+    shell_fprintf(sh, SHELL_NORMAL, "\tDTIMER = 0x%lx\n", sdmmc->DTIMER);
+    shell_fprintf(sh, SHELL_NORMAL, "\tDLEN = 0x%lx\n", sdmmc->DLEN);
+    shell_fprintf(sh, SHELL_NORMAL, "\tDCTRL = 0x%lx\n", sdmmc->DCTRL);
+    shell_fprintf(sh, SHELL_NORMAL, "\tDCOUNT = 0x%lx\n", sdmmc->DCOUNT);
+    shell_fprintf(sh, SHELL_NORMAL, "\tSTA = 0x%lx\n", sdmmc->STA);
+    shell_fprintf(sh, SHELL_NORMAL, "\tICR = 0x%lx\n", sdmmc->ICR);
+    shell_fprintf(sh, SHELL_NORMAL, "\tMASK = 0x%lx\n", sdmmc->MASK);
+    shell_fprintf(sh, SHELL_NORMAL, "\tACKTIME = 0x%lx\n", sdmmc->ACKTIME);
+    shell_fprintf(sh, SHELL_NORMAL, "\tIDMACTRL = 0x%lx\n", sdmmc->IDMACTRL);
+    shell_fprintf(sh, SHELL_NORMAL, "\tIDMABSIZE = 0x%lx\n", sdmmc->IDMABSIZE);
+    shell_fprintf(sh, SHELL_NORMAL, "\tIDMABASE0 = 0x%lx\n", sdmmc->IDMABASE0);
+    shell_fprintf(sh, SHELL_NORMAL, "\tIDMABASE1 = 0x%lx\n", sdmmc->IDMABASE1);
 }
 
-static int stm32_hrtimer_cmd(struct cli_process *cli, int argc, 
-    char *argv[]) {
-    (void) cli;
+static int shell_stm32_sdmmc(const struct shell *sh, size_t argc, char *argv[]) {
     (void) argc;
     (void) argv;
     stm32_sdmmc_dumpreg(SDMMC1, NULL, NULL);
 	return 0;
 }
 
-CLI_CMD(sdmmc, "sdmmc",
-    "Show SDMMC register status",
-    stm32_hrtimer_cmd
-);
+SHELL_CMD_REGISTER(sdmmc, NULL, "Dump sdmmc register information", shell_stm32_sdmmc);
 #endif /* STM32_SDMMC_DEBUG */
 
 static void __fastcode 

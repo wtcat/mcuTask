@@ -202,7 +202,7 @@ static int mmc_parse_ext_csd(struct mmcsd_card *card, uint8_t *ext_csd) {
 	card_capacity *= card->card_blksize;
 	card_capacity >>= 10; /* unit:KB */
 	card->card_capacity = card_capacity;
-	pr_info("emmc card capacity %d KB, card sec count:%d.", card->card_capacity,
+	pr_info("emmc card capacity %"PRIu32" KB, card sec count:%"PRIu32".", card->card_capacity,
 			card->card_sec_cnt);
 
 	return 0;

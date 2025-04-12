@@ -17,13 +17,6 @@ static void empty_puts(const char *s, size_t len) {
 	(void) len;
 }
 
-static int empty_getc(void) {
-	return -1;
-}
-
-console_puts_t __console_puts = empty_puts;
-console_getc_t __console_getc = empty_getc;
-
 static void __fastcode put_char(int c, void *arg) {
 	struct printk_buffer *p = (struct printk_buffer *)arg;
 	if (rte_likely(p->len < BUF_SIZE)) {
@@ -52,3 +45,11 @@ int printk(const char *fmt, ...) {
 	va_end(ap);
 	return len;
 }
+
+console_puts_t __console_puts = empty_puts;
+
+static int platform_setup(void) {
+	return 0;
+}
+
+SYSINIT(platform_setup, SI_EARLY_LEVEL, 10);

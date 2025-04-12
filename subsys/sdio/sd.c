@@ -20,7 +20,7 @@
 #include <drivers/sdio/mmcsd_core.h>
 #include <drivers/sdio/sd.h>
 
-#define be32_to_cpu(x)  rte_be32_to_cpu(x)
+#define be32_to_cpu(x)  sys_be32_to_cpu(x)
 
 static const uint32_t tran_unit[] = {10000, 100000, 1000000, 10000000, 0, 0, 0, 0};
 static const uint8_t tran_value[] = {
@@ -122,7 +122,7 @@ static int32_t mmcsd_parse_csd(struct mmcsd_card *card) {
 		return -EINVAL;
 	}
 
-	pr_info("SD card capacity %d KB.", card->card_capacity);
+	pr_info("SD card capacity %"PRIu32" KB.", card->card_capacity);
 	return 0;
 }
 
@@ -210,7 +210,7 @@ static int32_t mmcsd_switch(struct mmcsd_card *card) {
 	}
 
 	if ((buf[16] & 0xF) != switch_func_timing) {
-		pr_err("switching card to timing mode %d failed!", switch_func_timing);
+		pr_err("switching card to timing mode %"PRIu32" failed!", switch_func_timing);
 		goto err;
 	}
 

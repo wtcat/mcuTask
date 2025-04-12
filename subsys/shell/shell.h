@@ -1352,7 +1352,7 @@ int shell_get_return_value(const struct shell *sh);
 
 #ifdef CONFIG_SHELL_CUSTOM_HEADER
 /* This include must always be at the end of shell.h */
-#include <zephyr_custom_shell.h>
+#include CONFIG_SHELL_CUSTOM_HEADER
 #endif
 
 #endif /* SHELL_H__ */

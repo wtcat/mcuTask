@@ -686,7 +686,7 @@ int fs_flush(const char *mnt_point) {
 	
 	int err = fs->fs_ops.flush(fs);
 	if (err < 0)
-		pr_err("fs flush error(%s)\n", err);
+		pr_err("fs flush error(%d)\n", err);
 	return err;
 }
 

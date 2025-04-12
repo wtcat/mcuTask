@@ -6,6 +6,7 @@
 
 #include <base/sys/atomic.h>
 #include <base/sys/ring_buffer.h>
+#include <base/log.h>
 
 #include <subsys/shell/shell.h>
 #include <subsys/shell/shell_uart.h>
@@ -512,6 +513,11 @@ struct smp_shell_data *shell_uart_smp_shell_data_get_ptr(void) {
 }
 #endif
 
+static int shell_uart_format(void *context, const char *fmt, va_list ap) {
+	shell_vfprintf(&shell_uart, SHELL_NORMAL, fmt, ap);
+	return 0;
+}
+
 static int enable_shell_uart(void) {
 	const struct device *const dev = device_find(CONFIG_SHELL_DEVICE);
 	bool log_backend = CONFIG_SHELL_BACKEND_SERIAL_LOG_LEVEL > 0;
@@ -526,6 +532,7 @@ static int enable_shell_uart(void) {
 
 	rte_assert(dev != NULL);
 	shell_init(&shell_uart, dev, cfg_flags, log_backend, level);
+	pr_log_redirect(shell_uart_format, NULL);
 
 	return 0;
 }

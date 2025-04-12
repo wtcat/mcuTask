@@ -152,33 +152,28 @@ int stm32_hrtimer_init(void) {
 SYSINIT(stm32_hrtimer_init, SI_PREDRIVER_LEVEL, 10);
 
 #ifdef HRTIMER_DEBUG_ON
-#include "subsys/cli/cli.h"
+#include <subsys/shell/shell.h>
 
-static void stm32_hrtimer_dump(void) {
-    printk("Timer2 register dump:\n");
-    printk("CR1    = 0x%08"PRIx32"\n", HR_TIMER->CR1);
-    printk("CR2    = 0x%08"PRIx32"\n", HR_TIMER->CR2);
-    printk("DIER   = 0x%08"PRIx32"\n", HR_TIMER->DIER);
-    printk("SR     = 0x%08"PRIx32"\n", HR_TIMER->SR);
-    printk("EGR    = 0x%08"PRIx32"\n", HR_TIMER->EGR);
-    printk("CNT    = 0x%08"PRIx32"\n", HR_TIMER->CNT);
-    printk("CCR1   = 0x%08"PRIx32"\n", HR_TIMER->CCR1);
-    printk("PSC    = 0x%08"PRIx32"\n", HR_TIMER->PSC);
-    printk("ARR    = 0x%08"PRIx32"\n", HR_TIMER->ARR);
-    printk("RCR    = 0x%08"PRIx32"\n", HR_TIMER->RCR);
+static void stm32_hrtimer_dump(const struct shell *sh) {
+    shell_fprintf(sh, SHELL_NORMAL, "Timer2 register dump:\n");
+    shell_fprintf(sh, SHELL_NORMAL, "CR1    = 0x%08"PRIx32"\n", HR_TIMER->CR1);
+    shell_fprintf(sh, SHELL_NORMAL, "CR2    = 0x%08"PRIx32"\n", HR_TIMER->CR2);
+    shell_fprintf(sh, SHELL_NORMAL, "DIER   = 0x%08"PRIx32"\n", HR_TIMER->DIER);
+    shell_fprintf(sh, SHELL_NORMAL, "SR     = 0x%08"PRIx32"\n", HR_TIMER->SR);
+    shell_fprintf(sh, SHELL_NORMAL, "EGR    = 0x%08"PRIx32"\n", HR_TIMER->EGR);
+    shell_fprintf(sh, SHELL_NORMAL, "CNT    = 0x%08"PRIx32"\n", HR_TIMER->CNT);
+    shell_fprintf(sh, SHELL_NORMAL, "CCR1   = 0x%08"PRIx32"\n", HR_TIMER->CCR1);
+    shell_fprintf(sh, SHELL_NORMAL, "PSC    = 0x%08"PRIx32"\n", HR_TIMER->PSC);
+    shell_fprintf(sh, SHELL_NORMAL, "ARR    = 0x%08"PRIx32"\n", HR_TIMER->ARR);
+    shell_fprintf(sh, SHELL_NORMAL, "RCR    = 0x%08"PRIx32"\n", HR_TIMER->RCR);
 }
 
-static int stm32_hrtimer_cmd(struct cli_process *cli, int argc, 
-    char *argv[]) {
-    (void) cli;
+static int shell_stm32_hrtimer(const struct shell *sh, size_t argc, char *argv[]) {
     (void) argc;
     (void) argv;
-    stm32_hrtimer_dump();
+    stm32_hrtimer_dump(sh);
 	return 0;
 }
 
-CLI_CMD(timdump, "timdump",
-    "SHow timer register status",
-    stm32_hrtimer_cmd
-);
-#endif
+SHELL_CMD_REGISTER(hrtimer, NULL, "Dump hrtimer register information", shell_stm32_hrtimer);
+#endif /* HRTIMER_DEBUG_ON */

@@ -217,12 +217,6 @@ static void early_puts(const char *s, size_t len) {
 	}
 }
 
-static int early_getc(void) {
-    if (CONSOLE_PORT->ISR & LL_USART_ISR_RXNE_RXFNE)
-        return CONSOLE_PORT->RDR & 0xFF;
-    return -1;
-}
-
 static int __rte_notrace 
 printk_printer(void *context, const char *fmt, va_list ap) {
     (void) context;
@@ -264,12 +258,7 @@ static void early_console_init(void) {
 	CONSOLE_PORT->CR1 |= USART_CR1_UE;
 
 	__console_puts = early_puts;
-	__console_getc = early_getc;
-
-	static struct printer console_printer = {
-		.format = printk_printer
-	};
-	pr_log_init(&console_printer);
+	pr_log_redirect(printk_printer, NULL);
 }
 
 uint32_t HAL_GetTick(void) {

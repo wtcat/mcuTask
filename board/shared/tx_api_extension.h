@@ -254,10 +254,8 @@ int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg);
  * Console interface
  */
 typedef void (*console_puts_t)(const char *, size_t);
-typedef int  (*console_getc_t)(void);
 
 extern console_puts_t __console_puts;
-extern console_getc_t __console_getc;
 
 /*
  * Device Driver

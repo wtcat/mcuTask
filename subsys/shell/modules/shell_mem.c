@@ -3,10 +3,11 @@
  */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdlib.h>
 
-#include "subsys/cli/cli.h"
+#include <subsys/shell/shell.h>
 
 #define MAX_LINE_LENGTH_BYTES (64)
 #define DEFAULT_LINE_LENGTH_BYTES (16)
@@ -14,7 +15,7 @@
 #define DISP_LINE_LEN 16
 
 static void 
-format_buffer(struct cli_process *cli, const char *addr, int width, 
+format_buffer(const struct shell *sh, const char *addr, int width, 
     int count, int linelen, unsigned long disp_addr) {
 	int i, thislinelen;
 	const char *data;
@@ -38,7 +39,7 @@ format_buffer(struct cli_process *cli, const char *addr, int width,
 		thislinelen = linelen;
 		data = (const char *)addr;
 
-		cli_println(cli, "%08x:", (unsigned int)disp_addr);
+		shell_fprintf(sh, SHELL_NORMAL, "%08x:", (unsigned int)disp_addr);
 
 		/* check for overflow condition */
 		if (count < thislinelen)
@@ -48,13 +49,13 @@ format_buffer(struct cli_process *cli, const char *addr, int width,
 		for (i = 0; i < thislinelen; i++) {
 			if (width == 4) {
 				lb.ui[i] = *(volatile uint32_t *)data;
-				cli_println(cli, " %08x", lb.ui[i]);
+				shell_fprintf(sh, SHELL_NORMAL, " %08"PRIx32, lb.ui[i]);
 			} else if (width == 2) {
 				lb.us[i] = *(volatile uint16_t *)data;
-				cli_println(cli, " %04x", lb.us[i]);
+				shell_fprintf(sh, SHELL_NORMAL, " %04"PRIx16, lb.us[i]);
 			} else {
 				lb.uc[i] = *(volatile uint8_t *)data;
-				cli_println(cli, " %02x", lb.uc[i]);
+				shell_fprintf(sh, SHELL_NORMAL, " %02"PRIx8, lb.uc[i]);
 			}
 			data += width;
 		}
@@ -62,7 +63,7 @@ format_buffer(struct cli_process *cli, const char *addr, int width,
 		while (thislinelen < linelen) {
 			/* fill line with whitespace for nice ASCII print */
 			for (i = 0; i < width * 2 + 1; i++)
-				cli_println(cli, " ");
+				shell_fprintf(sh, SHELL_NORMAL, " ");
 			linelen--;
 		}
 
@@ -72,7 +73,7 @@ format_buffer(struct cli_process *cli, const char *addr, int width,
 				lb.uc[i] = '.';
 		}
 		lb.uc[i] = '\0';
-		cli_println(cli, "    %s\n", lb.uc);
+		shell_fprintf(sh, SHELL_NORMAL, "    %s\n", lb.uc);
 
 		/* update references */
 		addr += thislinelen * width;
@@ -82,7 +83,7 @@ format_buffer(struct cli_process *cli, const char *addr, int width,
 }
 
 static int 
-do_mem_mw(struct cli_process *cli, int width, int argc, char *argv[]) {
+do_mem_mw(const struct shell *sh, int width, size_t argc, char *argv[]) {
 	unsigned long writeval;
 	unsigned long addr, count;
 	char *buf;
@@ -98,7 +99,7 @@ do_mem_mw(struct cli_process *cli, int width, int argc, char *argv[]) {
 		count = strtoul(argv[3], &pend, 16);
 		if ((pend == argv[3] || *pend != '\0') || errno == ERANGE ||
 			count > MAX_MEM_SIZE) {
-			cli_println(cli, "params invalid.\n");
+			shell_fprintf(sh, SHELL_NORMAL, "params invalid.\n");
 			return -EINVAL;
 		}
 	} else
@@ -122,7 +123,7 @@ do_mem_mw(struct cli_process *cli, int width, int argc, char *argv[]) {
 }
 
 static int 
-do_mem_md(struct cli_process *cli, int width, int argc, char *argv[]) {
+do_mem_md(const struct shell *sh, int width, size_t argc, char *argv[]) {
 	unsigned long addr;
 	unsigned long count;
 	char *pend;
@@ -136,7 +137,7 @@ do_mem_md(struct cli_process *cli, int width, int argc, char *argv[]) {
 		count = strtoul(argv[2], &pend, 16);
 		if ((pend == argv[2] || *pend != '\0') || errno == ERANGE ||
 			count > MAX_MEM_SIZE) {
-			cli_println(cli, "params invalid.\n");
+			shell_fprintf(sh, SHELL_NORMAL, "params invalid.\n");
 			count = 0;
 			return -EINVAL;
 		}
@@ -144,57 +145,46 @@ do_mem_md(struct cli_process *cli, int width, int argc, char *argv[]) {
 		count = 1;
 
 	if (count != ULONG_MAX) {
-		format_buffer(cli, (char *)addr, width, count, 
+		format_buffer(sh, (char *)addr, width, count, 
             DISP_LINE_LEN / width, -1);
     }
 
 	return 0;
 }
 
-static int cli_cmd_mdw(struct cli_process *cli, int argc, char *argv[]) {
-	return do_mem_md(cli, 4, argc, argv);
+static int cli_cmd_mdw(const struct shell *sh, size_t argc, char *argv[]) {
+	return do_mem_md(sh, 4, argc, argv);
 }
-CLI_CMD(mdw, "mdw address [count]",
-    "Show memory by word",
-    cli_cmd_mdw
-)
 
-static int cli_cmd_mdh(struct cli_process *cli, int argc, char *argv[]) {
-	return do_mem_md(cli, 2, argc, argv);
+static int cli_cmd_mdh(const struct shell *sh, size_t argc, char *argv[]) {
+	return do_mem_md(sh, 2, argc, argv);
 }
-CLI_CMD(mdh, "mdh address [count]",
-    "Show memory by half-word",
-    cli_cmd_mdh
-)
 
-static int cli_cmd_mdb(struct cli_process *cli, int argc, char *argv[]) {
-	return do_mem_md(cli, 1, argc, argv);
+static int cli_cmd_mdb(const struct shell *sh, size_t argc, char *argv[]) {
+	return do_mem_md(sh, 1, argc, argv);
 }
-CLI_CMD(mdb, "mdb address [count]",
-    "Show memory by byte",
-    cli_cmd_mdb
-)
 
-static int cli_cmd_mww(struct cli_process *cli, int argc, char *argv[]) {
-	return do_mem_mw(cli, 4, argc, argv);
+static int cli_cmd_mww(const struct shell *sh, size_t argc, char *argv[]) {
+	return do_mem_mw(sh, 4, argc, argv);
 }
-CLI_CMD(mww, "mww address [,count]",
-    "Write memory by word",
-    cli_cmd_mww
-)
 
-static int cli_cmd_mwh(struct cli_process *cli, int argc, char *argv[]) {
-	return do_mem_mw(cli, 2, argc, argv);
+static int cli_cmd_mwh(const struct shell *sh, size_t argc, char *argv[]) {
+	return do_mem_mw(sh, 2, argc, argv);
 }
-CLI_CMD(mwh, "mwh address [,count]",
-    "Write memory by half-word",
-    cli_cmd_mwh
-)
 
-static int cli_cmd_mwb(struct cli_process *cli, int argc, char *argv[]) {
-	return do_mem_mw(cli, 1, argc, argv);
+static int cli_cmd_mwb(const struct shell *sh, size_t argc, char *argv[]) {
+	return do_mem_mw(sh, 1, argc, argv);
 }
-CLI_CMD(mwb, "mwb address [,count]",
-    "Write memory by byte",
-    cli_cmd_mwb
-)
+
+
+SHELL_STATIC_SUBCMD_SET_CREATE(memory_cmds, 
+	SHELL_CMD_ARG(mdw, NULL, "mdw <address> [count]", cli_cmd_mdw, 2, 1),
+	SHELL_CMD_ARG(mdh, NULL, "mdh <address> [count]", cli_cmd_mdh, 2, 1),
+	SHELL_CMD_ARG(mdb, NULL, "mdb <address> [count]", cli_cmd_mdb, 2, 1),
+
+	SHELL_CMD_ARG(mww, NULL, "mww <address> <value> [count]", cli_cmd_mww, 3, 1),
+	SHELL_CMD_ARG(mwh, NULL, "mwh <address> <value> [count]", cli_cmd_mwh, 3, 1),
+	SHELL_CMD_ARG(mwb, NULL, "mwb <address> <value> [count]", cli_cmd_mwb, 3, 1),
+);
+
+SHELL_CMD_REGISTER(mem, &memory_cmds, "Memory read/write commands", NULL);
