@@ -20,17 +20,16 @@
  *      Version 2.0 available at www.apache.org/licenses/LICENSE-2.0.
  */
 
-#define pr_fmt(fmt) "[modbus_serial]: "fmt"\n" 
+#define pr_fmt(fmt) "[modbus_serial]: " fmt "\n"
 
 #include <string.h>
 #include <tx_api.h>
 #include <base/log.h>
 #include <base/sys/byteorder.h>
 #include <base/sys/crc.h>
-#include <modbus_internal.h>
+#include <subsys/modbus/modbus_internal.h>
 
-static void modbus_serial_tx_on(struct modbus_context *ctx)
-{
+static void modbus_serial_tx_on(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 
 	if (cfg->de != NULL) {
@@ -40,8 +39,7 @@ static void modbus_serial_tx_on(struct modbus_context *ctx)
 	uart_irq_tx_enable(cfg->dev);
 }
 
-static void modbus_serial_tx_off(struct modbus_context *ctx)
-{
+static void modbus_serial_tx_off(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 
 	uart_irq_tx_disable(cfg->dev);
@@ -50,8 +48,7 @@ static void modbus_serial_tx_off(struct modbus_context *ctx)
 	}
 }
 
-static void modbus_serial_rx_on(struct modbus_context *ctx)
-{
+static void modbus_serial_rx_on(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 
 	if (cfg->re != NULL) {
@@ -61,8 +58,7 @@ static void modbus_serial_rx_on(struct modbus_context *ctx)
 	uart_irq_rx_enable(cfg->dev);
 }
 
-static void modbus_serial_rx_off(struct modbus_context *ctx)
-{
+static void modbus_serial_rx_off(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 
 	uart_irq_rx_disable(cfg->dev);
@@ -73,8 +69,7 @@ static void modbus_serial_rx_off(struct modbus_context *ctx)
 
 #ifdef CONFIG_MODBUS_ASCII_MODE
 /* The function calculates an 8-bit Longitudinal Redundancy Check. */
-static uint8_t modbus_ascii_get_lrc(uint8_t *src, size_t length)
-{
+static uint8_t modbus_ascii_get_lrc(uint8_t *src, size_t length) {
 	uint8_t lrc = 0;
 	uint8_t tmp;
 	uint8_t *pblock = src;
@@ -96,8 +91,7 @@ static uint8_t modbus_ascii_get_lrc(uint8_t *src, size_t length)
 }
 
 /* Parses and converts an ASCII mode frame into a Modbus RTU frame. */
-static int modbus_ascii_rx_adu(struct modbus_context *ctx)
-{
+static int modbus_ascii_rx_adu(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	uint8_t *pmsg;
 	uint8_t *prx_data;
@@ -105,7 +99,7 @@ static int modbus_ascii_rx_adu(struct modbus_context *ctx)
 	uint8_t frame_lrc;
 	uint8_t calc_lrc;
 
-	rx_size =  cfg->uart_buf_ctr;
+	rx_size = cfg->uart_buf_ctr;
 	prx_data = &ctx->rx_adu.data[0];
 
 	if (!(rx_size & 0x01)) {
@@ -119,8 +113,8 @@ static int modbus_ascii_rx_adu(struct modbus_context *ctx)
 	}
 
 	if ((cfg->uart_buf[0] != MODBUS_ASCII_START_FRAME_CHAR) ||
-	    (cfg->uart_buf[rx_size - 2] != MODBUS_ASCII_END_FRAME_CHAR1) ||
-	    (cfg->uart_buf[rx_size - 1] != MODBUS_ASCII_END_FRAME_CHAR2)) {
+		(cfg->uart_buf[rx_size - 2] != MODBUS_ASCII_END_FRAME_CHAR1) ||
+		(cfg->uart_buf[rx_size - 1] != MODBUS_ASCII_END_FRAME_CHAR2)) {
 		pr_warn("Frame character error");
 		return -EMSGSIZE;
 	}
@@ -158,8 +152,7 @@ static int modbus_ascii_rx_adu(struct modbus_context *ctx)
 	 * by the sender. We thus need to subtract 5 'ASCII' characters
 	 * from the received message to exclude these.
 	 */
-	calc_lrc = modbus_ascii_get_lrc(&cfg->uart_buf[1],
-					(cfg->uart_buf_ctr - 5) / 2);
+	calc_lrc = modbus_ascii_get_lrc(&cfg->uart_buf[1], (cfg->uart_buf_ctr - 5) / 2);
 
 	if (calc_lrc != frame_lrc) {
 		pr_err("Calculated LRC does not match received LRC");
@@ -169,8 +162,7 @@ static int modbus_ascii_rx_adu(struct modbus_context *ctx)
 	return 0;
 }
 
-static uint8_t *modbus_ascii_bin2hex(uint8_t value, uint8_t *pbuf)
-{
+static uint8_t *modbus_ascii_bin2hex(uint8_t value, uint8_t *pbuf) {
 	uint8_t u_nibble = (value >> 4) & 0x0F;
 	uint8_t l_nibble = value & 0x0F;
 
@@ -182,8 +174,7 @@ static uint8_t *modbus_ascii_bin2hex(uint8_t value, uint8_t *pbuf)
 	return pbuf;
 }
 
-static void modbus_ascii_tx_adu(struct modbus_context *ctx)
-{
+static void modbus_ascii_tx_adu(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	uint16_t tx_bytes = 0;
 	uint8_t lrc;
@@ -229,19 +220,15 @@ static void modbus_ascii_tx_adu(struct modbus_context *ctx)
 	modbus_serial_tx_on(ctx);
 }
 #else
-static int modbus_ascii_rx_adu(struct modbus_context *ctx)
-{
+static int modbus_ascii_rx_adu(struct modbus_context *ctx) {
 	return 0;
 }
 
-static void modbus_ascii_tx_adu(struct modbus_context *ctx)
-{
-}
+static void modbus_ascii_tx_adu(struct modbus_context *ctx) {}
 #endif
 
 /* Copy Modbus RTU frame and check if the CRC is valid. */
-static int modbus_rtu_rx_adu(struct modbus_context *ctx)
-{
+static int modbus_rtu_rx_adu(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	uint16_t calc_crc;
 	uint16_t crc_idx;
@@ -249,7 +236,7 @@ static int modbus_rtu_rx_adu(struct modbus_context *ctx)
 
 	/* Is the message long enough? */
 	if ((cfg->uart_buf_ctr < MODBUS_RTU_MIN_MSG_SIZE) ||
-	    (cfg->uart_buf_ctr > CONFIG_MODBUS_BUFFER_SIZE)) {
+		(cfg->uart_buf_ctr > CONFIG_MODBUS_BUFFER_SIZE)) {
 		pr_warn("Frame length error");
 		return -EMSGSIZE;
 	}
@@ -264,10 +251,9 @@ static int modbus_rtu_rx_adu(struct modbus_context *ctx)
 
 	memcpy(ctx->rx_adu.data, data_ptr, ctx->rx_adu.length);
 
-	ctx->rx_adu.crc = rte_get_le16(&cfg->uart_buf[crc_idx]);
+	ctx->rx_adu.crc = sys_get_le16(&cfg->uart_buf[crc_idx]);
 	/* Calculate CRC over address, function code, and payload */
-	calc_crc = crc16_ansi(&cfg->uart_buf[0],
-			      cfg->uart_buf_ctr - sizeof(ctx->rx_adu.crc));
+	calc_crc = crc16_ansi(&cfg->uart_buf[0], cfg->uart_buf_ctr - sizeof(ctx->rx_adu.crc));
 
 	if (ctx->rx_adu.crc != calc_crc) {
 		pr_warn("Calculated CRC does not match received CRC");
@@ -277,8 +263,7 @@ static int modbus_rtu_rx_adu(struct modbus_context *ctx)
 	return 0;
 }
 
-static void rtu_tx_adu(struct modbus_context *ctx)
-{
+static void rtu_tx_adu(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	uint16_t tx_bytes = 0;
 	uint8_t *data_ptr;
@@ -291,8 +276,7 @@ static void rtu_tx_adu(struct modbus_context *ctx)
 	memcpy(data_ptr, ctx->tx_adu.data, ctx->tx_adu.length);
 
 	ctx->tx_adu.crc = crc16_ansi(&cfg->uart_buf[0], ctx->tx_adu.length + 2);
-	rte_put_le16(ctx->tx_adu.crc,
-		     &cfg->uart_buf[ctx->tx_adu.length + 2]);
+	sys_put_le16(ctx->tx_adu.crc, &cfg->uart_buf[ctx->tx_adu.length + 2]);
 	tx_bytes += 2;
 
 	cfg->uart_buf_ctr = tx_bytes;
@@ -308,12 +292,10 @@ static void rtu_tx_adu(struct modbus_context *ctx)
  * A byte has been received from a serial port. We just store it in the buffer
  * for processing when a complete packet has been received.
  */
-static void cb_handler_rx(struct modbus_context *ctx)
-{
+static void cb_handler_rx(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 
-	if ((ctx->mode == MODBUS_MODE_ASCII) &&
-	    IS_ENABLED(CONFIG_MODBUS_ASCII_MODE)) {
+	if ((ctx->mode == MODBUS_MODE_ASCII) && IS_ENABLED(CONFIG_MODBUS_ASCII_MODE)) {
 		uint8_t c;
 
 		if (uart_fifo_read(cfg->dev, &c, 1) != 1) {
@@ -333,7 +315,7 @@ static void cb_handler_rx(struct modbus_context *ctx)
 		}
 
 		if (c == MODBUS_ASCII_END_FRAME_CHAR2) {
-			k_work_submit(&ctx->server_work);
+			tx_queue_send(ctx->server_work, ctx, TX_NO_WAIT);
 		}
 
 	} else {
@@ -346,26 +328,22 @@ static void cb_handler_rx(struct modbus_context *ctx)
 		}
 
 		/* Restart timer on a new character */
-		k_timer_start(&cfg->rtu_timer,
-			      K_USEC(cfg->rtu_timeout), K_NO_WAIT);
+		tx_timer_activate(&cfg->rtu_timer);
 
 		n = uart_fifo_read(cfg->dev, cfg->uart_buf_ptr,
-				   (CONFIG_MODBUS_BUFFER_SIZE -
-				    cfg->uart_buf_ctr));
+						   (CONFIG_MODBUS_BUFFER_SIZE - cfg->uart_buf_ctr));
 
 		cfg->uart_buf_ptr += n;
 		cfg->uart_buf_ctr += n;
 	}
 }
 
-static void cb_handler_tx(struct modbus_context *ctx)
-{
+static void cb_handler_tx(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	int n;
 
 	if (cfg->uart_buf_ctr > 0) {
-		n = uart_fifo_fill(cfg->dev, cfg->uart_buf_ptr,
-				   cfg->uart_buf_ctr);
+		n = uart_fifo_fill(cfg->dev, cfg->uart_buf_ptr, cfg->uart_buf_ctr);
 		cfg->uart_buf_ctr -= n;
 		cfg->uart_buf_ptr += n;
 		return;
@@ -383,8 +361,7 @@ static void cb_handler_tx(struct modbus_context *ctx)
 	}
 }
 
-static void uart_cb_handler(const struct device *dev, void *app_data)
-{
+static void uart_cb_handler(const struct device *dev, void *app_data) {
 	struct modbus_context *ctx = (struct modbus_context *)app_data;
 
 	if (ctx == NULL) {
@@ -393,7 +370,6 @@ static void uart_cb_handler(const struct device *dev, void *app_data)
 	}
 
 	if (uart_irq_update(dev) && uart_irq_is_pending(dev)) {
-
 		if (uart_irq_rx_ready(dev)) {
 			cb_handler_rx(ctx);
 		}
@@ -405,40 +381,22 @@ static void uart_cb_handler(const struct device *dev, void *app_data)
 }
 
 /* This function is called when the RTU framing timer expires. */
-static void rtu_tmr_handler(struct k_timer *t_id)
-{
-	struct modbus_context *ctx;
+static void rtu_tmr_handler(ULONG t_id) {
+	struct modbus_context *ctx = (void *)t_id;
 
-	ctx = (struct modbus_context *)k_timer_user_data_get(t_id);
-
-	if (ctx == NULL) {
-		pr_err("Failed to get Modbus context");
-		return;
-	}
-
-	k_work_submit(&ctx->server_work);
+	tx_queue_send(ctx->server_work, ctx, TX_NO_WAIT);
 }
 
-static int configure_gpio(struct modbus_context *ctx)
-{
+static int configure_gpio(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 
 	if (cfg->de != NULL) {
-		if (!device_is_ready(cfg->de->port)) {
-			return -ENODEV;
-		}
-
 		if (gpio_pin_configure_dt(cfg->de, GPIO_OUTPUT_INACTIVE)) {
 			return -EIO;
 		}
 	}
 
-
 	if (cfg->re != NULL) {
-		if (!device_is_ready(cfg->re->port)) {
-			return -ENODEV;
-		}
-
 		if (gpio_pin_configure_dt(cfg->re, GPIO_OUTPUT_INACTIVE)) {
 			return -EIO;
 		}
@@ -448,8 +406,7 @@ static int configure_gpio(struct modbus_context *ctx)
 }
 
 static inline int configure_uart(struct modbus_context *ctx,
-				 struct modbus_iface_param *param)
-{
+								 struct modbus_iface_param *param) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	struct uart_config uart_cfg = {
 		.baudrate = param->serial.baud,
@@ -499,18 +456,15 @@ static inline int configure_uart(struct modbus_context *ctx,
 	return 0;
 }
 
-void modbus_serial_rx_disable(struct modbus_context *ctx)
-{
+void modbus_serial_rx_disable(struct modbus_context *ctx) {
 	modbus_serial_rx_off(ctx);
 }
 
-void modbus_serial_rx_enable(struct modbus_context *ctx)
-{
+void modbus_serial_rx_enable(struct modbus_context *ctx) {
 	modbus_serial_rx_on(ctx);
 }
 
-int modbus_serial_rx_adu(struct modbus_context *ctx)
-{
+int modbus_serial_rx_adu(struct modbus_context *ctx) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	int rc = 0;
 
@@ -536,8 +490,7 @@ int modbus_serial_rx_adu(struct modbus_context *ctx)
 	return rc;
 }
 
-int modbus_serial_tx_adu(struct modbus_context *ctx)
-{
+int modbus_serial_tx_adu(struct modbus_context *ctx) {
 	switch (ctx->mode) {
 	case MODBUS_MODE_RTU:
 		rtu_tx_adu(ctx);
@@ -554,9 +507,7 @@ int modbus_serial_tx_adu(struct modbus_context *ctx)
 	return -ENOTSUP;
 }
 
-int modbus_serial_init(struct modbus_context *ctx,
-		       struct modbus_iface_param param)
-{
+int modbus_serial_init(struct modbus_context *ctx, struct modbus_iface_param param) {
 	struct modbus_serial_config *cfg = ctx->cfg;
 	const uint32_t if_delay_max = 3500000;
 	const uint32_t numof_bits = 11;
@@ -571,11 +522,6 @@ int modbus_serial_init(struct modbus_context *ctx,
 		return -ENOTSUP;
 	}
 
-	if (!device_is_ready(cfg->dev)) {
-		pr_err("Bus device %s is not ready", cfg->dev->name);
-		return -ENODEV;
-	}
-
 	if (IS_ENABLED(CONFIG_UART_USE_RUNTIME_CONFIGURE)) {
 		if (configure_uart(ctx, &param) != 0) {
 			return -EINVAL;
@@ -583,8 +529,7 @@ int modbus_serial_init(struct modbus_context *ctx,
 	}
 
 	if (param.serial.baud <= 38400) {
-		cfg->rtu_timeout = (numof_bits * if_delay_max) /
-				   param.serial.baud;
+		cfg->rtu_timeout = (numof_bits * if_delay_max) / param.serial.baud;
 	} else {
 		cfg->rtu_timeout = (numof_bits * if_delay_max) / 38400;
 	}
@@ -601,18 +546,16 @@ int modbus_serial_init(struct modbus_context *ctx,
 		return err;
 	};
 
-	k_timer_init(&cfg->rtu_timer, rtu_tmr_handler, NULL);
-	k_timer_user_data_set(&cfg->rtu_timer, ctx);
-
+	tx_timer_create(&cfg->rtu_timer, "modbus-rtu", rtu_tmr_handler, (uintptr_t)ctx,
+					TX_USEC(cfg->rtu_timeout), 0, TX_NO_ACTIVATE);
 	modbus_serial_rx_on(ctx);
-	pr_info("RTU timeout %u us", cfg->rtu_timeout);
+	pr_info("RTU timeout %"PRIu32" us", cfg->rtu_timeout);
 
 	return 0;
 }
 
-void modbus_serial_disable(struct modbus_context *ctx)
-{
+void modbus_serial_disable(struct modbus_context *ctx) {
 	modbus_serial_tx_off(ctx);
 	modbus_serial_rx_off(ctx);
-	k_timer_stop(&ctx->cfg->rtu_timer);
+	tx_timer_delete(&ctx->cfg->rtu_timer);
 }

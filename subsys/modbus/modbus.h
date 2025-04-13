@@ -630,6 +630,39 @@ int modbus_raw_backend_txn(const int iface, struct modbus_adu *adu);
  */
 int modbus_register_user_fc(const int iface, struct modbus_custom_fc *custom_fc);
 
+
+/*
+ * Modbus context helper macro
+ */
+#define MODBUS_CONTEXT_DEFINE(name) \
+	LINKER_RWSET_ITEM_ORDERED(modbus, struct modbus_context, name, 1)
+
+#ifdef CONFIG_MODBUS_SERIAL
+#define MODBUS_UART_DEFINE(name, devname, _de, _re) \
+	static struct modbus_serial_config name##_serial_cfg = { \
+		.name = devname, \
+		.de = _de, \
+		.re = _re, \
+	}; \
+	static MODBUS_CONTEXT_DEFINE(name) = { \
+		.iface_name = #name, \
+		.cfg = &name##_serial_cfg, \
+	}
+
+#else /* !CONFIG_MODBUS_SERIAL */
+#define MODBUS_UART_DEFINE(...)
+#endif /* CONFIG_MODBUS_SERIAL */
+
+#define MODBUS_RAW_DEFINE(name, handler, param) \
+	static MODBUS_CONTEXT_DEFINE(name) = { \
+		.iface_name = #name, \
+		.rawcb = { \
+			.raw_tx_cb = handler, \
+			.user_data = param, \
+		}, \
+		.mode = MODBUS_MODE_RAW, \
+	}
+
 #ifdef __cplusplus
 }
 #endif

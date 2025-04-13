@@ -3,5 +3,6 @@ menu "Subsystem"
 rsource "fs/Kconfig"
 rsource "sdio/Kconfig"
 rsource "shell/Kconfig"
+rsource "modbus/Kconfig"
 
 endmenu

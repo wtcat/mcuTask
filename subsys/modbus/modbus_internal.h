@@ -25,7 +25,7 @@
 
 #include <tx_api.h>
 #include <base/sys/atomic.h>
-// #include <zephyr/drivers/gpio.h>
+#include <drivers/gpio.h>
 #include <subsys/modbus/modbus.h>
 
 #ifdef CONFIG_MODBUS_FP_EXTENSIONS
@@ -71,7 +71,10 @@
 
 struct modbus_serial_config {
 	/* UART device */
-	const struct device *dev;
+	union {
+		const char *name;
+		const struct device *dev;
+	};
 	/* RTU timeout (maximum inter-frame delay) */
 	uint32_t rtu_timeout;
 	/* Pointer to current position in buffer */
@@ -115,7 +118,7 @@ struct modbus_context {
 	/* Wait for response semaphore */
 	TX_SEMAPHORE client_wait_sem;
 	/* Server work item */
-	struct k_work server_work;
+	TX_QUEUE *server_work;
 	/* Received frame */
 	struct modbus_adu rx_adu;
 	/* Frame to transmit */

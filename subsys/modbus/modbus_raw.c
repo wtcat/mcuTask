@@ -4,21 +4,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#define pr_fmt(fmt) "[modbus_raw]: "fmt"\n" 
+#define pr_fmt(fmt) "[modbus_raw]: " fmt "\n"
 
 #include <tx_api.h>
 #include <base/log.h>
 #include <base/sys/byteorder.h>
-#include <modbus_internal.h>
+#include <subsys/modbus/modbus_internal.h>
 
-#define MODBUS_ADU_LENGTH_DEVIATION	2
-#define MODBUS_RAW_MIN_MSG_SIZE		(MODBUS_RTU_MIN_MSG_SIZE - 2)
-#define MODBUS_RAW_BUFFER_SIZE		(CONFIG_MODBUS_BUFFER_SIZE - 2)
+#define MODBUS_ADU_LENGTH_DEVIATION 2
+#define MODBUS_RAW_MIN_MSG_SIZE (MODBUS_RTU_MIN_MSG_SIZE - 2)
+#define MODBUS_RAW_BUFFER_SIZE (CONFIG_MODBUS_BUFFER_SIZE - 2)
 
-int modbus_raw_rx_adu(struct modbus_context *ctx)
-{
+int modbus_raw_rx_adu(struct modbus_context *ctx) {
 	if (ctx->rx_adu.length < MODBUS_RAW_MIN_MSG_SIZE ||
-	    ctx->rx_adu.length > MODBUS_RAW_BUFFER_SIZE) {
+		ctx->rx_adu.length > MODBUS_RAW_BUFFER_SIZE) {
 		pr_warn("Frame length error");
 		return -EMSGSIZE;
 	}
@@ -31,8 +30,7 @@ int modbus_raw_rx_adu(struct modbus_context *ctx)
 	return 0;
 }
 
-int modbus_raw_tx_adu(struct modbus_context *ctx)
-{
+int modbus_raw_tx_adu(struct modbus_context *ctx) {
 	int iface = modbus_iface_get_by_ctx(ctx);
 
 	if (ctx->mode != MODBUS_MODE_RAW) {
@@ -48,8 +46,7 @@ int modbus_raw_tx_adu(struct modbus_context *ctx)
 	return 0;
 }
 
-int modbus_raw_submit_rx(const int iface, const struct modbus_adu *adu)
-{
+int modbus_raw_submit_rx(const int iface, const struct modbus_adu *adu) {
 	struct modbus_context *ctx;
 
 	ctx = modbus_get_context(iface);
@@ -69,29 +66,26 @@ int modbus_raw_submit_rx(const int iface, const struct modbus_adu *adu)
 	ctx->rx_adu.length = adu->length;
 	ctx->rx_adu.unit_id = adu->unit_id;
 	ctx->rx_adu.fc = adu->fc;
-	memcpy(ctx->rx_adu.data, adu->data,
-	       MIN(adu->length, sizeof(ctx->rx_adu.data)));
-	k_work_submit(&ctx->server_work);
+	memcpy(ctx->rx_adu.data, adu->data, MIN(adu->length, sizeof(ctx->rx_adu.data)));
+	tx_queue_send(ctx->server_work, ctx, TX_NO_WAIT);
 
 	return 0;
 }
 
-void modbus_raw_put_header(const struct modbus_adu *adu, uint8_t *header)
-{
+void modbus_raw_put_header(const struct modbus_adu *adu, uint8_t *header) {
 	uint16_t length = MIN(adu->length, CONFIG_MODBUS_BUFFER_SIZE);
 
-	rte_put_be16(adu->trans_id, &header[0]);
-	rte_put_be16(adu->proto_id, &header[2]);
-	rte_put_be16(length + MODBUS_ADU_LENGTH_DEVIATION, &header[4]);
+	sys_put_be16(adu->trans_id, &header[0]);
+	sys_put_be16(adu->proto_id, &header[2]);
+	sys_put_be16(length + MODBUS_ADU_LENGTH_DEVIATION, &header[4]);
 	header[6] = adu->unit_id;
 	header[7] = adu->fc;
 }
 
-void modbus_raw_get_header(struct modbus_adu *adu, const uint8_t *header)
-{
-	adu->trans_id = rte_get_be16(&header[0]);
-	adu->proto_id = rte_get_be16(&header[2]);
-	adu->length = MIN(rte_get_be16(&header[4]), CONFIG_MODBUS_BUFFER_SIZE);
+void modbus_raw_get_header(struct modbus_adu *adu, const uint8_t *header) {
+	adu->trans_id = sys_get_be16(&header[0]);
+	adu->proto_id = sys_get_be16(&header[2]);
+	adu->length = MIN(sys_get_be16(&header[4]), CONFIG_MODBUS_BUFFER_SIZE);
 	adu->unit_id = header[6];
 	adu->fc = header[7];
 
@@ -100,9 +94,7 @@ void modbus_raw_get_header(struct modbus_adu *adu, const uint8_t *header)
 	}
 }
 
-static void modbus_set_exception(struct modbus_adu *adu,
-				 const uint8_t excep_code)
-{
+static void modbus_set_exception(struct modbus_adu *adu, const uint8_t excep_code) {
 	const uint8_t excep_bit = BIT(7);
 
 	adu->fc |= excep_bit;
@@ -110,8 +102,7 @@ static void modbus_set_exception(struct modbus_adu *adu,
 	adu->length = 1;
 }
 
-void modbus_raw_set_server_failure(struct modbus_adu *adu)
-{
+void modbus_raw_set_server_failure(struct modbus_adu *adu) {
 	const uint8_t excep_bit = BIT(7);
 
 	adu->fc |= excep_bit;
@@ -119,8 +110,7 @@ void modbus_raw_set_server_failure(struct modbus_adu *adu)
 	adu->length = 1;
 }
 
-int modbus_raw_backend_txn(const int iface, struct modbus_adu *adu)
-{
+int modbus_raw_backend_txn(const int iface, struct modbus_adu *adu) {
 	struct modbus_context *ctx;
 	int err;
 
@@ -136,7 +126,7 @@ int modbus_raw_backend_txn(const int iface, struct modbus_adu *adu)
 	 * since no other medium is directly supported.
 	 */
 	if (ctx->client == false ||
-	    (ctx->mode != MODBUS_MODE_RTU && ctx->mode != MODBUS_MODE_ASCII)) {
+		(ctx->mode != MODBUS_MODE_RTU && ctx->mode != MODBUS_MODE_ASCII)) {
 		pr_err("Interface %d has wrong configuration", iface);
 		modbus_set_exception(adu, MODBUS_EXC_GW_PATH_UNAVAILABLE);
 		return -ENOTSUP;
@@ -165,9 +155,7 @@ int modbus_raw_backend_txn(const int iface, struct modbus_adu *adu)
 	return err;
 }
 
-int modbus_raw_init(struct modbus_context *ctx,
-		    struct modbus_iface_param param)
-{
+int modbus_raw_init(struct modbus_context *ctx, struct modbus_iface_param param) {
 	if (ctx->mode != MODBUS_MODE_RAW) {
 		return -ENOTSUP;
 	}
@@ -178,6 +166,4 @@ int modbus_raw_init(struct modbus_context *ctx,
 	return 0;
 }
 
-void modbus_raw_disable(struct modbus_context *ctx)
-{
-}
+void modbus_raw_disable(struct modbus_context *ctx) {}

@@ -19,20 +19,19 @@
  *      Version 2.0 available at www.apache.org/licenses/LICENSE-2.0.
  */
 
-#define pr_fmt(fmt) "[modbus_server]: "fmt"\n" 
+#define pr_fmt(fmt) "[modbus_server]: " fmt "\n"
 
 #include <string.h>
-#include <base/sys/byteorder.h>
 #include <base/log.h>
-#include "modbus_internal.h"
+#include <base/sys/byteorder.h>
+#include <subsys/modbus/modbus_internal.h>
 
 /*
  * This functions are used to reset and update server's
  * statistics and communications counters.
  */
 #ifdef CONFIG_MODBUS_FC08_DIAGNOSTIC
-void modbus_reset_stats(struct modbus_context *ctx)
-{
+void modbus_reset_stats(struct modbus_context *ctx) {
 	/* Initialize all MODBUS event counters. */
 	ctx->mbs_msg_ctr = 0;
 	ctx->mbs_crc_err_ctr = 0;
@@ -41,28 +40,23 @@ void modbus_reset_stats(struct modbus_context *ctx)
 	ctx->mbs_noresp_ctr = 0;
 }
 
-static void update_msg_ctr(struct modbus_context *ctx)
-{
+static void update_msg_ctr(struct modbus_context *ctx) {
 	ctx->mbs_msg_ctr++;
 }
 
-static void update_crcerr_ctr(struct modbus_context *ctx)
-{
+static void update_crcerr_ctr(struct modbus_context *ctx) {
 	ctx->mbs_crc_err_ctr++;
 }
 
-static void update_excep_ctr(struct modbus_context *ctx)
-{
+static void update_excep_ctr(struct modbus_context *ctx) {
 	ctx->mbs_except_ctr++;
 }
 
-static void update_server_msg_ctr(struct modbus_context *ctx)
-{
+static void update_server_msg_ctr(struct modbus_context *ctx) {
 	ctx->mbs_server_msg_ctr++;
 }
 
-static void update_noresp_ctr(struct modbus_context *ctx)
-{
+static void update_noresp_ctr(struct modbus_context *ctx) {
 	ctx->mbs_noresp_ctr++;
 }
 #else
@@ -78,8 +72,7 @@ static void update_noresp_ctr(struct modbus_context *ctx)
  * This function sets the indicated error response code into the response frame.
  * Then the routine is called to calculate the error check value.
  */
-static void mbs_exception_rsp(struct modbus_context *ctx, uint8_t excep_code)
-{
+static void mbs_exception_rsp(struct modbus_context *ctx, uint8_t excep_code) {
 	const uint8_t excep_bit = BIT(7);
 
 	pr_info("FC 0x%02x Error 0x%02x", ctx->rx_adu.fc, excep_code);
@@ -104,8 +97,7 @@ static void mbs_exception_rsp(struct modbus_context *ctx, uint8_t excep_code)
  *  Byte count            1 Bytes
  *  Coil status           N * 1 Byte
  */
-static bool mbs_fc01_coil_read(struct modbus_context *ctx)
-{
+static bool mbs_fc01_coil_read(struct modbus_context *ctx) {
 	const uint16_t coils_limit = 2000;
 	const uint8_t request_len = 4;
 	uint8_t *presp;
@@ -127,8 +119,8 @@ static bool mbs_fc01_coil_read(struct modbus_context *ctx)
 		return true;
 	}
 
-	coil_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	coil_qty = rte_get_be16(&ctx->rx_adu.data[2]);
+	coil_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	coil_qty = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	/* Make sure we don't exceed the allowed limit per request */
 	if (coil_qty == 0 || coil_qty > coils_limit) {
@@ -157,7 +149,6 @@ static bool mbs_fc01_coil_read(struct modbus_context *ctx)
 
 	/* Loop through each coil requested. */
 	while (coil_cntr < coil_qty) {
-
 		err = ctx->mbs_user_cb->coil_rd(coil_addr, &coil_state);
 		if (err != 0) {
 			pr_info("Coil address not supported");
@@ -203,8 +194,7 @@ static bool mbs_fc01_coil_read(struct modbus_context *ctx)
  *  Byte count            1 Bytes
  *  Input status           N * 1 Byte
  */
-static bool mbs_fc02_di_read(struct modbus_context *ctx)
-{
+static bool mbs_fc02_di_read(struct modbus_context *ctx) {
 	const uint16_t di_limit = 2000;
 	const uint8_t request_len = 4;
 	uint8_t *presp;
@@ -226,8 +216,8 @@ static bool mbs_fc02_di_read(struct modbus_context *ctx)
 		return true;
 	}
 
-	di_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	di_qty = rte_get_be16(&ctx->rx_adu.data[2]);
+	di_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	di_qty = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	/* Make sure we don't exceed the allowed limit per request */
 	if (di_qty == 0 || di_qty > di_limit) {
@@ -258,7 +248,6 @@ static bool mbs_fc02_di_read(struct modbus_context *ctx)
 
 	/* Loop through each DI requested. */
 	while (di_cntr < di_qty) {
-
 		err = ctx->mbs_user_cb->discrete_input_rd(di_addr, &di_state);
 		if (err != 0) {
 			pr_info("Discrete input address not supported");
@@ -304,8 +293,7 @@ static bool mbs_fc02_di_read(struct modbus_context *ctx)
  *  Byte count            1 Bytes
  *  Register Value        N * 2 Byte
  */
-static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
-{
+static bool mbs_fc03_hreg_read(struct modbus_context *ctx) {
 	const uint16_t regs_limit = 125;
 	const uint8_t request_len = 4;
 	uint8_t *presp;
@@ -319,12 +307,11 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
 		return false;
 	}
 
-	reg_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	reg_qty = rte_get_be16(&ctx->rx_adu.data[2]);
+	reg_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	reg_qty = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	if (reg_qty == 0 || reg_qty > regs_limit) {
-		pr_err("Wrong register quantity, %u (limit is %u)",
-			reg_qty, regs_limit);
+		pr_err("Wrong register quantity, %u (limit is %u)", reg_qty, regs_limit);
 		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_VAL);
 		return true;
 	}
@@ -333,7 +320,7 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
 	num_bytes = (uint8_t)(reg_qty * sizeof(uint16_t));
 
 	if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
-	    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+		!IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
 		/* Read integer register */
 		if (ctx->mbs_user_cb->holding_reg_rd == NULL) {
 			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
@@ -368,7 +355,7 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
 			/* Read integer register */
 			err = ctx->mbs_user_cb->holding_reg_rd(reg_addr, &reg);
 			if (err == 0) {
-				rte_put_be16(reg, presp);
+				sys_put_be16(reg, presp);
 				presp += sizeof(uint16_t);
 			}
 
@@ -383,7 +370,7 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
 			err = ctx->mbs_user_cb->holding_reg_rd_fp(reg_addr, &fp);
 			if (err == 0) {
 				memcpy(&reg, &fp, sizeof(reg));
-				rte_put_be32(reg, presp);
+				sys_put_be32(reg, presp);
 				presp += sizeof(uint32_t);
 			}
 
@@ -397,7 +384,6 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
 			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_ADDR);
 			return true;
 		}
-
 	}
 
 	return true;
@@ -416,8 +402,7 @@ static bool mbs_fc03_hreg_read(struct modbus_context *ctx)
  *  Byte count            1 Bytes
  *  Register Value        N * 2 Byte
  */
-static bool mbs_fc04_inreg_read(struct modbus_context *ctx)
-{
+static bool mbs_fc04_inreg_read(struct modbus_context *ctx) {
 	const uint16_t regs_limit = 125;
 	const uint8_t request_len = 4;
 	uint8_t *presp;
@@ -431,12 +416,11 @@ static bool mbs_fc04_inreg_read(struct modbus_context *ctx)
 		return false;
 	}
 
-	reg_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	reg_qty = rte_get_be16(&ctx->rx_adu.data[2]);
+	reg_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	reg_qty = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	if (reg_qty == 0 || reg_qty > regs_limit) {
-		pr_err("Wrong register quantity, %u (limit is %u)",
-			reg_qty, regs_limit);
+		pr_err("Wrong register quantity, %u (limit is %u)", reg_qty, regs_limit);
 		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_VAL);
 		return true;
 	}
@@ -445,7 +429,7 @@ static bool mbs_fc04_inreg_read(struct modbus_context *ctx)
 	num_bytes = (uint8_t)(reg_qty * sizeof(uint16_t));
 
 	if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
-	    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+		!IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
 		/* Read integer register */
 		if (ctx->mbs_user_cb->input_reg_rd == NULL) {
 			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
@@ -480,7 +464,7 @@ static bool mbs_fc04_inreg_read(struct modbus_context *ctx)
 			/* Read integer register */
 			err = ctx->mbs_user_cb->input_reg_rd(reg_addr, &reg);
 			if (err == 0) {
-				rte_put_be16(reg, presp);
+				sys_put_be16(reg, presp);
 				presp += sizeof(uint16_t);
 			}
 
@@ -495,7 +479,7 @@ static bool mbs_fc04_inreg_read(struct modbus_context *ctx)
 			err = ctx->mbs_user_cb->input_reg_rd_fp(reg_addr, &fp);
 			if (err == 0) {
 				memcpy(&reg, &fp, sizeof(reg));
-				rte_put_be32(reg, presp);
+				sys_put_be32(reg, presp);
 				presp += sizeof(uint32_t);
 			}
 
@@ -527,8 +511,7 @@ static bool mbs_fc04_inreg_read(struct modbus_context *ctx)
  *  Output Address        2 Bytes
  *  Output Value          2 Bytes
  */
-static bool mbs_fc05_coil_write(struct modbus_context *ctx)
-{
+static bool mbs_fc05_coil_write(struct modbus_context *ctx) {
 	const uint8_t request_len = 4;
 	const uint8_t response_len = 4;
 	int err;
@@ -547,8 +530,8 @@ static bool mbs_fc05_coil_write(struct modbus_context *ctx)
 	}
 
 	/* Get the desired coil address and coil value */
-	coil_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	coil_val = rte_get_be16(&ctx->rx_adu.data[2]);
+	coil_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	coil_val = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	/* See if coil needs to be OFF? */
 	if (coil_val == MODBUS_COIL_OFF_CODE) {
@@ -567,8 +550,8 @@ static bool mbs_fc05_coil_write(struct modbus_context *ctx)
 
 	/* Assemble response payload */
 	ctx->tx_adu.length = response_len;
-	rte_put_be16(coil_addr, &ctx->tx_adu.data[0]);
-	rte_put_be16(coil_val, &ctx->tx_adu.data[2]);
+	sys_put_be16(coil_addr, &ctx->tx_adu.data[0]);
+	sys_put_be16(coil_val, &ctx->tx_adu.data[2]);
 
 	return true;
 }
@@ -586,8 +569,7 @@ static bool mbs_fc05_coil_write(struct modbus_context *ctx)
  *  Register Address      2 Bytes
  *  Register Value        2 Bytes
  */
-static bool mbs_fc06_hreg_write(struct modbus_context *ctx)
-{
+static bool mbs_fc06_hreg_write(struct modbus_context *ctx) {
 	const uint8_t request_len = 4;
 	const uint8_t response_len = 4;
 	int err;
@@ -604,8 +586,8 @@ static bool mbs_fc06_hreg_write(struct modbus_context *ctx)
 		return true;
 	}
 
-	reg_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	reg_val = rte_get_be16(&ctx->rx_adu.data[2]);
+	reg_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	reg_val = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	err = ctx->mbs_user_cb->holding_reg_wr(reg_addr, reg_val);
 
@@ -617,8 +599,8 @@ static bool mbs_fc06_hreg_write(struct modbus_context *ctx)
 
 	/* Assemble response payload */
 	ctx->tx_adu.length = response_len;
-	rte_put_be16(reg_addr, &ctx->tx_adu.data[0]);
-	rte_put_be16(reg_val, &ctx->tx_adu.data[2]);
+	sys_put_be16(reg_addr, &ctx->tx_adu.data[0]);
+	sys_put_be16(reg_val, &ctx->tx_adu.data[2]);
 
 	return true;
 }
@@ -637,8 +619,7 @@ static bool mbs_fc06_hreg_write(struct modbus_context *ctx)
  *  Data                  N * 2 Byte
  */
 #ifdef CONFIG_MODBUS_FC08_DIAGNOSTIC
-static bool mbs_fc08_diagnostics(struct modbus_context *ctx)
-{
+static bool mbs_fc08_diagnostics(struct modbus_context *ctx) {
 	const uint8_t request_len = 4;
 	const uint8_t response_len = 4;
 	uint16_t sfunc;
@@ -649,8 +630,8 @@ static bool mbs_fc08_diagnostics(struct modbus_context *ctx)
 		return false;
 	}
 
-	sfunc = rte_get_be16(&ctx->rx_adu.data[0]);
-	data = rte_get_be16(&ctx->rx_adu.data[2]);
+	sfunc = sys_get_be16(&ctx->rx_adu.data[0]);
+	data = sys_get_be16(&ctx->rx_adu.data[2]);
 
 	switch (sfunc) {
 	case MODBUS_FC08_SUBF_QUERY:
@@ -695,14 +676,13 @@ static bool mbs_fc08_diagnostics(struct modbus_context *ctx)
 
 	/* Assemble response payload */
 	ctx->tx_adu.length = response_len;
-	rte_put_be16(sfunc, &ctx->tx_adu.data[0]);
-	rte_put_be16(data, &ctx->tx_adu.data[2]);
+	sys_put_be16(sfunc, &ctx->tx_adu.data[0]);
+	sys_put_be16(data, &ctx->tx_adu.data[2]);
 
 	return true;
 }
 #else
-static bool mbs_fc08_diagnostics(struct modbus_context *ctx)
-{
+static bool mbs_fc08_diagnostics(struct modbus_context *ctx) {
 	mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
 
 	return true;
@@ -724,8 +704,7 @@ static bool mbs_fc08_diagnostics(struct modbus_context *ctx)
  *  Starting Address      2 Bytes
  *  Quantity of Outputs   2 Bytes
  */
-static bool mbs_fc15_coils_write(struct modbus_context *ctx)
-{
+static bool mbs_fc15_coils_write(struct modbus_context *ctx) {
 	const uint16_t coils_limit = 2000;
 	const uint8_t request_len = 6;
 	const uint8_t response_len = 4;
@@ -748,8 +727,8 @@ static bool mbs_fc15_coils_write(struct modbus_context *ctx)
 		return true;
 	}
 
-	coil_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	coil_qty = rte_get_be16(&ctx->rx_adu.data[2]);
+	coil_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	coil_qty = sys_get_be16(&ctx->rx_adu.data[2]);
 	/* Get the byte count for the data. */
 	num_bytes = ctx->rx_adu.data[4];
 
@@ -760,8 +739,8 @@ static bool mbs_fc15_coils_write(struct modbus_context *ctx)
 	}
 
 	/* Be sure byte count is valid for quantity of coils. */
-	if (((((coil_qty - 1) / 8) + 1) !=  num_bytes) ||
-	    (ctx->rx_adu.length  != (num_bytes + 5))) {
+	if (((((coil_qty - 1) / 8) + 1) != num_bytes) ||
+		(ctx->rx_adu.length != (num_bytes + 5))) {
 		pr_err("Mismatch in the number of coils");
 		mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_DATA_VAL);
 		return true;
@@ -783,8 +762,7 @@ static bool mbs_fc15_coils_write(struct modbus_context *ctx)
 			coil_state = false;
 		}
 
-		err = ctx->mbs_user_cb->coil_wr(coil_addr + coil_cntr,
-						coil_state);
+		err = ctx->mbs_user_cb->coil_wr(coil_addr + coil_cntr, coil_state);
 
 		if (err != 0) {
 			pr_info("Coil address not supported");
@@ -800,8 +778,8 @@ static bool mbs_fc15_coils_write(struct modbus_context *ctx)
 
 	/* Assemble response payload */
 	ctx->tx_adu.length = response_len;
-	rte_put_be16(coil_addr, &ctx->tx_adu.data[0]);
-	rte_put_be16(coil_qty, &ctx->tx_adu.data[2]);
+	sys_put_be16(coil_addr, &ctx->tx_adu.data[0]);
+	sys_put_be16(coil_qty, &ctx->tx_adu.data[2]);
 
 	return true;
 }
@@ -826,8 +804,7 @@ static bool mbs_fc15_coils_write(struct modbus_context *ctx)
  * the 'Daniels Flow Meter' extensions.  This means that each register
  * requested is considered as a 32-bit IEEE-754 floating-point format.
  */
-static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
-{
+static bool mbs_fc16_hregs_write(struct modbus_context *ctx) {
 	const uint16_t regs_limit = 125;
 	const uint8_t request_len = 6;
 	const uint8_t response_len = 4;
@@ -842,8 +819,8 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
 		return false;
 	}
 
-	reg_addr = rte_get_be16(&ctx->rx_adu.data[0]);
-	reg_qty = rte_get_be16(&ctx->rx_adu.data[2]);
+	reg_addr = sys_get_be16(&ctx->rx_adu.data[0]);
+	reg_qty = sys_get_be16(&ctx->rx_adu.data[2]);
 	/* Get the byte count for the data. */
 	num_bytes = ctx->rx_adu.data[4];
 
@@ -854,7 +831,7 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
 	}
 
 	if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
-	    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+		!IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
 		/* Write integer register */
 		if (ctx->mbs_user_cb->holding_reg_wr == NULL) {
 			mbs_exception_rsp(ctx, MODBUS_EXC_ILLEGAL_FC);
@@ -893,14 +870,14 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
 		uint16_t addr = reg_addr + reg_cntr;
 
 		if ((reg_addr < MODBUS_FP_EXTENSIONS_ADDR) ||
-		    !IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
-			uint16_t reg_val = rte_get_be16(prx_data);
+			!IS_ENABLED(CONFIG_MODBUS_FP_EXTENSIONS)) {
+			uint16_t reg_val = sys_get_be16(prx_data);
 
 			prx_data += sizeof(uint16_t);
 			err = ctx->mbs_user_cb->holding_reg_wr(addr, reg_val);
 			reg_cntr++;
 		} else {
-			uint32_t reg_val = rte_get_be32(prx_data);
+			uint32_t reg_val = sys_get_be32(prx_data);
 			float fp;
 
 			/* Write to floating point register */
@@ -919,14 +896,13 @@ static bool mbs_fc16_hregs_write(struct modbus_context *ctx)
 
 	/* Assemble response payload */
 	ctx->tx_adu.length = response_len;
-	rte_put_be16(reg_addr, &ctx->tx_adu.data[0]);
-	rte_put_be16(reg_qty, &ctx->tx_adu.data[2]);
+	sys_put_be16(reg_addr, &ctx->tx_adu.data[0]);
+	sys_put_be16(reg_qty, &ctx->tx_adu.data[2]);
 
 	return true;
 }
 
-static bool mbs_try_user_fc(struct modbus_context *ctx, uint8_t fc)
-{
+static bool mbs_try_user_fc(struct modbus_context *ctx, uint8_t fc) {
 	struct modbus_custom_fc *p;
 
 	pr_dbg("Searching for custom Modbus handlers for code %u", fc);
@@ -939,8 +915,7 @@ static bool mbs_try_user_fc(struct modbus_context *ctx, uint8_t fc)
 			pr_dbg("Found custom handler");
 
 			p->excep_code = MODBUS_EXC_NONE;
-			rval = p->cb(iface, &ctx->rx_adu, &ctx->tx_adu, &p->excep_code,
-					p->user_data);
+			rval = p->cb(iface, &ctx->rx_adu, &ctx->tx_adu, &p->excep_code, p->user_data);
 
 			if (p->excep_code != MODBUS_EXC_NONE) {
 				pr_info("Custom handler failed with code %d", p->excep_code);
@@ -957,8 +932,7 @@ static bool mbs_try_user_fc(struct modbus_context *ctx, uint8_t fc)
 	return true;
 }
 
-bool modbus_server_handler(struct modbus_context *ctx)
-{
+bool modbus_server_handler(struct modbus_context *ctx) {
 	bool send_reply = false;
 	uint8_t addr = ctx->rx_adu.unit_id;
 	uint8_t fc = ctx->rx_adu.fc;

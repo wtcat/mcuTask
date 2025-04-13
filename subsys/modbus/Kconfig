@@ -7,6 +7,20 @@ menuconfig MODBUS
 
 if MODBUS
 
+config MODBUS_THREAD_PRIORITY
+	int "Modbus thread priority"
+	range 0 TX_MAX_PRIORITIES
+	default 10
+
+config MODBUS_THREAD_STACK_SIZE
+	int "Modbus thread stack size"
+	default 2048
+
+config MODBUS_QUEUE_SIZE
+	int "Modbus thread message queue size"
+	range 4 32
+	default 4
+
 config MODBUS_BUFFER_SIZE
 	int "Modbus buffer size"
 	default 256
@@ -42,8 +56,7 @@ config MODBUS_CLIENT
 config MODBUS_SERIAL
 	bool "Modbus over serial line support"
 	default y
-	depends on SERIAL && SERIAL_HAS_DRIVER
-	depends on DT_HAS_ZEPHYR_MODBUS_SERIAL_ENABLED
+	depends on SERIAL
 	imply UART_USE_RUNTIME_CONFIGURE
 	help
 	  Enable Modbus over serial line support.
@@ -78,10 +91,5 @@ config MODBUS_FC08_DIAGNOSTIC
 	default y
 	help
 	  Enable function code 08 Diagnostic support
-
-module = MODBUS
-module-str = Modbus Support
-module-help = Sets log level for Modbus support
-source "subsys/logging/Kconfig.template.log_config"
 
 endif
