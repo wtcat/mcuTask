@@ -11,6 +11,8 @@
 #include <tx_api.h>
 #include <base/log.h>
 #include <base/bitops.h>
+
+#define _GPIO_SOURCE_FILE
 #include <drivers/gpio.h>
 
 
@@ -41,14 +43,6 @@
 #define STM32_OTYPER_OPEN_DRAIN		(0x1 << STM32_OTYPER_SHIFT)
 #define STM32_OTYPER_MASK		0x1
 #define STM32_OTYPER_SHIFT		6
-
-/* GPIO speed */
-#define STM32_OSPEEDR_LOW_SPEED		(0x0 << STM32_OSPEEDR_SHIFT)
-#define STM32_OSPEEDR_MEDIUM_SPEED	(0x1 << STM32_OSPEEDR_SHIFT)
-#define STM32_OSPEEDR_HIGH_SPEED	(0x2 << STM32_OSPEEDR_SHIFT)
-#define STM32_OSPEEDR_VERY_HIGH_SPEED	(0x3 << STM32_OSPEEDR_SHIFT)
-#define STM32_OSPEEDR_MASK		0x3
-#define STM32_OSPEEDR_SHIFT		7
 
 /* GPIO High impedance/Pull-up/pull-down */
 #define STM32_PUPDR_NO_PULL		(0x0 << STM32_PUPDR_SHIFT)
@@ -473,7 +467,7 @@ static int stm32_gpio_setup(void) {
 		}
 	}
 
-	return 0;
+	return gpio_dt_spec_init();
 }
 
 SYSINIT(stm32_gpio_setup, SI_PREDRIVER_LEVEL, 10);

@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include <base/assert.h>
+#include <base/linker.h>
 #include <base/sys/util_macro.h>
 #include <drivers/device.h>
 
@@ -355,6 +356,29 @@ typedef uint16_t gpio_dt_flags_t;
  */
 typedef uint32_t gpio_flags_t;
 
+/**
+ * @brief Container for GPIO pin information specified in devicetree
+ *
+ * This type contains a pointer to a GPIO device, pin number for a pin
+ * controlled by that device, and the subset of pin configuration
+ * flags which may be given in devicetree.
+ *
+ * @see GPIO_DT_SPEC_GET_BY_IDX
+ * @see GPIO_DT_SPEC_GET_BY_IDX_OR
+ * @see GPIO_DT_SPEC_GET
+ * @see GPIO_DT_SPEC_GET_OR
+ */
+struct gpio_dt_spec {
+	/** GPIO device controlling the pin */
+	union {
+		const struct device *port;
+		const char *name;
+	};
+	/** The pin's number on the device */
+	gpio_pin_t pin;
+	/** The pin's configuration flags as specified in devicetree */
+	gpio_dt_flags_t dt_flags;
+};
 
 /**
  * @brief Maximum number of pins that are supported by `gpio_port_pins_t`.
@@ -470,10 +494,6 @@ enum gpio_int_trig {
 };
 
 DEVICE_CLASS_DEFINE(gpio_device,
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
-	struct gpio_driver_data data;
-#endif
-
 	int (*pin_configure)(const struct device *port, gpio_pin_t pin,
 			     gpio_flags_t flags);
 #ifdef CONFIG_GPIO_GET_CONFIG
@@ -503,6 +523,7 @@ DEVICE_CLASS_DEFINE(gpio_device,
 	int (*port_get_direction)(const struct device *port, gpio_port_pins_t map,
 				  gpio_port_pins_t *inputs, gpio_port_pins_t *outputs);
 #endif /* CONFIG_GPIO_GET_DIRECTION */
+	struct gpio_driver_data data;
 );
 
 /**
@@ -538,10 +559,9 @@ static inline int gpio_pin_interrupt_configure(const struct device *port,
 						      gpio_flags_t flags)
 {
 	const struct gpio_device *api = (const struct gpio_device *)port;
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	const struct gpio_driver_data *const data =
 		(const struct gpio_driver_data *)&api->data;
-#endif /* CONFIG_GPIO_INVERT_SUPPORT */
+
 	enum gpio_int_trig trig;
 	enum gpio_int_mode mode;
 
@@ -573,13 +593,11 @@ static inline int gpio_pin_interrupt_configure(const struct device *port,
 		 "At least one of GPIO_INT_LOW_0, GPIO_INT_HIGH_1 has to be "
 		 "enabled.");
 
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	if (((flags & GPIO_INT_LEVELS_LOGICAL) != 0) &&
 	    ((data->invert & (gpio_port_pins_t)BIT(pin)) != 0)) {
 		/* Invert signal bits */
 		flags ^= (GPIO_INT_LOW_0 | GPIO_INT_HIGH_1);
 	}
-#endif /* CONFIG_GPIO_INVERT_SUPPORT */
 
 	trig = (enum gpio_int_trig)(flags & (GPIO_INT_LOW_0 | GPIO_INT_HIGH_1 | GPIO_INT_WAKEUP));
 #ifdef CONFIG_GPIO_ENABLE_DISABLE_INTERRUPT
@@ -590,6 +608,27 @@ static inline int gpio_pin_interrupt_configure(const struct device *port,
 #endif /* CONFIG_GPIO_ENABLE_DISABLE_INTERRUPT */
 
 	return api->pin_interrupt_configure(port, pin, mode, trig);
+}
+
+/**
+ * @brief Configure pin interrupts from a @p gpio_dt_spec.
+ *
+ * @funcprops \isr_ok
+ *
+ * This is equivalent to:
+ *
+ *     gpio_pin_interrupt_configure(spec->port, spec->pin, flags);
+ *
+ * The <tt>spec->dt_flags</tt> value is not used.
+ *
+ * @param spec GPIO specification from devicetree
+ * @param flags interrupt configuration flags
+ * @return a value from gpio_pin_interrupt_configure()
+ */
+static inline int gpio_pin_interrupt_configure_dt(const struct gpio_dt_spec *spec,
+						  gpio_flags_t flags)
+{
+	return gpio_pin_interrupt_configure(spec->port, spec->pin, flags);
 }
 
 /**
@@ -612,9 +651,7 @@ static inline int gpio_pin_configure(const struct device *port,
 					    gpio_flags_t flags)
 {
 	const struct gpio_device *api = (const struct gpio_device *)port;
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	struct gpio_driver_data *data = (struct gpio_driver_data *)&api->data;
-#endif
 
 	rte_assert_msg((flags & GPIO_INT_MASK) == 0,
 		 "Interrupt flags are not supported");
@@ -645,15 +682,31 @@ static inline int gpio_pin_configure(const struct device *port,
 
 	flags &= ~GPIO_OUTPUT_INIT_LOGICAL;
 
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	if ((flags & GPIO_ACTIVE_LOW) != 0) {
 		data->invert |= (gpio_port_pins_t)BIT(pin);
 	} else {
 		data->invert &= ~(gpio_port_pins_t)BIT(pin);
 	}
-#endif /* CONFIG_GPIO_INVERT_SUPPORT */
 
 	return api->pin_configure(port, pin, flags);
+}
+
+/**
+ * @brief Configure a single pin from a @p gpio_dt_spec and some extra flags.
+ *
+ * This is equivalent to:
+ *
+ *     gpio_pin_configure(spec->port, spec->pin, spec->dt_flags | extra_flags);
+ *
+ * @param spec GPIO specification from devicetree
+ * @param extra_flags additional flags
+ * @return a value from gpio_pin_configure()
+ */
+static inline int gpio_pin_configure_dt(const struct gpio_dt_spec *spec,
+					gpio_flags_t extra_flags)
+{
+	return gpio_pin_configure(spec->port, spec->pin,
+				  spec->dt_flags | extra_flags);
 }
 
 /**
@@ -822,16 +875,13 @@ static inline int gpio_port_get_raw(const struct device *port, gpio_port_value_t
 static inline int gpio_port_get(const struct device *port,
 				gpio_port_value_t *value)
 {
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	const struct gpio_driver_data *const data =
 			&((const struct gpio_device *)port)->data;
-#endif
+
 	int ret = gpio_port_get_raw(port, value);
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	if (ret == 0) {
 		*value ^= data->invert;
 	}
-#endif /* CONFIG_GPIO_INVERT_SUPPORT */
 	return ret;
 }
 
@@ -886,12 +936,10 @@ static inline int gpio_port_set_masked(const struct device *port,
 				       gpio_port_pins_t mask,
 				       gpio_port_value_t value)
 {
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	const struct gpio_driver_data *data =
 			&((const struct gpio_device *)port)->data;
 
 	value ^= data->invert;
-#endif /* CONFIG_GPIO_INVERT_SUPPORT */
 	return gpio_port_set_masked_raw(port, mask, value);
 }
 
@@ -1128,14 +1176,12 @@ static inline int gpio_pin_set_raw(const struct device *port, gpio_pin_t pin,
 static inline int gpio_pin_set(const struct device *port, gpio_pin_t pin,
 			       int value)
 {
-#ifdef CONFIG_GPIO_INVERT_SUPPORT
 	const struct gpio_driver_data *const data =
 			&((const struct gpio_device *)port)->data;
 
 	if (data->invert & (gpio_port_pins_t)BIT(pin)) {
 		value = (value != 0) ? 0 : 1;
 	}
-#endif /* CONFIG_GPIO_INVERT_SUPPORT */
 	return gpio_pin_set_raw(port, pin, value);
 }
 
@@ -1238,6 +1284,30 @@ static inline int gpio_get_pending_int(const struct device *dev)
 /**
  * @}
  */
+
+/*
+ * GPIO dt spec define
+ */
+#define GPIO_DT(name) LINKER_SET_ITEM(gpio_dt, name)
+#define GPIO_DT_SPEC_DEFINE(name, portname, _pin, _flags) \
+	LINKER_RWSET_ITEM_ORDERED(gpio_dt, struct gpio_dt_spec, name, 1) = {\
+		.name = portname, \
+		.pin = _pin, \
+		.dt_flags = _flags, \
+	}
+
+#ifdef _GPIO_SOURCE_FILE
+LINKER_RWSET(gpio_dt, struct gpio_dt_spec);
+
+static int gpio_dt_spec_init(void) {
+	LINKER_SET_FOREACH(gpio_dt, dt, struct gpio_dt_spec) {
+		struct device *dev = device_find(dt->name);
+		rte_assert(dev != NULL);
+		dt->port = dev;
+	}
+	return 0;
+}
+#endif /* _GPIO_SOURCE_FILE */
 
 #ifdef __cplusplus
 }
