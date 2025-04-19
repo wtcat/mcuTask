@@ -222,5 +222,17 @@ config TX_BYTE_POOL_DELAY_VALUE
 config TX_EXECUTION_PROFILE_ENABLE
     bool "Enable thread profile"
     default y
+
+config TX_POSIX_API
+    bool "Enable posix compatible API"
+    default n
+
+config TX_FREERTOS_API
+    bool "Enable FreeRTOS compatible API"
+    default n
+
+config TX_OSEK_API
+    bool "Enable OSEK compatible API"
+    default n
     
 endif #THREADX

@@ -2,7 +2,11 @@
  * Copyright 2024 wtcat
  */
 #define TX_USE_BOARD_PRIVATE
-#include "tx_api.h"
+#include <tx_api.h>
+
+#ifdef CONFIG_CORTEXM_BACKTRACE
+#include <cortexm/backtrace/cm_backtrace.h>
+#endif
 
 
 typedef unsigned int __u32;
@@ -300,7 +304,9 @@ stm32_fault_process(void *msp, void *psp, __u32 exec_ret,
 
     fault_handle(esf, fault);
     esf_dump(esf, callee, exec_ret);
-
+#ifdef CONFIG_CORTEXM_BACKTRACE
+	cm_backtrace_fault(exec_ret, (uint32_t)esf);
+#endif
 	for ( ; ; );
 }
 

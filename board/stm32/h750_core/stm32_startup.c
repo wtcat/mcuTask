@@ -24,12 +24,11 @@ void _stm32_reset(void);
 static void stm32_clock_setup(void);
 static void early_console_init(void);
 
-static char _main_stack[4096] __rte_section(".dtcm") __rte_aligned(8);
 static void *_ram_vectors[VECTOR_SIZE] __rte_section(".ram_vectors");
 static const void *const irq_vectors[VECTOR_SIZE] __rte_section(".vectors") __rte_used = {
 
 	/* Initial stack */
-	_main_stack + sizeof(_main_stack),
+	_isr_statck_area + CONFIG_ISR_STACK_SIZE,
 
 	/* Reset exception handler */
 	(void *)_stm32_reset,
@@ -68,7 +67,7 @@ void __attribute__((optimize("O0")))
 _stm32_reset(void) {
 	SystemInit();
 
-	__set_PSP((uint32_t)&_main_stack[2048]);
+	__set_PSP((uint32_t)&_isr_statck_area[2048]);
 
 	/* Clear bss section */
 	_clear_bss_section(_sbss, _ebss);

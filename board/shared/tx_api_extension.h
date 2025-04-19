@@ -246,22 +246,18 @@ int disable_irq(int irq);
 void dispatch_irq(void);
 int request_irq(int irq, void (*handler)(void *), void *arg);
 int remove_irq(int irq, void (*handler)(void *), void *arg);
-int gpio_request_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg,
-					 bool rising_edge, bool falling_edge);
-int gpio_remove_irq(uint32_t gpio, void (*fn)(int line, void *arg), void *arg);
 
 /*
  * Console interface
  */
 typedef void (*console_puts_t)(const char *, size_t);
-
 extern console_puts_t __console_puts;
 
-/*
- * Device Driver
- */
-#include "drivers/device.h"
 
+/*
+ * Global variable
+ */
+extern char _isr_statck_area[CONFIG_ISR_STACK_SIZE];
 
 #ifdef __cplusplus
 }

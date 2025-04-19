@@ -12,6 +12,8 @@ struct printk_buffer {
 	uint16_t len;
 };
 
+char _isr_statck_area[CONFIG_ISR_STACK_SIZE] __rte_aligned(8) __fastbss;
+
 static void empty_puts(const char *s, size_t len) {
 	(void) s;
 	(void) len;

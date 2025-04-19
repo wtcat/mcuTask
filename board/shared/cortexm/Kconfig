@@ -1,0 +1,33 @@
+menuconfig CORTEXM_LIBRARY
+    bool "Enable cortex-m library"
+    default n
+
+if CORTEXM_LIBRARY
+
+config CORTEXM_BACKTRACE
+    bool "Enable backtrace for cortexM cpu"
+    default n
+
+if CORTEXM_BACKTRACE
+
+choice
+	prompt "CPU core architecture type"
+	default CMB_CPU_ARM_CORTEX_M7
+
+config CMB_CPU_ARM_CORTEX_M7
+    bool "Cortex-M7"
+
+config CMB_CPU_ARM_CORTEX_M33
+    bool "Cortex-M33"
+
+config CMB_CPU_ARM_CORTEX_M4
+    bool "Cortex-M4"
+
+config CMB_CPU_ARM_CORTEX_M3
+    bool "Cortex-M3"
+endchoice
+
+endif #CORTEXM_BACKTRACE
+
+
+endif

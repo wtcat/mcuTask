@@ -4,6 +4,10 @@
 rsource "kconfig/Kconfig"
 
 menu "Board Shared library"
+config ISR_STACK_SIZE
+    int "Interrupt stack size"
+    default 4096
+
 config KMALLOC
     bool "Enable kernel malloc"
     default y
@@ -24,4 +28,5 @@ config TASK_RUNNER
     bool "Enable task runner queue"
     default y
 
+rsource "cortexm/Kconfig"
 endmenu
