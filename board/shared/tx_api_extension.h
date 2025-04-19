@@ -257,7 +257,7 @@ extern console_puts_t __console_puts;
 /*
  * Global variable
  */
-extern char _isr_statck_area[CONFIG_ISR_STACK_SIZE];
+extern char _isr_stack_area[CONFIG_ISR_STACK_SIZE];
 
 #ifdef __cplusplus
 }

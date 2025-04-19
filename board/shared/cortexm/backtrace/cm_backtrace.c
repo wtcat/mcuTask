@@ -174,7 +174,7 @@ static void cm_backtrace_init(const char *firmware_name) {
 	fw_name = firmware_name;
 
 //TODO: fixme
-	main_stack_start_addr = (uint32_t)_isr_statck_area;
+	main_stack_start_addr = (uint32_t)_isr_stack_area;
 	main_stack_size = CONFIG_ISR_STACK_SIZE;
 	code_start_addr = (uint32_t)_stext;
 	code_size = (uint32_t)(_etext - _stext);
