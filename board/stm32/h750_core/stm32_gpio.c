@@ -9,6 +9,8 @@
 #include <stdbool.h>
 
 #include <tx_api.h>
+#include <service/init.h>
+#include <service/irq.h>
 #include <base/log.h>
 #include <base/bitops.h>
 

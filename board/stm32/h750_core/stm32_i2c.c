@@ -12,8 +12,11 @@
 
 #define TX_USE_BOARD_PRIVATE
 
-#include "tx_api.h"
-#include "drivers/i2c.h"
+#include <tx_api.h>
+#include <service/init.h>
+#include <service/irq.h>
+#include <service/printk.h>
+#include <drivers/i2c.h>
 
 
 // #define CONFIG_I2C_TARGET

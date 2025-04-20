@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <string.h>
 #include <tx_api.h>
+#include <service/init.h>
 
 #include <base/assert.h>
 #include <base/log.h>
@@ -482,7 +483,7 @@ int mmcsd_wait_cd_changed(int32_t timeout) {
 }
 
 void mmcsd_change(struct mmcsd_host *host) {
-	printk("%s: host(%p)\n", __func__, host);
+	pr_info("%s: host(%p)\n", __func__, host);
 	tx_queue_send(&mmcsd_detect_q, &host, TX_NO_WAIT);
 }
 
@@ -494,7 +495,7 @@ void mmcsd_detect(void *param) {
 	for ( ; ; ) {
 		err = (int32_t)tx_queue_receive(&mmcsd_detect_q, (VOID *)&host, 
 			TX_WAIT_FOREVER);
-		printk("%s: host(%p) card(%p) err(%ld)\n", __func__, host, host->card, err);
+		pr_info("%s: host(%p) card(%p) err(%"PRId32")\n", __func__, host, host->card, err);
 		if (err == TX_SUCCESS) {
 			if (host->card == NULL) {
 				mmcsd_host_lock(host);

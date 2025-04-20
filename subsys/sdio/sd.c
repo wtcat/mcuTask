@@ -14,6 +14,7 @@
 #include <errno.h>
 
 #include <tx_api.h>
+#include <service/malloc.h>
 #include <base/log.h>
 #include <base/sys/byteorder.h>
 

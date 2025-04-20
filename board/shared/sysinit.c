@@ -1,7 +1,9 @@
 /*
  * Copyright 2024 wtcat
  */
-#include "tx_api.h"
+
+#include <service/init.h>
+#include <service/printk.h>
 
 LINKER_ROSET(sysinit, struct sysinit_item);
 

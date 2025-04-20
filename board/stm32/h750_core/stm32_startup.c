@@ -5,10 +5,13 @@
 #define TX_USE_SECTION_INIT_API_EXTENSION 1
 #include <stdint.h>
 
-#include "tx_api.h"
-#include "tx_thread.h"
-#include "tx_timer.h"
-#include "base/log.h"
+#include <tx_api.h>
+#include <tx_thread.h>
+#include <tx_timer.h>
+#include <service/start.h>
+#include <service/irq.h>
+#include <service/printk.h>
+#include <base/log.h>
 
 #include "stm32h7xx_hal.h"
 

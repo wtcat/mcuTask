@@ -2,7 +2,9 @@
  * Copyright 2024 wtcat
  */
 
-#include "tx_api.h"
+#include <tx_api.h>
+#include <service/init.h>
+
 #include "stm32h7xx_hal.h"
 
 

@@ -10,6 +10,8 @@
 #include <inttypes.h>
 
 #include <tx_api.h>
+#include <service/init.h>
+#include <service/irq.h>
 #include <base/assert.h>
 #include <base/log.h>
 #include <base/assert.h>
@@ -100,7 +102,7 @@ stm32_sdmmc_wait_complete(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd) {
 
     err = tx_semaphore_get(&sd->sdio_idle, TX_MSEC(5000));
     if (err) {
-        printk("wait for sdio complete timeout\n");
+        pr_err("wait for sdio complete timeout\n");
         cmd->err = -ETIMEDOUT;
         return;
     }
@@ -118,7 +120,7 @@ stm32_sdmmc_wait_complete(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd) {
             (resp_type(cmd) & (RESP_R3 | RESP_R4)))
             return;
         
-        printk("sdio bus error(status = 0x%08"PRIx32")\n", status);
+        pr_err("sdio bus error(status = 0x%08"PRIx32")\n", status);
         cmd->err = -EIO;
     }
 }
@@ -277,7 +279,7 @@ static int _stm32_sdmmc_init(struct stm32_sdmmc *sd) {
     host->max_blk_count = 512;
     mmcsd_change(host);
 
-    printk("register sdmmc0 device\n");
+    pr_dbg("register sdmmc0 device\n");
     return 0;
 
 _remove_host:

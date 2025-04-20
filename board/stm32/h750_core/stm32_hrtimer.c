@@ -9,8 +9,11 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#include "tx_api.h"
-#include "base/hrtimer_.h"
+#include <tx_api.h>
+#include <service/init.h>
+#include <service/irq.h>
+#include <service/printk.h>
+#include <base/hrtimer_.h>
 
 struct stm32_hrtimer {
     struct hrtimer_context base;

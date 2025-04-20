@@ -8,6 +8,7 @@
 #define ZEPHYR_INCLUDE_SHELL_FPRINTF_H_
 
 #include <tx_api.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 

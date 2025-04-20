@@ -4,7 +4,7 @@
 
 #include <inttypes.h>
 #include <tx_api.h>
-
+#include <service/init.h>
 #include <base/lib/string.h>
 #include <subsys/shell/shell.h>
 

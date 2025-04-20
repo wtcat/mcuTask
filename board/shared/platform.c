@@ -3,7 +3,8 @@
  */
 #include <stdarg.h>
 #include <tx_api.h>
-
+#include <service/init.h>
+#include <service/printk.h>
 #include <base/lib/iovpr.h>
 
 struct printk_buffer {

@@ -2,7 +2,9 @@
  * Copyright 2024 wtcat
  */
 
-#include "tx_api.h"
+#include <tx_api.h>
+#include <service/init.h>
+#include <service/malloc.h>
 
 extern char _kernel_byte_pool_start[];
 #ifndef CONFIG_SIMULATOR

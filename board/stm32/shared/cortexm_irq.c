@@ -2,8 +2,8 @@
  * Copyright 2024 wtcat
  */
 #define TX_USE_BOARD_PRIVATE
-
-#include "tx_api.h"
+#include <tx_api.h>
+#include <service/irq.h>
 
 extern void _tx_timer_interrupt(void);
 

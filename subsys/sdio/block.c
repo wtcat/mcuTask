@@ -14,10 +14,9 @@
 #include <errno.h>
 #include <tx_api.h>
 #include <tx_timer.h>
-
+#include <service/malloc.h>
 #include <base/lib/string.h>
 #include <base/log.h>
-
 #include <drivers/blkdev.h>
 #include <drivers/blkdev.h>
 #include <drivers/sdio/mmcsd_core.h>

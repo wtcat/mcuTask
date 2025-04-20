@@ -5,6 +5,7 @@
 #define TX_USE_BOARD_PRIVATE
 
 #include <tx_api.h>
+#include <service/init.h>
 #include <drivers/gpio.h>
 #include <base/bitops.h>
 #include <base/log.h>

@@ -16,7 +16,7 @@
 #include <errno.h>
 #include <tx_api.h>
 #include <tx_timer.h>
-
+#include <service/malloc.h>
 #include <base/assert.h>
 #include <base/container/list.h>
 #include <base/log.h>

@@ -4,7 +4,9 @@
 #define TX_USE_BOARD_PRIVATE
 
 #include <errno.h>
-#include "tx_api.h"
+#include <tx_api.h>
+#include <service/irq.h>
+#include <service/printk.h>
 
 
 struct irq_desc {

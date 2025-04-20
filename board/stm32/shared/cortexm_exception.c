@@ -3,7 +3,7 @@
  */
 #define TX_USE_BOARD_PRIVATE
 #include <tx_api.h>
-
+#include <service/printk.h>
 #ifdef CONFIG_CORTEXM_BACKTRACE
 #include <cortexm/backtrace/cm_backtrace.h>
 #endif

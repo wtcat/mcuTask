@@ -4,7 +4,9 @@
 
 
 #define TX_USE_BOARD_PRIVATE
+#define pr_fmt(fmt) "[gpio-key]: "fmt
 #include <tx_api.h>
+#include <service/init.h>
 #include <base/log.h>
 #include <drivers/gpio.h>
 
@@ -28,7 +30,7 @@ static void stm32_gpiokey_task(struct task *task) {
     gpio_port_get_raw(key->cb.port, &pval);
     state = !!(key->cb.pin_mask & pval);
     if (state == key->state) {
-        printk("gpiokey state: %d\n", state);
+        pr_info("gpiokey state: %d\n", state);
     }
 }
 

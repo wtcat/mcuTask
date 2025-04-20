@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include <tx_api.h>
+#include <service/init.h>
 #include <subsys/fs/fs.h>
 #include <base/log.h>
 

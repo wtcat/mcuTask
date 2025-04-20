@@ -5,9 +5,13 @@
 #define TX_USE_BOARD_PRIVATE
 
 #include <errno.h>
-#include "tx_api.h"
 
-#include "base/bitops.h"
+#include <tx_api.h>
+#include <service/init.h>
+#include <service/irq.h>
+#include <service/printk.h>
+#include <base/bitops.h>
+
 #include "stm32_dma.h"
 
 

@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <tx_api.h>
+#include <service/init.h>
 
 #include <base/log.h>
 #include <base/linker.h>

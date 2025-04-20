@@ -3,7 +3,8 @@
  */
 
 #include <errno.h>
-#include "tx_api.h"
+#include <tx_api.h>
+#include <service/init.h>
 
 #include <base/assert.h>
 

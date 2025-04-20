@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include <tx_api.h>
+#include <service/init.h>
 #include <drivers/device.h>
 
 static STAILQ_HEAD(device_list, device) __device_head;	

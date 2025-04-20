@@ -9,8 +9,11 @@
 #define TX_USE_BOARD_PRIVATE
 
 #include <tx_api.h>
-#include <drivers/uart.h>
+#include <service/init.h>
+#include <service/irq.h>
+#include <service/printk.h>
 #include <base/assert.h>
+#include <drivers/uart.h>
 
 #include "stm32_dma.h"
 
@@ -1464,7 +1467,7 @@ static int uart_stm32_registers_configure(struct stm32_uart *uart) {
 
 static struct device *uart_console;
 
-static void stm32_uart_puts(const char *s, size_t len) {
+static void stm32_uart_puts(const char *s, unsigned int len) {
    USART_TypeDef *reg = to_uart(uart_console)->reg;
 	while (len > 0) {
 		while (!(reg->ISR & LL_USART_ISR_TXE_TXFNF));

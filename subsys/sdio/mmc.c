@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include <tx_api.h>
+#include <service/malloc.h>
 #include <base/log.h>
 #include <drivers/sdio/mmc.h>
 #include <drivers/sdio/mmcsd_core.h>

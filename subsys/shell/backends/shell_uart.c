@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <service/init.h>
 #include <base/sys/atomic.h>
 #include <base/sys/ring_buffer.h>
 #include <base/log.h>

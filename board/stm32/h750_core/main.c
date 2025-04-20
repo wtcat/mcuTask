@@ -7,6 +7,9 @@
 
 #include <tx_api.h>
 #include <fx_api.h>
+#include <service/init.h>
+#include <service/printk.h>
+#include <service/start.h>
 
 #include <base/rte_cpu.h>
 #include <base/osal.h>
