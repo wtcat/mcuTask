@@ -55,7 +55,7 @@ extern "C"{
 
 UINT tx_os_nanosleep(uint64_t time);
 UINT tx_os_delay(uint64_t nano_sec);
-
+void tx_thread_foreach(bool (*iterator)(TX_THREAD *, void *arg), void *arg) __rte_nonnull(1);
 
 /*
  * Define lock guard

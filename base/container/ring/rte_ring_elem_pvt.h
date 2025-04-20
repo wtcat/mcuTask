@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-#include "base/generic.h"
+#include <base/generic.h>
 
 #if defined(__GNUC__) && \
 	(__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__ >= 120000)
@@ -300,11 +300,7 @@ __rte_ring_dequeue_elems(struct rte_ring *r, uint32_t cons_head,
  * 2.use one-direction load_acquire/store_release barrier
  * It depends on performance test results.
  */
-#ifdef CONFIG_C11_MEM_MODEL
 #include "base/container/ring/rte_ring_c11_pvt.h"
-#else
-#include "base/container/ring/rte_ring_generic_pvt.h"
-#endif
 
 /**
  * @internal Enqueue several objects on the ring

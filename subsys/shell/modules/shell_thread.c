@@ -2,10 +2,8 @@
  * Copyright 2025 wtcat
  */
 
-#define TX_SOURCE_CODE
 #include <inttypes.h>
 #include <tx_api.h>
-#include <tx_thread.h>
 
 #include <base/lib/string.h>
 #include <subsys/shell/shell.h>
@@ -60,33 +58,6 @@ static const char *thread_state_name[] = {
 	_STATE_ITEM(PRIORITY_CHANGE),
 };
 
-static void thread_foreach(bool (*iterator)(TX_THREAD *, void *arg), void *arg) {
-    TX_INTERRUPT_SAVE_AREA
-    TX_THREAD *thread_ptr;
-    UINT thread_count;
-
-    TX_DISABLE
-    _tx_thread_preempt_disable++;
-    TX_RESTORE
-
-    thread_ptr   = _tx_thread_created_ptr;
-    thread_count = _tx_thread_created_count;
-
-    while (thread_count > 0) {
-        if (iterator(thread_ptr, arg))
-            break;
-
-        thread_count--;
-
-        /* Pointer to the next thread */
-        thread_ptr = thread_ptr->tx_thread_created_next;
-    }
-    
-    TX_DISABLE
-    _tx_thread_preempt_disable--;
-    TX_RESTORE
-}
-
 static bool cpuuse_iterator(TX_THREAD *thread_ptr, void *arg) {
     struct thread_param *p = arg;
     UINT index = p->index;
@@ -113,7 +84,7 @@ static UINT thread_information_collect(struct thread_monitor *thread_monitor,
     param.count = count;
     param.index = 0;
 
-    thread_foreach(cpuuse_iterator, &param);
+    tx_thread_foreach(cpuuse_iterator, &param);
     return param.index;
 }
 
@@ -200,7 +171,7 @@ static UINT stack_information_collect(struct stack_monitor *stack_monitor,
     param.count = count;
     param.index = 0;
 
-    thread_foreach(stackuse_iterator, &param);
+    tx_thread_foreach(stackuse_iterator, &param);
     return param.index;
 }
 

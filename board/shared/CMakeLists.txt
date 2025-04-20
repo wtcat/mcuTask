@@ -9,7 +9,9 @@ set(TARGET_SRCS
     device.c
     sysinit.c
     object_pool.c
-    init_array.c)
+    init_array.c
+    thread_foreach.c
+)
 
 if (CONFIG_HRTIMER)
     list(APPEND TARGET_SRCS nanosleep.c)

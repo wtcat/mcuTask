@@ -92,16 +92,16 @@ rte_wait_until_equal_16(volatile uint16_t *addr, uint16_t expected,
 		rte_pause();
 }
 
-static __rte_always_inline void
-rte_wait_until_equal_32(volatile uint32_t *addr, uint32_t expected,
-		rte_memory_order memorder)
-{
-	assert(memorder == rte_memory_order_acquire || memorder == rte_memory_order_relaxed);
+// static __rte_always_inline void
+// rte_wait_until_equal_32(volatile uint32_t *addr, uint32_t expected,
+// 		rte_memory_order memorder)
+// {
+// 	assert(memorder == rte_memory_order_acquire || memorder == rte_memory_order_relaxed);
 
-	while (rte_atomic_load_explicit((volatile __rte_atomic uint32_t *)addr, memorder)
-			!= expected)
-		rte_pause();
-}
+// 	while (rte_atomic_load_explicit((volatile __rte_atomic uint32_t *)addr, memorder)
+// 			!= expected)
+// 		rte_pause();
+// }
 
 static __rte_always_inline void
 rte_wait_until_equal_64(volatile uint64_t *addr, uint64_t expected,

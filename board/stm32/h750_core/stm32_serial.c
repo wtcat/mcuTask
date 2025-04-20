@@ -462,7 +462,6 @@ static int uart_stm32_poll_in(const struct device *dev, unsigned char *c) {
 	struct stm32_uart *uart = to_uart(dev);
 	USART_TypeDef *usart = uart->reg;
 
-printk("uart_stm32_poll_in\n");
 	/* Clear overrun error flag */
 	if (LL_USART_IsActiveFlag_ORE(usart)) {
 		LL_USART_ClearFlag_ORE(usart);
