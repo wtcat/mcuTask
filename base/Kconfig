@@ -1,5 +1,9 @@
 menu "Base library"
 
+config ASSERT_DISABLE
+    bool "Disable Assert"
+    default n
+
 config HFSM_SUPPORT
     bool "Enable hierarchical support for FSM"
     default n
