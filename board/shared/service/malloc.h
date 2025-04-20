@@ -4,6 +4,8 @@
 #ifndef SERVICE_MALLOC_H_
 #define SERVICE_MALLOC_H_
 
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C"{
 #endif
