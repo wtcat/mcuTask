@@ -22,6 +22,7 @@ extern "C"{
 #define tx_thread_spawn(a, b, c, d, e, f, g, h, i, j) \
     tx_thread_create((a), (CHAR *)(b), (VOID(*)(ULONG))(void *)(c), (ULONG)(d), (e), (f), (g), (h), (i), (j))
 
+const char *tx_thread_state_name(UINT state);
 void tx_thread_foreach(bool (*iterator)(TX_THREAD *, void *arg), void *arg) __rte_nonnull(1);
 UINT tx_os_nanosleep(uint64_t time);
 UINT tx_os_delay(uint64_t nano_sec);

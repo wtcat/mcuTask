@@ -32,6 +32,8 @@
 #include <string.h>
 
 #include <tx_api.h>
+#include <service/init.h>
+#include <service/printk.h>
 
 #define _CMB_SOURCE_CODE
 #include <cortexm/backtrace/cm_backtrace.h>
@@ -93,17 +95,15 @@ static const char *const print_info[] = {
 		"Firmware name: %s, hardware version: %s, software version: %s\n",
 	[PRINT_ASSERT_ON_THREAD] = "Assert on thread %s\n",
 	[PRINT_ASSERT_ON_HANDLER] = "Assert on interrupt or bare metal(no OS) environment\n",
-	[PRINT_THREAD_STACK_INFO] = "===== Thread stack information =====\n",
+	[PRINT_THREAD_STACK_INFO] = "\n",
 	[PRINT_MAIN_STACK_INFO] = "====== Main stack information ======\n",
 	[PRINT_THREAD_STACK_OVERFLOW] = "Error: Thread stack(%08x) was overflow\n",
 	[PRINT_MAIN_STACK_OVERFLOW] = "Error: Main stack(%08x) was overflow\n",
-	[PRINT_CALL_STACK_INFO] =
-		"Show more call stack info by run: addr2line -e %s%s -a -f %.*s\n",
+	[PRINT_CALL_STACK_INFO] = "addr2line -e %s%s -a -f %.*s\n",
 	[PRINT_CALL_STACK_ERR] = "Dump call stack has an error\n",
 	[PRINT_FAULT_ON_THREAD] = "Fault on thread %s\n",
 	[PRINT_FAULT_ON_HANDLER] = "Fault on interrupt or bare metal(no OS) environment\n",
-	[PRINT_REGS_TITLE] =
-		"=================== Registers information ====================\n",
+	[PRINT_REGS_TITLE] = "\n",
 	[PRINT_HFSR_VECTBL] = "Hard fault is caused by failed vector fetch\n",
 	[PRINT_MFSR_IACCVIOL] =
 		"Memory management fault is caused by instruction access violation\n",
@@ -186,13 +186,10 @@ static void cm_backtrace_init(const char *firmware_name) {
 	init_ok = true;
 }
 
-static void get_cur_thread_stack_info(uint32_t sp, uint32_t *start_addr, size_t *size) {
-	rte_assert(start_addr);
-	rte_assert(size);
-	TX_THREAD *current = tx_thread_identify();
-
-	*start_addr = (uint32_t)current->tx_thread_stack_start;
-	*size = current->tx_thread_stack_size;
+static void get_cur_thread_stack_info(TX_THREAD *thread, uint32_t *start_addr,
+	size_t *size) {
+	*start_addr = (uint32_t)thread->tx_thread_stack_start;
+	*size = thread->tx_thread_stack_size;
 }
 
 static const char *get_cur_thread_name(void) {
@@ -212,14 +209,15 @@ static void dump_stack(uint32_t stack_start_addr, size_t stack_size,
 		else if ((uint32_t)stack_pointer > stack_start_addr + stack_size)
 			stack_pointer = (uint32_t *)(stack_start_addr + stack_size);
 	}
-	cmb_println(print_info[PRINT_THREAD_STACK_INFO]);
+
     cmb_println("=>StackPointer: %p\n", stack_pointer);
-	for (int i = 0; (uint32_t)stack_pointer < stack_start_addr + stack_size; stack_pointer++) {
-        if (i % 16 == 0)
+	for (int i = 0; (uint32_t)stack_pointer < stack_start_addr + stack_size; 
+		stack_pointer++, i++) {
+        if (i % 8 == 0)
             cmb_println("\n");
 		cmb_println("0x%08" PRIx32 " ", *stack_pointer);
 	}
-	cmb_println("====================================");
+	cmb_println("\n\n");
 }
 
 /* check the disassembly instruction is 'BL' or 'BLX' */
@@ -242,7 +240,8 @@ static bool disassembly_ins_is_bl_blx(uint32_t addr) {
 	}
 }
 
-size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp) {
+static size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp, 
+	TX_THREAD *thread) {
 	uint32_t stack_start_addr = main_stack_start_addr, pc;
 	size_t depth = 0, stack_size = main_stack_size;
 	bool regs_saved_lr_is_valid = false;
@@ -262,11 +261,11 @@ size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp) {
 
 		/* program is running on thread before fault */
 		if (on_thread_before_fault)
-			get_cur_thread_stack_info(sp, &stack_start_addr, &stack_size);
+			get_cur_thread_stack_info(thread, &stack_start_addr, &stack_size);
 	} else {
 		/* OS environment */
 		if (cmb_get_sp() == cmb_get_psp())
-			get_cur_thread_stack_info(sp, &stack_start_addr, &stack_size);
+			get_cur_thread_stack_info(thread, &stack_start_addr, &stack_size);
 	}
 
 	if (stack_is_overflow) {
@@ -303,11 +302,12 @@ size_t cm_backtrace_call_stack(uint32_t *buffer, size_t size, uint32_t sp) {
 	return depth;
 }
 
-static void print_call_stack(uint32_t sp) {
+static void print_call_stack(uint32_t sp, TX_THREAD *thread) {
 	size_t i, cur_depth = 0;
 	uint32_t call_stack_buf[CMB_CALL_STACK_MAX_DEPTH] = {0};
 
-	cur_depth = cm_backtrace_call_stack(call_stack_buf, CMB_CALL_STACK_MAX_DEPTH, sp);
+	cur_depth = cm_backtrace_call_stack(call_stack_buf, CMB_CALL_STACK_MAX_DEPTH, 
+		sp, thread);
 
 	for (i = 0; i < cur_depth; i++) {
 		sprintf(call_stack_info + i * (8 + 1), "%08lx", (unsigned long)call_stack_buf[i]);
@@ -337,11 +337,11 @@ void cm_backtrace_assert(uint32_t sp) {
 
 		uint32_t stack_start_addr;
 		size_t stack_size;
-		get_cur_thread_stack_info(sp, &stack_start_addr, &stack_size);
+		get_cur_thread_stack_info(tx_thread_identify(), &stack_start_addr, &stack_size);
 		dump_stack(stack_start_addr, stack_size, (uint32_t *)sp);
 	}
 
-	print_call_stack(sp);
+	print_call_stack(sp, tx_thread_identify());
 }
 
 static void fault_diagnosis(void) {
@@ -445,6 +445,17 @@ static uint32_t statck_del_fpu_regs(uint32_t fault_handler_lr, uint32_t sp) {
 }
 #endif
 
+static bool cm_thread_backtrace(TX_THREAD *thread, void *arg) {
+	cmb_println("Thread name(%s) state(%s)\n", thread->tx_thread_name, 
+		tx_thread_state_name(thread->tx_thread_state));
+	print_call_stack((uint32_t)thread->tx_thread_stack_ptr, thread);
+	dump_stack((uint32_t)thread->tx_thread_stack_start, 
+		thread->tx_thread_stack_end - thread->tx_thread_stack_start, 
+		(uint32_t *)thread->tx_thread_stack_ptr);
+	cmb_println("\n\n");
+	return false;
+}
+
 void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 	uint32_t stack_pointer = fault_handler_sp;
 	uint32_t stack_start_addr = main_stack_start_addr;
@@ -463,7 +474,7 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 	if (on_thread_before_fault) {
 		cmb_println(print_info[PRINT_FAULT_ON_THREAD],
 					get_cur_thread_name() != NULL ? get_cur_thread_name() : "NO_NAME");
-		get_cur_thread_stack_info(stack_pointer, &stack_start_addr, &stack_size);
+		get_cur_thread_stack_info(tx_thread_identify(), &stack_start_addr, &stack_size);
 	} else {
 		cmb_println(print_info[PRINT_FAULT_ON_HANDLER]);
 	}
@@ -483,8 +494,6 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 		stack_pointer > stack_start_addr + stack_size) {
 		stack_is_overflow = true;
 	}
-	/* dump stack information */
-	dump_stack(stack_start_addr, stack_size, (uint32_t *)stack_pointer);
 
 	/* the Cortex-M0 is not support fault diagnosis */
 	regs.syshndctrl.value = CMB_SYSHND_CTRL; // System Handler Control and State Register
@@ -499,8 +508,10 @@ void cm_backtrace_fault(uint32_t fault_handler_lr, uint32_t fault_handler_sp) {
 
 	fault_diagnosis();
 
-//TODO: foreach thread
-	print_call_stack(stack_pointer);
+	/* dump stack information */
+	print_call_stack(stack_pointer, tx_thread_identify());
+	cmb_println("\n\n");
+	tx_thread_foreach(cm_thread_backtrace, NULL);
 }
 
 static int backtrace_init(void) {

@@ -10,7 +10,7 @@ include(${WKSAPCE_PATH}/cmake/utils.cmake)
 include(${WKSAPCE_PATH}/cmake/zephyr.cmake)
 
 # Declare project
-project(mcutask
+project(mcuTask
     LANGUAGES C CXX ASM
 )
 

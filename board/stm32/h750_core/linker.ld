@@ -138,6 +138,7 @@ SECTIONS
     .dtcm (NOLOAD) :
     {
         *(.dtcm*)
+        *(.isr.stack*)
     } > dtcm
 
     .noinit (NOLOAD):

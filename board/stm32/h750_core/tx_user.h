@@ -50,9 +50,9 @@
 #define TX_TASK_RUNNER_PRIO 12
 
 /* */
-#define __fastcode  __rte_section(".itcm")
-#define __fastbss   __rte_section(".fastbss")
-#define __fastdata  __rte_section(".fastdata")
+#define __fastcode    __rte_section(".itcm")
+#define __fastbss     __rte_section(".fastbss")
+#define __fastdata    __rte_section(".fastdata")
 
 /* HR-Timer */
 #define HR_TIMER_PRESCALER 5
