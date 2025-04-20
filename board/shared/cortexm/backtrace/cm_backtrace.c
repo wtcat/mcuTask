@@ -99,7 +99,7 @@ static const char *const print_info[] = {
 	[PRINT_MAIN_STACK_INFO] = "====== Main stack information ======\n",
 	[PRINT_THREAD_STACK_OVERFLOW] = "Error: Thread stack(%08x) was overflow\n",
 	[PRINT_MAIN_STACK_OVERFLOW] = "Error: Main stack(%08x) was overflow\n",
-	[PRINT_CALL_STACK_INFO] = "addr2line -e %s%s -a -f %.*s\n",
+	[PRINT_CALL_STACK_INFO] = "addr2line -e %s -a -f %.*s\n",
 	[PRINT_CALL_STACK_ERR] = "Dump call stack has an error\n",
 	[PRINT_FAULT_ON_THREAD] = "Fault on thread %s\n",
 	[PRINT_FAULT_ON_HANDLER] = "Fault on interrupt or bare metal(no OS) environment\n",
@@ -316,7 +316,7 @@ static void print_call_stack(uint32_t sp, TX_THREAD *thread) {
 
 	if (cur_depth) {
 		cmb_println(print_info[PRINT_CALL_STACK_INFO], fw_name,
-					CMB_ELF_FILE_EXTENSION_NAME, cur_depth * (8 + 1), call_stack_info);
+					cur_depth * (8 + 1), call_stack_info);
 	} else {
 		cmb_println(print_info[PRINT_CALL_STACK_ERR]);
 	}

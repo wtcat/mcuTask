@@ -68,8 +68,11 @@ bool z_shell_history_get(struct shell_history *history, bool up, uint8_t *dst,
 
 		l_item = history->current->prev;
 	} else { /* button up */
-		l_item = (history->current == NULL) ? history->list.next : history->current->next;
+		l_item = (history->current == NULL)? history->list.next : history->current->next;
 	}
+
+	if (l_item == &history->list)
+		goto _end;
 
 	history->current = l_item;
 	h_item = CONTAINER_OF(l_item, struct shell_history_item, dnode);
@@ -81,6 +84,7 @@ bool z_shell_history_get(struct shell_history *history, bool up, uint8_t *dst,
 		return true;
 	}
 
+_end:
 	*len = 0U;
 	return false;
 }
