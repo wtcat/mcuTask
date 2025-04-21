@@ -14,6 +14,7 @@
 #include <service/init.h>
 #include <subsys/fs/fs.h>
 #include <base/log.h>
+#include <base/assert.h>
 
 
 struct fs_manager {
@@ -191,9 +192,7 @@ int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags) {
 }
 
 int fs_close(struct fs_file *fp) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return 0;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.close(fp);
 	if (rc < 0) {
 		pr_err("file close error (%d)", rc);
@@ -205,9 +204,7 @@ int fs_close(struct fs_file *fp) {
 }
 
 ssize_t fs_read(struct fs_file *fp, void *ptr, size_t size) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBADF;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.read(fp, ptr, size);
 	if (rc < 0)
 		pr_err("file read error (%d)", rc);
@@ -216,9 +213,7 @@ ssize_t fs_read(struct fs_file *fp, void *ptr, size_t size) {
 }
 
 ssize_t fs_write(struct fs_file *fp, const void *ptr, size_t size) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBADF;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.write(fp, ptr, size);
 	if (rc < 0)
 		pr_err("file write error (%d)", rc);
@@ -227,9 +222,7 @@ ssize_t fs_write(struct fs_file *fp, const void *ptr, size_t size) {
 }
 
 int fs_seek(struct fs_file *fp, off_t offset, int whence) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBADF;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.lseek(fp, offset, whence);
 	if (rc < 0)
 		pr_err("file seek error (%d)", rc);
@@ -238,9 +231,7 @@ int fs_seek(struct fs_file *fp, off_t offset, int whence) {
 }
 
 off_t fs_tell(struct fs_file *fp) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBADF;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.tell(fp);
 	if (rc < 0)
 		pr_err("file tell error (%d)", rc);
@@ -249,9 +240,7 @@ off_t fs_tell(struct fs_file *fp) {
 }
 
 int fs_truncate(struct fs_file *fp, off_t length) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBADF;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.truncate(fp, length);
 	if (rc < 0)
 		pr_err("file truncate error (%d)", rc);
@@ -260,9 +249,7 @@ int fs_truncate(struct fs_file *fp, off_t length) {
 }
 
 int fs_sync(struct fs_file *fp) {
-	if (rte_unlikely(fp->vfs == NULL))
-		return -EBADF;
-
+	rte_assert(fp->vfs != NULL);
 	int rc = fp->vfs->fs_ops.sync(fp);
 	if (rc < 0)
 		pr_err("file sync error (%d)", rc);

@@ -6,6 +6,7 @@
 
 #include <sys/types.h>
 #include <base/container/list.h>
+#include <base/compiler.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -516,7 +517,7 @@ int fs_open(struct fs_file *fp, const char *file_name, fs_mode_t flags);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 a negative errno code on error.
  */
-int fs_close(struct fs_file *fp);
+int fs_close(struct fs_file *fp) __rte_nonnull(1);
 
 /**
  * @brief Unlink file
@@ -577,7 +578,7 @@ int fs_rename(const char *from, const char *to);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 a negative errno code on error.
  */
-ssize_t fs_read(struct fs_file *fp, void *ptr, size_t size);
+ssize_t fs_read(struct fs_file *fp, void *ptr, size_t size) __rte_nonnull(1, 2);
 
 /**
  * @brief Write file
@@ -598,7 +599,7 @@ ssize_t fs_read(struct fs_file *fp, void *ptr, size_t size);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 an other negative errno code on error.
  */
-ssize_t fs_write(struct fs_file *fp, const void *ptr, size_t size);
+ssize_t fs_write(struct fs_file *fp, const void *ptr, size_t size) __rte_nonnull(1, 2);
 
 /**
  * @brief Seek file
@@ -618,7 +619,7 @@ ssize_t fs_write(struct fs_file *fp, const void *ptr, size_t size);
  * @retval -ENOTSUP if not supported by underlying file system driver;
  * @retval <0 an other negative errno code on error.
  */
-int fs_seek(struct fs_file *fp, off_t offset, int whence);
+int fs_seek(struct fs_file *fp, off_t offset, int whence) __rte_nonnull(1);
 
 /**
  * @brief Get current file position.
@@ -634,7 +635,7 @@ int fs_seek(struct fs_file *fp, off_t offset, int whence);
  *
  * The current revision does not validate the file object.
  */
-off_t fs_tell(struct fs_file *fp);
+off_t fs_tell(struct fs_file *fp) __rte_nonnull(1);
 
 /**
  * @brief Truncate or extend an open file to a given size
@@ -656,7 +657,7 @@ off_t fs_tell(struct fs_file *fp);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 an other negative errno code on error.
  */
-int fs_truncate(struct fs_file *fp, off_t length);
+int fs_truncate(struct fs_file *fp, off_t length) __rte_nonnull(1);
 
 /**
  * @brief Flush cached write data buffers of an open file
@@ -674,7 +675,7 @@ int fs_truncate(struct fs_file *fp, off_t length);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 a negative errno code on error.
  */
-int fs_sync(struct fs_file *fp);
+int fs_sync(struct fs_file *fp) __rte_nonnull(1);
 
 /**
  * @brief Directory create
@@ -727,7 +728,7 @@ int fs_opendir(struct fs_dir *zdp, const char *path);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 a negative errno code on error.
  */
-int fs_readdir(struct fs_dir *zdp, struct fs_dirent *entry);
+int fs_readdir(struct fs_dir *zdp, struct fs_dirent *entry) __rte_nonnull(1, 2);
 
 /**
  * @brief Directory close
@@ -740,7 +741,7 @@ int fs_readdir(struct fs_dir *zdp, struct fs_dirent *entry);
  * @retval -ENOTSUP when not implemented by underlying file system driver;
  * @retval <0 a negative errno code on error.
  */
-int fs_closedir(struct fs_dir *zdp);
+int fs_closedir(struct fs_dir *zdp) __rte_nonnull(1);
 
 /**
  * @brief Mount filesystem

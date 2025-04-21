@@ -8,6 +8,14 @@ config ISR_STACK_SIZE
     int "Interrupt stack size"
     default 4096
 
+config CFILE
+    bool "Enable C standard file implement"
+    default n
+
+config FILE_DESC_MAX
+    int "The maximum number of file descriptor"
+    default 3
+
 config KMALLOC
     bool "Enable kernel malloc"
     default y
