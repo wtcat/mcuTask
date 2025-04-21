@@ -58,9 +58,11 @@ int _open_r(struct _reent *ptr, const char *path, int oflag,
 
     fs_mode_t fsmode = to_local_fsmode(oflag);
     int err = fs_open(filp, path, fsmode);
-    if (err)
+    if (err) {
         object_free(&file_pool, filp);
-    return err;
+        return err;
+    }
+    return FILE2FD(filp);
 }
 
 int _close_r(struct _reent *ptr, int fd) {
