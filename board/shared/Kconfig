@@ -4,6 +4,11 @@
 rsource "kconfig/Kconfig"
 
 menu "Board Shared library"
+
+config MAX_IRQ_VECTOR
+    int "Maximum irq vectors"
+    default 150
+
 config ISR_STACK_SIZE
     int "Interrupt stack size"
     default 4096

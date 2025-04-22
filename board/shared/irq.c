@@ -14,7 +14,7 @@ struct irq_desc {
 	void *arg;
 };
 
-static struct irq_desc _irqdesc_table[BOARD_IRQ_MAX] __fastbss;
+static struct irq_desc _irqdesc_table[CONFIG_MAX_IRQ_VECTOR] __fastbss;
 
 static void default_irq_handler(void *arg) {
 	printk("Warnning***: please install interrupt(%d) handler\n", 
@@ -35,7 +35,7 @@ void __fastcode dispatch_irq(void) {
 }
 
 int request_irq(int irq, void (*handler)(void *), void *arg) {
-	if (irq >= BOARD_IRQ_MAX)
+	if (irq >= CONFIG_MAX_IRQ_VECTOR)
 		return -EINVAL;
 
 	if (!handler)
@@ -51,7 +51,7 @@ int request_irq(int irq, void (*handler)(void *), void *arg) {
 }
 
 int remove_irq(int irq, void (*handler)(void *), void *arg) {
-	if (irq >= BOARD_IRQ_MAX)
+	if (irq >= CONFIG_MAX_IRQ_VECTOR)
 		return -EINVAL;
 
 	(void) handler;

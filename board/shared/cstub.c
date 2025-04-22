@@ -73,8 +73,10 @@ int _close_r(struct _reent *ptr, int fd) {
     rte_assert(fd < CONFIG_FILE_DESC_MAX);
     filp = FD2FILE(fd);
     err = fs_close(filp);
-    if (!err)
+    if (!err) {
+        filp->vfs = NULL;
         object_free(&file_pool, filp);
+    }
     return err;
 }
 
