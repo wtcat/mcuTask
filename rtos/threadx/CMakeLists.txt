@@ -86,12 +86,6 @@ if (CONFIG_TX_POSIX_API)
     target_compile_options(${PROJECT_NAME}
         PRIVATE
         -Wno-maybe-uninitialized
-    )
-    target_include_directories(${PROJECT_NAME}
-        PRIVATE
-        ${POSIX_SRC_PATH}
-    )
-    compile_options(
         -D_SIGSET_T_DECLARED
         -D_CLOCKID_T_DECLARED
         -D_TIME_T_DECLARED
@@ -100,6 +94,11 @@ if (CONFIG_TX_POSIX_API)
         -D_SYS_TIMESPEC_H_
         -D_SYS_SELECT_H
     )
+    target_include_directories(${PROJECT_NAME}
+        PRIVATE
+        ${POSIX_SRC_PATH}
+    )
+
     target_sources(${PROJECT_NAME}
         PRIVATE
         ${POSIX_SRC_PATH}/px_pth_attr_setschedpolicyl.c
@@ -110,8 +109,8 @@ if (CONFIG_TX_POSIX_API)
         ${POSIX_SRC_PATH}/px_sig_fillset.c
         ${POSIX_SRC_PATH}/px_pth_attr_getschedpolicy.c
         ${POSIX_SRC_PATH}/px_mx_lock.c
-        ${POSIX_SRC_PATH}/posix_signal_sigmask_test.c
-        ${POSIX_SRC_PATH}/posix_signal_self_send_test.c
+        # ${POSIX_SRC_PATH}/posix_signal_sigmask_test.c
+        # ${POSIX_SRC_PATH}/posix_signal_self_send_test.c
         ${POSIX_SRC_PATH}/px_pth_set_default_pthread_attr.c
         ${POSIX_SRC_PATH}/px_pth_create.c
         ${POSIX_SRC_PATH}/px_pth_cancel.c
@@ -144,10 +143,10 @@ if (CONFIG_TX_POSIX_API)
         ${POSIX_SRC_PATH}/px_sem_post.c
         ${POSIX_SRC_PATH}/px_sem_set_sem_name.c
         ${POSIX_SRC_PATH}/px_mq_send.c
-        ${POSIX_SRC_PATH}/posix_signal_resume_thread_test.c
+        # ${POSIX_SRC_PATH}/posix_signal_resume_thread_test.c
         ${POSIX_SRC_PATH}/px_pth_self.c
         ${POSIX_SRC_PATH}/px_mq_get_queue_desc.c
-        ${POSIX_SRC_PATH}/posix_demo.c
+        # ${POSIX_SRC_PATH}/posix_demo.c
         ${POSIX_SRC_PATH}/px_sig_addset.c
         ${POSIX_SRC_PATH}/px_mq_putback_queue.c
         ${POSIX_SRC_PATH}/px_sem_wait.c
@@ -164,7 +163,7 @@ if (CONFIG_TX_POSIX_API)
         ${POSIX_SRC_PATH}/px_pth_detach.c
         ${POSIX_SRC_PATH}/px_sem_unlink.c
         ${POSIX_SRC_PATH}/px_mq_create.c
-        ${POSIX_SRC_PATH}/posix_signal_suspended_thread_test.c
+        # ${POSIX_SRC_PATH}/posix_signal_suspended_thread_test.c
         ${POSIX_SRC_PATH}/px_mx_attr_getpshared.c
         ${POSIX_SRC_PATH}/px_mq_receive.c
         ${POSIX_SRC_PATH}/px_mx_attr_gettype.c
@@ -179,7 +178,7 @@ if (CONFIG_TX_POSIX_API)
         ${POSIX_SRC_PATH}/px_sem_reset.c
         ${POSIX_SRC_PATH}/px_sem_destroy.c
         ${POSIX_SRC_PATH}/px_clock_settime.c
-        ${POSIX_SRC_PATH}/px_pth_testcancel.c
+        # ${POSIX_SRC_PATH}/px_pth_testcancel.c
         ${POSIX_SRC_PATH}/px_pth_setcanceltype.c
         ${POSIX_SRC_PATH}/px_clock_getres.c
         ${POSIX_SRC_PATH}/px_sched_yield.c
@@ -197,9 +196,9 @@ if (CONFIG_TX_POSIX_API)
         ${POSIX_SRC_PATH}/px_pth_kill.c
         ${POSIX_SRC_PATH}/px_pth_attr_getschedparam.c
         ${POSIX_SRC_PATH}/px_mx_attr_initi.c
-        ${POSIX_SRC_PATH}/posix_signal_sigwait_test.c
+        # ${POSIX_SRC_PATH}/posix_signal_sigwait_test.c
         ${POSIX_SRC_PATH}/px_pth_init.c
-        ${POSIX_SRC_PATH}/posix_signal_nested_test.c
+        # ${POSIX_SRC_PATH}/posix_signal_nested_test.c
         ${POSIX_SRC_PATH}/px_sig_signal.c
         ${POSIX_SRC_PATH}/px_sig_wait.c
         ${POSIX_SRC_PATH}/px_mq_find_queue.c
