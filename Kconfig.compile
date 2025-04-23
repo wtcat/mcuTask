@@ -4,5 +4,8 @@ config COMPILER_OPTIMIZE
     string "Custom compiler optimize option"
     default "-Os"
 
-
+config LINKER_SCRIPT
+    string "Linker script file"
+    default "linker.ld"
+    
 endmenu

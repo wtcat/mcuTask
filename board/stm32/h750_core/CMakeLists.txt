@@ -32,9 +32,6 @@ include_dirs(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_compile_options(
-    -imacros ${AUTOCONF_H}
-    ${CONFIG_COMPILER_OPTIMIZE}
-    
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1
@@ -82,14 +79,7 @@ add_executable(${PROJECT_NAME}
 )
 
 # Link target
-collect_link_libraries(libs ${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME}
-    -Wl,--whole-archive
-    -Wl,--start-group
-    ${libs}
-    -Wl,--end-group
-    -Wl,--no-whole-archive
-)
+build_link(${PROJECT_NAME})
 
 # Generate binary
 build_post(${PROJECT_NAME})
