@@ -9,10 +9,6 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#ifndef CONFIG_C11_MEM_MODEL
-#include "base/arch/generic/rte_pause.h"
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif

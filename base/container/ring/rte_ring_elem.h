@@ -20,8 +20,8 @@
 extern "C" {
 #endif
 
-#include "base/container/ring/rte_ring_core.h"
-#include "base/container/ring/rte_ring_elem_pvt.h"
+#include <base/container/ring/rte_ring_core.h>
+#include <base/container/ring/rte_ring_elem_pvt.h>
 
 /**
  * Calculate the memory size needed for a ring with given element size
@@ -56,8 +56,6 @@ ssize_t rte_ring_get_memsize_elem(unsigned int esize, unsigned int count);
  *
  * The ring is added in RTE_TAILQ_RING list.
  *
- * @param name
- *   The name of the ring.
  * @param esize
  *   The size of ring element, in bytes. It must be a multiple of 4.
  * @param count
@@ -102,8 +100,8 @@ ssize_t rte_ring_get_memsize_elem(unsigned int esize, unsigned int count);
  *    - EEXIST - a memzone with the same name already exists
  *    - ENOMEM - no appropriate memory area found in which to create memzone
  */
-struct rte_ring *rte_ring_create_elem(const char *name, unsigned int esize,
-			unsigned int count, int socket_id, unsigned int flags);
+struct rte_ring *rte_ring_create_elem(unsigned int esize,
+			unsigned int count, unsigned int flags);
 
 /**
  * Enqueue several objects on the ring (multi-producers safe).
@@ -694,10 +692,9 @@ rte_ring_dequeue_burst_elem(struct rte_ring *r, void *obj_table,
 	return 0;
 }
 
-#include "base/container/ring/rte_ring_peek.h"
-#include "base/container/ring/rte_ring_peek_zc.h"
-
-#include "base/container/ring/rte_ring.h"
+#include <base/container/ring/rte_ring_peek.h>
+#include <base/container/ring/rte_ring_peek_zc.h>
+#include <base/container/ring/rte_ring.h>
 
 #ifdef __cplusplus
 }

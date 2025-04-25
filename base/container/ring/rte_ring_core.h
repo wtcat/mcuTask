@@ -30,8 +30,16 @@ extern "C" {
 
 #include "base/generic.h"
 
+#define rte_pause(...)
+
 #define RTE_STD_C11
 #define RTE_TAILQ_RING_NAME "rte_ring"
+
+#ifdef CONFIG_RTE_RING_SMP
+#define __rte_ringbuf_aligned __rte_cache_aligned
+#else
+#define __rte_ringbuf_aligned
+#endif /* CONFIG_RTE_RING_SMP */
 
 /** enqueue/dequeue behavior types */
 enum rte_ring_queue_behavior {
@@ -110,7 +118,7 @@ struct rte_ring_hts_headtail {
  */
 struct rte_ring {
 #define RTE_RING_NAMESIZE 16
-	char name[RTE_RING_NAMESIZE] __rte_cache_aligned;
+	char name[RTE_RING_NAMESIZE] __rte_ringbuf_aligned;
 	/**< Name of the ring. */
 	int flags;               /**< Flags supplied at creation. */
 	// const struct rte_memzone *memzone;
@@ -119,7 +127,9 @@ struct rte_ring {
 	uint32_t mask;           /**< Mask (size-1) of ring. */
 	uint32_t capacity;       /**< Usable size of ring */
 
-	char pad0 __rte_cache_aligned; /**< empty cache line */
+#ifdef CONFIG_RTE_RING_SMP
+	char pad0 __rte_ringbuf_aligned; /**< empty cache line */
+#endif
 
 	/** Ring producer status. */
 	RTE_STD_C11
@@ -127,19 +137,22 @@ struct rte_ring {
 		struct rte_ring_headtail prod;
 		struct rte_ring_hts_headtail hts_prod;
 		struct rte_ring_rts_headtail rts_prod;
-	}  __rte_cache_aligned;
+	}  __rte_ringbuf_aligned;
 
-	char pad1 __rte_cache_aligned; /**< empty cache line */
-
+#ifdef CONFIG_RTE_RING_SMP
+	char pad1 __rte_ringbuf_aligned; /**< empty cache line */
+#endif
 	/** Ring consumer status. */
 	RTE_STD_C11
 	union {
 		struct rte_ring_headtail cons;
 		struct rte_ring_hts_headtail hts_cons;
 		struct rte_ring_rts_headtail rts_cons;
-	}  __rte_cache_aligned;
+	}  __rte_ringbuf_aligned;
 
-	char pad2 __rte_cache_aligned; /**< empty cache line */
+#ifdef CONFIG_RTE_RING_SMP
+	char pad2 __rte_ringbuf_aligned; /**< empty cache line */
+#endif
 };
 
 #define RING_F_SP_ENQ 0x0001 /**< The default enqueue is "single-producer". */

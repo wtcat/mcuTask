@@ -97,37 +97,6 @@ __rte_ring_enqueue_elems_64(struct rte_ring *r, uint32_t prod_head,
 	}
 }
 
-#ifdef RTE_CPU_INT128
-static __rte_always_inline void
-__rte_ring_enqueue_elems_128(struct rte_ring *r, uint32_t prod_head,
-		const void *obj_table, uint32_t n)
-{
-	unsigned int i;
-	const uint32_t size = r->size;
-	uint32_t idx = prod_head & r->mask;
-	int128_t *ring = (int128_t *)&r[1];
-	const int128_t *obj = (const int128_t *)obj_table;
-	if (rte_likely(idx + n <= size)) {
-		for (i = 0; i < (n & ~0x1); i += 2, idx += 2)
-			memcpy((void *)(ring + idx),
-				(const void *)(obj + i), 32);
-		switch (n & 0x1) {
-		case 1:
-			memcpy((void *)(ring + idx),
-				(const void *)(obj + i), 16);
-		}
-	} else {
-		for (i = 0; idx < size; i++, idx++)
-			memcpy((void *)(ring + idx),
-				(const void *)(obj + i), 16);
-		/* Start at the beginning */
-		for (idx = 0; i < n; i++, idx++)
-			memcpy((void *)(ring + idx),
-				(const void *)(obj + i), 16);
-	}
-}
-#endif /* RTE_CPU_INT128 */
-
 /* the actual enqueue of elements on the ring.
  * Placed here since identical code needed in both
  * single and multi producer enqueue functions.
@@ -141,10 +110,6 @@ __rte_ring_enqueue_elems(struct rte_ring *r, uint32_t prod_head,
 	 */
 	if (esize == 8)
 		__rte_ring_enqueue_elems_64(r, prod_head, obj_table, num);
-#ifdef RTE_CPU_INT128
-	else if (esize == 16)
-		__rte_ring_enqueue_elems_128(r, prod_head, obj_table, num);
-#endif /* RTE_CPU_INT128 */
 	else {
 		uint32_t idx, scale, nr_idx, nr_num, nr_size;
 
@@ -235,33 +200,6 @@ __rte_ring_dequeue_elems_64(struct rte_ring *r, uint32_t cons_head,
 	}
 }
 
-#ifdef RTE_CPU_INT128
-static __rte_always_inline void
-__rte_ring_dequeue_elems_128(struct rte_ring *r, uint32_t cons_head,
-		void *obj_table, uint32_t n)
-{
-	unsigned int i;
-	const uint32_t size = r->size;
-	uint32_t idx = cons_head & r->mask;
-	int128_t *ring = (int128_t *)&r[1];
-	int128_t *obj = (int128_t *)obj_table;
-	if (rte_likely(idx + n <= size)) {
-		for (i = 0; i < (n & ~0x1); i += 2, idx += 2)
-			memcpy((void *)(obj + i), (void *)(ring + idx), 32);
-		switch (n & 0x1) {
-		case 1:
-			memcpy((void *)(obj + i), (void *)(ring + idx), 16);
-		}
-	} else {
-		for (i = 0; idx < size; i++, idx++)
-			memcpy((void *)(obj + i), (void *)(ring + idx), 16);
-		/* Start at the beginning */
-		for (idx = 0; i < n; i++, idx++)
-			memcpy((void *)(obj + i), (void *)(ring + idx), 16);
-	}
-}
-#endif /* RTE_CPU_INT128 */
-
 /* the actual dequeue of elements from the ring.
  * Placed here since identical code needed in both
  * single and multi producer enqueue functions.
@@ -275,10 +213,6 @@ __rte_ring_dequeue_elems(struct rte_ring *r, uint32_t cons_head,
 	 */
 	if (esize == 8)
 		__rte_ring_dequeue_elems_64(r, cons_head, obj_table, num);
-#ifdef RTE_CPU_INT128
-	else if (esize == 16)
-		__rte_ring_dequeue_elems_128(r, cons_head, obj_table, num);
-#endif
 	else {
 		uint32_t idx, scale, nr_idx, nr_num, nr_size;
 
@@ -388,7 +322,6 @@ __rte_ring_do_dequeue_elem(struct rte_ring *r, void *obj_table,
 		goto end;
 
 	__rte_ring_dequeue_elems(r, cons_head, obj_table, esize, n);
-
 	__rte_ring_update_tail(&r->cons, cons_head, cons_next, is_sc, 0);
 
 end:

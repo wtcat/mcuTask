@@ -92,7 +92,7 @@ struct rte_ring_zc_data {
 	 * will give the number of elements available at ptr2.
 	 */
 	unsigned int n1;
-} __rte_cache_aligned;
+} __rte_ringbuf_aligned;
 
 static __rte_always_inline void
 __rte_ring_get_elem_addr(struct rte_ring *r, uint32_t head,

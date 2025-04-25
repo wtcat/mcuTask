@@ -42,10 +42,9 @@
 extern "C" {
 #endif
 #include <sys/types.h>
-#include "base/rte_pause.h"
-#include "base/assert.h"
-#include "base/container/ring/rte_ring_core.h"
-#include "base/container/ring/rte_ring_elem.h"
+#include <base/assert.h>
+#include <base/container/ring/rte_ring_core.h>
+#include <base/container/ring/rte_ring_elem.h>
 
 struct printer;
 
@@ -83,8 +82,6 @@ ssize_t rte_ring_get_memsize(unsigned int count);
  *
  * @param r
  *   The pointer to the ring structure followed by the objects table.
- * @param name
- *   The name of the ring.
  * @param count
  *   The number of elements in the ring (must be a power of 2,
  *   unless RING_F_EXACT_SZ is set in flags).
@@ -124,7 +121,7 @@ ssize_t rte_ring_get_memsize(unsigned int count);
  * @return
  *   0 on success, or a negative value on error.
  */
-int rte_ring_init(struct rte_ring *r, const char *name, unsigned int count,
+int rte_ring_init(struct rte_ring *r, unsigned int count,
 	unsigned int flags);
 
 /**
@@ -139,8 +136,6 @@ int rte_ring_init(struct rte_ring *r, const char *name, unsigned int count,
  *
  * The ring is added in RTE_TAILQ_RING list.
  *
- * @param name
- *   The name of the ring.
  * @param count
  *   The size of the ring (must be a power of 2,
  *   unless RING_F_EXACT_SZ is set in flags).
@@ -190,8 +185,7 @@ int rte_ring_init(struct rte_ring *r, const char *name, unsigned int count,
  *    - EEXIST - a memzone with the same name already exists
  *    - ENOMEM - no appropriate memory area found in which to create memzone
  */
-struct rte_ring *rte_ring_create(const char *name, unsigned int count,
-				 int socket_id, unsigned int flags);
+struct rte_ring *rte_ring_create(unsigned int count, unsigned int flags);
 
 /**
  * De-allocate all memory used by the ring.
@@ -646,26 +640,6 @@ rte_ring_is_cons_single(const struct rte_ring *r)
 {
 	return (rte_ring_get_cons_sync_type(r) == RTE_RING_SYNC_ST);
 }
-
-/**
- * Dump the status of all rings on the console
- *
- * @param f
- *   A pointer to a file for output
- */
-void rte_ring_list_dump(struct printer *pr);
-
-/**
- * Search a ring from its name
- *
- * @param name
- *   The name of the ring.
- * @return
- *   The pointer to the ring matching the name, or NULL if not found,
- *   with rte_errno set appropriately. Possible rte_errno values include:
- *    - ENOENT - required entry not available to return.
- */
-struct rte_ring *rte_ring_lookup(const char *name);
 
 /**
  * Enqueue several objects on the ring (multi-producers safe).
