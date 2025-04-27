@@ -4,14 +4,13 @@
 
 #if !defined(_MSC_VER)
 
-#include <base/rte_cpu.h>
 #include <base/compiler_types.h>
 
 #define RTE_BUILD_BUG(e) ((int)(sizeof(struct { int:(-!!(e)); })))
 
 #ifndef __ASSEMBLY__
 
-#define __rte_cache_aligned __rte_aligned(RTE_CACHE_LINE_SIZE)
+#define __rte_cache_aligned __rte_aligned(CONFIG_CPU_CACHELINE_SIZE)
 
 /* Optimization barrier */
 #ifndef rte_compile_barrier

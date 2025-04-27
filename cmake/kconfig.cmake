@@ -325,9 +325,13 @@ foreach (name ${cache_variable_names})
 endforeach()
 
 
-#Linker options
+#Compiler Options
+include_dirs(
+    ${WKSAPCE_PATH}
+)
 add_compile_options(
     -imacros ${AUTOCONF_H}
     ${CONFIG_COMPILER_OPTIMIZE}
 )
+
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_LINKER_SCRIPT}")

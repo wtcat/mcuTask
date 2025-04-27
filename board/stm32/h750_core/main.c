@@ -11,7 +11,6 @@
 #include <service/printk.h>
 #include <service/start.h>
 
-#include <base/rte_cpu.h>
 #include <base/osal.h>
 #include <base/log.h>
 

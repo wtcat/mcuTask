@@ -40,7 +40,7 @@
 #endif
 
 #define _RTE_CACHE_GUARD_HELPER2(unique) \
-	char cache_guard_ ## unique[RTE_CACHE_LINE_SIZE] __rte_cache_aligned
+	char cache_guard_ ## unique[CONFIG_CPU_CACHELINE_SIZE] __rte_cache_aligned
 #define _RTE_CACHE_GUARD_HELPER1(unique) _RTE_CACHE_GUARD_HELPER2(unique)
 /**
  * Empty cache lines, to guard against false sharing-like effects

@@ -13,6 +13,10 @@ config ISR_STACK_SIZE
     int "Interrupt stack size"
     default 4096
 
+config CPU_CACHELINE_SIZE
+    int "CPU cache line size"
+    default 32
+
 config CFILE
     bool "Enable C standard file implement"
     default n

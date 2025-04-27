@@ -27,8 +27,6 @@ set(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
 
 # Add compile options
 include_dirs(
-    ${WKSAPCE_PATH}
-    ${WKSAPCE_PATH}/base/arch/arm
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 add_compile_options(

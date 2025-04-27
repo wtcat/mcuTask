@@ -128,7 +128,7 @@ stm32_sdmmc_wait_complete(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd) {
 static int 
 stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd, 
     struct mmcsd_data *data) {
-    static uint8_t dma_buffer[SDIO_BUFF_SIZE] __rte_aligned(RTE_CACHE_LINE_SIZE);
+    static uint8_t dma_buffer[SDIO_BUFF_SIZE] __rte_aligned(CONFIG_CPU_CACHELINE_SIZE);
     SDMMC_TypeDef *reg = sd->reg;
     void *pbuffer = NULL;
     uint32_t regcmd;
@@ -160,7 +160,7 @@ stm32_sdmmc_sendcmd(struct stm32_sdmmc *sd, struct mmcsd_cmd *cmd,
         bytes = data->blks * data->blksize;
         rte_assert(bytes <= SDIO_BUFF_SIZE);
         pbuffer = data->buf;
-        if ((uintptr_t)pbuffer & (RTE_CACHE_LINE_SIZE - 1)) {
+        if ((uintptr_t)pbuffer & (CONFIG_CPU_CACHELINE_SIZE - 1)) {
             pbuffer = dma_buffer;
             if (data->flags & DATA_DIR_WRITE)
                 memcpy(pbuffer, data->buf, bytes);

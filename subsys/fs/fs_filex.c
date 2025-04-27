@@ -30,7 +30,7 @@ struct dir_private {
 
 struct filex_instance {
     FX_MEDIA media;
-    char buffer[CONFIG_FS_FILEX_MEDIA_BUFFER_SIZE]  __rte_aligned(RTE_CACHE_LINE_SIZE);
+    char buffer[CONFIG_FS_FILEX_MEDIA_BUFFER_SIZE]  __rte_aligned(CONFIG_CPU_CACHELINE_SIZE);
 };
 
 extern UINT _fx_partition_offset_calculate(void  *partition_sector, UINT partition,

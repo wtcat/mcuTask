@@ -18,24 +18,24 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "base/assert.h"
-#include "base/generic.h"
-#include "base/lib/string.h"
-#include "base/log.h"
-#include "base/malloc.h"
+#include <base/assert.h>
+#include <base/generic.h>
+#include <base/lib/string.h>
+#include <base/log.h>
+#include <base/malloc.h>
 
-#include "base/container/queue.h"
-#include "base/container/ring/rte_ring.h"
-#include "base/container/ring/rte_ring_elem.h"
+#include <base/container/queue.h>
+#include <base/container/ring/rte_ring.h>
+#include <base/container/ring/rte_ring_elem.h>
 
 
 #ifdef CONFIG_RTE_RING_SMP
-#define RINGBUF_ALIGNED_SIZE RTE_CACHE_LINE_SIZE
+#define RINGBUF_ALIGNED_SIZE CONFIG_CPU_CACHELINE_SIZE
 #else
 #define RINGBUF_ALIGNED_SIZE sizeof(void *)
 #endif /* CONFIG_RTE_RING_SMP */
 
-#define RTE_CACHE_LINE_MASK (RTE_CACHE_LINE_SIZE - 1)
+#define RTE_CACHE_LINE_MASK (CONFIG_CPU_CACHELINE_SIZE - 1)
 #define rte_errno errno
 
 #define RTE_LOG(level, type, fmt, ...) pr_notice(fmt, ##__VA_ARGS__)
