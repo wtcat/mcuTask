@@ -329,9 +329,11 @@ endforeach()
 include_dirs(
     ${WKSAPCE_PATH}
 )
+
+separate_arguments(COMPILER_OPT_AS_LIST UNIX_COMMAND ${CONFIG_COMPILER_OPT})
 add_compile_options(
     -imacros ${AUTOCONF_H}
-    ${CONFIG_COMPILER_OPTIMIZE}
+    ${COMPILER_OPT_AS_LIST}
 )
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_LINKER_SCRIPT}")

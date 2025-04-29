@@ -1,7 +1,7 @@
 menu "Compile options"
 
-config COMPILER_OPTIMIZE
-    string "Custom compiler optimize option"
+config COMPILER_OPT
+    string "Custom compile option"
     default "-Os"
 
 config LINKER_SCRIPT
