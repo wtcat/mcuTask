@@ -1,30 +1,15 @@
-zephyr_library_named(base)
+static_library(base)
 
-if (CONFIG_KASAN)
-    add_library(kasan INTERFACE )
-    target_compile_options(kasan
-        INTERFACE
-        $<$<CXX_COMPILER_ID:GNU>:-fsanitize=kernel-address>
-        $<$<CXX_COMPILER_ID:ARMClang>:-fsanitize=address>
-    )
-    target_link_libraries(base PRIVATE kasan)
-endif(CONFIG_KASAN)
+add_subdirectory(trace)
+add_subdirectory(container)
+add_subdirectory(lib)
+add_subdirectory(sys)
 
-if (CONFIG_FTRACE)
-    add_library(fntrace INTERFACE)
-    target_compile_options(fntrace
-        INTERFACE
-        $<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:ARMClang>>:-finstrument-functions>
-    )
-    target_link_libraries(base PRIVATE fntrace)
-endif()
-
-zephyr_library_sources( 
+target_sources(base
+    PRIVATE
     bitops.c
     log.c
     fsm.c
 )
 
-add_subdirectory(container)
-add_subdirectory(lib)
-add_subdirectory(sys)
+add_kasan_trace(base)

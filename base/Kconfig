@@ -15,6 +15,14 @@ config SMALL_MEM_MODEL
 config FTRACE
     bool "Enable function trace"
 
+config KASAN
+    bool "Enable address sanitizer"
+    default n
+
+config KASAN_LOAD_NOCHECK
+    bool "Disable check load instruction"
+    default y
+
 rsource "sys/Kconfig"
 rsource "lib/Kconfig"
 

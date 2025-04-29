@@ -1,4 +1,5 @@
-zephyr_library_sources(
+target_sources(base
+    PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/observer.c
     ${CMAKE_CURRENT_SOURCE_DIR}/kfifo.c
     ${CMAKE_CURRENT_SOURCE_DIR}/radix-tree.c

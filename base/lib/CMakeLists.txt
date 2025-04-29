@@ -1,5 +1,6 @@
 
-zephyr_library_sources(
+target_sources(base
+    PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/iovprintf.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libitoa.c
     ${CMAKE_CURRENT_SOURCE_DIR}/libassert.c
