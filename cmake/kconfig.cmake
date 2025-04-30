@@ -326,9 +326,18 @@ endforeach()
 
 
 #Compiler Options
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+
 include_dirs(
     ${WKSAPCE_PATH}
 )
+
+if (CONFIG_LTO)
+  compile_options(-flto=auto)
+  set(CMAKE_AR      ${CMAKE_C_COMPILER}-ar)
+  set(CMAKE_RANLIB  ${CMAKE_C_COMPILER}-ranlib)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=auto")
+endif(CONFIG_LTO)
 
 separate_arguments(COMPILER_OPT_AS_LIST UNIX_COMMAND ${CONFIG_COMPILER_OPT})
 add_compile_options(

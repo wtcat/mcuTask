@@ -154,6 +154,12 @@ void *_sbrk(ptrdiff_t incr) {
     return NULL;
 }
 
+void _exit(int status) {
+    (void) status;
+    rte_assert0(0);
+    for ( ; ; );
+}
+
 #ifdef CONFIG_CFILE
 static int cstub_init(void) {
     object_pool_initialize(&file_pool, file_descriptors, 

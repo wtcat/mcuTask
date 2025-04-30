@@ -4,6 +4,10 @@ config COMPILER_OPT
     string "Custom compile option"
     default "-Os"
 
+config LTO
+    bool "Enable link-time optimize"
+    default n
+
 config LINKER_SCRIPT
     string "Linker script file"
     default "linker.ld"
