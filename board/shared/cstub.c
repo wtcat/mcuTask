@@ -10,6 +10,7 @@
 
 #include <tx_api.h>
 #include <service/init.h>
+#include <service/printk.h>
 #include <subsys/fs/fs.h>
 #include <base/assert.h>
 
@@ -158,6 +159,14 @@ void _exit(int status) {
     (void) status;
     rte_assert0(0);
     for ( ; ; );
+}
+
+void __assert_func(const char *file, int line, const char *func, 
+    const char *expr) {
+    printk("assertion \"%s\" failed: file \"%s\", line %d%s%s\n",
+	   expr, file, line,
+	   func ? ", function: " : "", func ? func : "");
+    while (1);
 }
 
 #ifdef CONFIG_CFILE

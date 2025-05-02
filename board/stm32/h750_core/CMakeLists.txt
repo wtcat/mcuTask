@@ -68,13 +68,13 @@ if (CONFIG_USBX)
     )
 endif()
 
-add_subdirectory(${WKSAPCE_PATH} wksapce)
-add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
-add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared/h7/Drivers drivers)
-
 add_executable(${PROJECT_NAME}
     ${BOARD_SOURCES}
 )
+
+add_subdirectory(${WKSAPCE_PATH} wksapce)
+add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
+add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared/h7/Drivers drivers)
 
 # Link target
 build_link(${PROJECT_NAME})

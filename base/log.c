@@ -14,6 +14,9 @@
 #define _USE_LOG_DEFINE
 #include <base/log.h>
 
+#define _ASSERT_SOURCE_CODE
+#include <base/assert.h>
+
 #ifndef RTE_WRITE_ONCE
 #define RTE_WRITE_ONCE(x, val) (x) = (val)
 #endif

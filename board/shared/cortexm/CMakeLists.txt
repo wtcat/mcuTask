@@ -1,12 +1,12 @@
 # CortexM shared
 
-target_sources(board_shared
+target_sources(${board_shared}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/dwt.c
 )
 
 if (CONFIG_CORTEXM_BACKTRACE)
-target_sources(board_shared
+target_sources(${board_shared}
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/backtrace/cm_backtrace.c
 )

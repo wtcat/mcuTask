@@ -332,11 +332,12 @@ include_dirs(
     ${WKSAPCE_PATH}
 )
 
+# Enable link time optimize
 if (CONFIG_LTO)
   compile_options(-flto=auto)
   set(CMAKE_AR      ${CMAKE_C_COMPILER}-ar)
   set(CMAKE_RANLIB  ${CMAKE_C_COMPILER}-ranlib)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=auto")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=auto -fuse-linker-plugin -specs=nano.specs")
 endif(CONFIG_LTO)
 
 separate_arguments(COMPILER_OPT_AS_LIST UNIX_COMMAND ${CONFIG_COMPILER_OPT})
