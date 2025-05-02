@@ -125,7 +125,7 @@ extern "C" {
  */
 #define TYPE_SECTION_GET(type, secname, i, dst) do { \
 	TYPE_SECTION_START_EXTERN(type, secname); \
-	*(dst) = &TYPE_SECTION_START(secname)[i]; \
+	*((volatile type **)dst) = &((volatile type *)TYPE_SECTION_START(secname))[i]; \
 } while (0)
 
 /**
