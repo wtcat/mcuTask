@@ -5,6 +5,19 @@ rsource "kconfig/Kconfig"
 
 menu "Board Shared library"
 
+config CACHE_MANAGEMENT
+    bool n
+
+config DCACHE
+    bool "Enable cpu data cache"
+    select CACHE_MANAGEMENT
+    default n
+
+config ICACHE
+    bool "Enable cpu instruction cache"
+    select CACHE_MANAGEMENT
+    default n
+
 config MAX_IRQ_VECTOR
     int "Maximum irq vectors"
     default 150

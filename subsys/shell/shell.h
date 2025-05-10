@@ -442,7 +442,7 @@ struct shell_static_entry {
  * @param[in] get	Pointer to the function returning dynamic commands array
  */
 #define SHELL_DYNAMIC_CMD_CREATE(name, get)					\
-	static const TYPE_SECTION_ITERABLE(union shell_cmd_entry, name,		\
+	static /*const*/ TYPE_SECTION_ITERABLE(union shell_cmd_entry, name,		\
 		shell_dynamic_subcmds, name) =					\
 	{									\
 		.dynamic_get = get						\
