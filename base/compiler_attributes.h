@@ -92,7 +92,7 @@
  *
  *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-const-function-attribute
  */
-#define __rte_attribute_const              __attribute__((__const__))
+#define __rte_const                 __attribute__((__const__))
 
 /*
  * Optional: only supported since gcc >= 9
@@ -278,6 +278,18 @@
  * clang: https://clang.llvm.org/docs/AttributeReference.html#id1
  */
 #define __rte_noreturn                      __attribute__((__noreturn__))
+
+/*
+ * Optional: only supported since GCC >= 11.1, clang >= 7.0.
+ *
+ *   gcc: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-no_005fstack_005fprotector-function-attribute
+ *   clang: https://clang.llvm.org/docs/AttributeReference.html#no-stack-protector-safebuffers
+ */
+#if __has_attribute(__no_stack_protector__)
+# define __rte_no_stack_protector		__attribute__((__no_stack_protector__))
+#else
+# define __rte_no_stack_protector
+#endif
 
 /*
  * Optional: not supported by gcc.

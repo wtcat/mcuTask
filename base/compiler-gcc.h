@@ -51,6 +51,8 @@
 #define __rte_noscs __attribute__((__no_sanitize__("shadow-call-stack")))
 #endif
 
+#define __rte_no_kasan __attribute__((__no_sanitize_address__))
+
 /*
  * Turn individual warnings and errors on and off locally, depending
  * on version.

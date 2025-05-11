@@ -6,7 +6,7 @@ rsource "kconfig/Kconfig"
 menu "Board Shared library"
 
 config CACHE_MANAGEMENT
-    bool n
+    bool
 
 config DCACHE
     bool "Enable cpu data cache"

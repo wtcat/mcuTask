@@ -22,9 +22,15 @@ extern "C" {
 #define KASAN_REGION_STRUCT_SIZE (sizeof(uintptr_t) * 4)
 #define KASAN_REGION_SIZE(size) (KASAN_REGION_STRUCT_SIZE + KASAN_SHADOW_SIZE(size))
 
+#ifdef CONFIG_KASAN
 void kasan_poison(const void *addr, size_t size);
 void kasan_unpoison(const void *addr, size_t size);
 void kasan_register(void *addr, size_t *size);
+#else /* !CONFIG_KASAN */
+#define kasan_poison(...)
+#define kasan_unpoison(...)
+#define kasan_register(...)
+#endif /* CONFIG_KASAN */
 
 #ifdef __cplusplus
 }
