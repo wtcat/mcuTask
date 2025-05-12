@@ -38,13 +38,13 @@ config FILE_DESC_MAX
     int "The maximum number of file descriptor"
     default 3
 
-config KMALLOC
-    bool "Enable kernel malloc"
-    default y
+config KMALLOC_POOL_SIZE
+    int "The size of kmalloc byte pool"
+    default 2048
 
-config MALLOC
-    bool "Enable general malloc"
-    default n
+config GMALLOC_POOL_SIZE
+    int "The size general malloc byte pool"
+    default 0
 
 config CPLUSPLUS
     bool "Enable C++ language support"

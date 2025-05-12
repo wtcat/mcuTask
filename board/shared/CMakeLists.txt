@@ -10,6 +10,9 @@ set(TARGET_SRCS
     sysinit.c
     object_pool.c
     init_array.c
+    heap.c
+    kmalloc.c
+    malloc.c
     thread_foreach.c
 )
 
