@@ -4,6 +4,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include <tx_api.h>
 #include <service/printk.h>
@@ -12,6 +13,8 @@
 #include <base/container/queue.h>
 #include <base/trace/kasan.h>
 #include <base/generic.h>
+
+#define DEBUG_ON 0
 
 #if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wbuiltin-declaration-mismatch"
@@ -36,6 +39,29 @@ STATIC_ASSERT(sizeof(struct kasan_region) == KASAN_REGION_STRUCT_SIZE, "");
 
 static SLIST_HEAD(, kasan_region) kasan_list = SLIST_HEAD_INITIALIZER(kasan_list);
 static uintptr_t kasan_state;
+
+#if DEBUG_ON > 0
+static void dump_shadow(const char *fmt, ...) {
+	struct kasan_region *region;
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintk(fmt, ap);
+	va_end(ap);
+
+	SLIST_FOREACH(region, &kasan_list, link) {
+		uintptr_t addr = region->begin;
+		printk("Kasan dump(0x%x, 0x%x):\n", region->begin, region->end);
+		for (uintptr_t *p = region->shadow; (uintptr_t)p < region->end; p++) {
+			uintptr_t next = addr + 128;
+			printk("[0x%x, 0x%x] => 0x%08x\n", addr, next, *p);
+			addr = next;
+		}
+	}
+}
+#else
+#define dump_shadow(...) (void)0
+#endif /* DEBUG_ON > 0 */
 
 static __rte_always_inline 
 uintptr_t *kasan_mem_to_shadow(const void *ptr, size_t size, unsigned int *bit) {
@@ -117,10 +143,12 @@ kasan_check_report(const void *addr, size_t size, bool is_write, void *return_ad
 
 void kasan_poison(const void *addr, size_t size) {
 	kasan_set_poison(addr, size, true);
+	dump_shadow("Poison: [%p, %p]\n", addr, addr+size);
 }
 
 void kasan_unpoison(const void *addr, size_t size) {
 	kasan_set_poison(addr, size, false);
+	dump_shadow("Unpoison: [%p, %p]\n", addr, addr+size);
 }
 
 void kasan_register(void *addr, size_t *size) {

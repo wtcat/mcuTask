@@ -40,7 +40,7 @@
 /*
  * User general extension configuration
  */
-#define TX_SYSTEM_PANIC() for ( ; ; )
+#define TX_SYSTEM_PANIC() __asm__ volatile ("svc #0")
 
 /* Device driver */
 #define TX_UART_DEVICE_STUB  /* Optimized uart driver performance */

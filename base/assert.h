@@ -44,7 +44,8 @@ extern "C"{
 void __assert_failed(const char *file, int line, const char *func, 
     const char *failedexpr);
 #else /* _ASSERT_SOURCE_CODE */
-void __assert_failed(const char *file, int line, const char *func, 
+void __rte_weak 
+__assert_failed(const char *file, int line, const char *func, 
     const char *expr) {
     pr_emerg("assertion \"%s\" failed: file \"%s\", line %d%s%s\n",
 	   expr, file, line,

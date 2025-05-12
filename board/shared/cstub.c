@@ -169,6 +169,15 @@ void __assert_func(const char *file, int line, const char *func,
     while (1);
 }
 
+void __assert_failed(const char *file, int line, const char *func, 
+    const char *expr) {
+    printk("assertion \"%s\" failed: file \"%s\", line %d%s%s\n",
+	   expr, file, line,
+	   func ? ", function: " : "", func ? func : "");
+    TX_SYSTEM_PANIC();
+    while (1);
+}
+
 #ifdef CONFIG_CFILE
 static int cstub_init(void) {
     object_pool_initialize(&file_pool, file_descriptors, 

@@ -34,7 +34,7 @@ __kasan_heap_allocate(TX_BYTE_POOL *pool, size_t size, unsigned long options) {
     void *ptr;
     if (tx_byte_allocate(pool, &ptr, size, options) == TX_SUCCESS) {
 #ifdef CONFIG_KASAN
-        kasan_unpoison(ptr, size);
+        kasan_unpoison(ptr, rte_roundup(size, sizeof(uintptr_t)));
 #endif
         return ptr;
     }
