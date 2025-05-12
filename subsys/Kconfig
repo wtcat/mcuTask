@@ -4,5 +4,6 @@ rsource "fs/Kconfig"
 rsource "sdio/Kconfig"
 rsource "shell/Kconfig"
 rsource "modbus/Kconfig"
+rsource "llext/Kconfig"
 
 endmenu
