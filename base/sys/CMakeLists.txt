@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-if (CONFIG_CRC)
 target_sources(base
   PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/crc32c_sw.c
@@ -12,4 +11,3 @@ target_sources(base
   ${CMAKE_CURRENT_SOURCE_DIR}/crc4_sw.c
   ${CMAKE_CURRENT_SOURCE_DIR}/hex.c
 )
-endif()

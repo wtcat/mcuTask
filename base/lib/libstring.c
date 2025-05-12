@@ -6,9 +6,10 @@
 #include CONFIG_HEADER_FILE
 #endif
 
-#include "base/compiler.h"
 #include <errno.h>
 #include <string.h>
+
+#include <base/compiler.h>
 
 #ifdef _WIN32
 #define __libc
@@ -104,7 +105,7 @@ size_t __libc strlcat(char *__restrict dst, const char *__restrict src,
 }
 
 #ifdef CONFIG_KASAN
-char *strcpy(char *dest, const char *src) {
+char *strcpy(char *__restrict dest, const char * __restrict src) {
 	char *tmp = dest;
 
 	while ((*dest++ = *src++) != '\0')
@@ -124,7 +125,7 @@ char *strncpy(char *dest, const char *src, size_t count) {
 	return dest;
 }
 
-char *strcat(char *dest, const char *src) {
+char *strcat(char *__restrict dest, const char *__restrict src) {
 	char *tmp = dest;
 
 	while (*dest)
@@ -158,7 +159,7 @@ void *memset(void *s, int c, size_t count) {
 	return s;
 }
 
-void *memcpy(void *dest, const void *src, size_t count) {
+void *memcpy(void *__restrict dest, const void *__restrict src, size_t count) {
 	char *tmp = dest;
 	const char *s = src;
 

@@ -20,7 +20,12 @@ extern "C" {
 #define KASAN_SHADOW_SIZE(size)                                                          \
 	(KASAN_BYTES_PER_WORD * ((size) / KASAN_SHADOW_SCALE / KASAN_BITS_PER_WORD))
 #define KASAN_REGION_STRUCT_SIZE (sizeof(uintptr_t) * 4)
+
+#ifdef CONFIG_KASAN
 #define KASAN_REGION_SIZE(size) (KASAN_REGION_STRUCT_SIZE + KASAN_SHADOW_SIZE(size))
+#else
+#define KASAN_REGION_SIZE(size) (size)
+#endif /* CONFIG_KASAN */
 
 #ifdef CONFIG_KASAN
 void kasan_poison(const void *addr, size_t size);

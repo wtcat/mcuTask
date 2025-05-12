@@ -395,7 +395,6 @@
 #define __rte_weak                          __attribute__((__weak__))
 
 #define __rte_printf_like(f, a)             __attribute__((__format__(printf, f, a)))
-
 #define __rte_nonnull(...)                  __attribute__((__nonnull__(__VA_ARGS__)))
 
 #endif /* BASE_COMPILER_ATTRIBUTES_H_ */
