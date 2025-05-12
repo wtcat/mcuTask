@@ -23,7 +23,8 @@ typedef struct TX_BYTE_POOL_STRUCT TX_BYTE_POOL;
  */
 #define BYTE_HEAP_DEFINE(name, size, attr) \
     TX_BYTE_POOL name attr; \
-    static char name##_heap_buffer[size + KASAN_REGION_SIZE(size)] attr; \
+    static char name##_heap_buffer[size + KASAN_REGION_SIZE(size)] \
+        __rte_aligned(sizeof(void *)) attr; \
     static int name##_heap_init(void) { \
         return __kasan_heap_init(&name, #name, name##_heap_buffer, \
             sizeof(name##_heap_buffer)); \

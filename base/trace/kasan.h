@@ -24,7 +24,7 @@ extern "C" {
 #ifdef CONFIG_KASAN
 #define KASAN_REGION_SIZE(size) (KASAN_REGION_STRUCT_SIZE + KASAN_SHADOW_SIZE(size))
 #else
-#define KASAN_REGION_SIZE(size) (size)
+#define KASAN_REGION_SIZE(size) (0)
 #endif /* CONFIG_KASAN */
 
 #ifdef CONFIG_KASAN
