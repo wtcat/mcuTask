@@ -125,7 +125,7 @@ void z_shell_history_purge(struct shell_history *history) {
 
 void z_shell_history_put(struct shell_history *history, uint8_t *line, size_t len) {
 	struct rte_list *l_item; /* list item */
-	struct shell_history_item *h_item, *h_prev_item;
+	struct shell_history_item *h_item = NULL, *h_prev_item;
 	uint32_t total_len = len + offsetof(struct shell_history_item, data);
 	uint32_t claim_len;
 	uint32_t claim2_len;
