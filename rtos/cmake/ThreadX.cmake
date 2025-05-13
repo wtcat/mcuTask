@@ -5,7 +5,7 @@
 #     LANGUAGES C ASM
 # )
 set(PROJECT_NAME "threadx")
-set(SRCTREE_DIR ${CMAKE_CURRENT_LIST_DIR}/threadx)
+set(SRCTREE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/threadx)
 
 static_library(${PROJECT_NAME})
 lib_include_directories(
@@ -234,17 +234,3 @@ if (CONFIG_TX_OSEK_API)
         ${OSEK_SRC_PATH}/tx_osek.c
     )
 endif(CONFIG_TX_OSEK_API)
-
-# Enable a build target that produces a ZIP file of all sources
-# set(CPACK_SOURCE_GENERATOR "ZIP")
-# set(CPACK_SOURCE_IGNORE_FILES
-#   \\.git/
-#   \\.github/
-#   _build/
-#   \\.git
-#   \\.gitattributes
-#   \\.gitignore
-#   ".*~$"
-# )
-# set(CPACK_VERBATIM_VARIABLES YES)
-# include(CPack)

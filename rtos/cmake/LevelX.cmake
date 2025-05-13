@@ -5,12 +5,16 @@
 #     LANGUAGES C ASM
 # )
 set(PROJECT_NAME "levelx")
-set(SRCTREE_DIR ${CMAKE_CURRENT_LIST_DIR}/levelx)
+set(SRCTREE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/levelx)
 
 static_library(${PROJECT_NAME})
 lib_include_directories(
     ${SRCTREE_DIR}/common/inc
     ${SRCTREE_DIR}/ports/${THREADX_ARCH}/${THREADX_TOOLCHAIN}/inc
+)
+target_compile_options(${PROJECT_NAME}
+    PRIVATE
+    -Wno-maybe-uninitialized
 )
 
 add_dependencies(${PROJECT_NAME} threadx)

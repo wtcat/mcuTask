@@ -5,7 +5,7 @@
 #     LANGUAGES C ASM
 # )    
 set(PROJECT_NAME "netxduo")
-set(SRCTREE_DIR ${CMAKE_CURRENT_LIST_DIR}/netxduo)
+set(SRCTREE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/netxduo)
 
 static_library(${PROJECT_NAME})
 lib_include_directories(

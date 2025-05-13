@@ -5,7 +5,7 @@
 #     LANGUAGES C ASM
 # )
 set(PROJECT_NAME "filex")
-set(SRCTREE_DIR ${CMAKE_CURRENT_LIST_DIR}/threadx)
+set(SRCTREE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/filex)
 
 static_library(${PROJECT_NAME})
 lib_include_directories(
@@ -47,9 +47,6 @@ endif()
 # Then the common files
 add_subdirectory(${SRCTREE_DIR}/common)
 
-
-
-
 # Include the user's override file if required
 if (NOT FX_USER_FILE)
 message(STATUS "Using default fx_user_config.h file")
@@ -71,17 +68,4 @@ compile_definitions(FX_INCLUDE_USER_DEFINE_FILE)
 #     target_compile_definitions(${PROJECT_NAME} PUBLIC "FX_INCLUDE_USER_DEFINE_FILE" -DFX_STANDALONE_ENABLE)
 # endif()
 
-# Enable a build target that produces a ZIP file of all sources
-# set(CPACK_SOURCE_GENERATOR "ZIP")
-# set(CPACK_SOURCE_IGNORE_FILES
-#   \\.git/
-#   \\.github/
-#   _build/
-#   \\.git
-#   \\.gitattributes
-#   \\.gitignore
-#   ".*~$"
-# )
-# set(CPACK_VERBATIM_VARIABLES YES)
-# include(CPack)
 
