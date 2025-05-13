@@ -4,10 +4,12 @@
 
 #include <errno.h>
 
-#include "tx_api.h"
-#include "ux_api.h"
-#include "ux_device_class_storage.h"
-#include "drivers/blkdev.h"
+#include <tx_api.h>
+#include <ux_api.h>
+#include <ux_device_class_storage.h>
+#include <ux_device_stack.h>
+#include <drivers/blkdev.h>
+#include <service/init.h>
 
 #define UX_ERR(_err) (_err)? -(__ELASTERROR + (int)(_err)): 0
 #define USBMSC_LUN_MAX 1

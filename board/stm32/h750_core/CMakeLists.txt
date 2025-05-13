@@ -28,6 +28,7 @@ set(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
 # Add compile options
 include_dirs(
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${WKSAPCE_PATH}/board/shared/port
 )
 add_compile_options(
     -DSTM32H750xx=1

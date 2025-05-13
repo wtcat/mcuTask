@@ -18,6 +18,10 @@
 #include <subsys/shell/shell.h>
 #include <drivers/sdio/mmcsd_core.h>
 
+#ifdef CONFIG_LTO
+#pragma GCC optimize("O1")
+#endif
+
 struct stm32_sdmmc_config {
     uint32_t fmax;
     int irq;

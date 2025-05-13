@@ -5,8 +5,10 @@
 #define TX_USE_BOARD_PRIVATE
 
 #define pr_fmt(fmt) "[stm32_usb]: " fmt
-#include "tx_api.h"
 #include <errno.h>
+#include <tx_api.h>
+#include <service/irq.h>
+#include <service/init.h>
 
 #define UX_SOURCE_CODE
 #include "ux_api.h"
