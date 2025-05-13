@@ -332,17 +332,23 @@ static int filex_fs_mount(struct fs_class *fs) {
     UINT err;
 
     dev = device_find(fs->storage_dev);
-    if (dev == NULL)
+    if (dev == NULL) {
+        pr_err("not found device(%s)\n", (char *)fs->storage_dev);
         return -ENODEV;
+    }
 
     UINT blksz = 0;
     device_control(dev, BLKDEV_IOC_GET_BLKSIZE, &blksz);
-    if (blksz == 0 || blksz > 4096 || blksz > CONFIG_FS_FILEX_MEDIA_BUFFER_SIZE)
+    if (blksz == 0 || blksz > 4096 || blksz > CONFIG_FS_FILEX_MEDIA_BUFFER_SIZE) {
+        pr_err("Invalid device block size(%u)\n", blksz);
         return -EIO;
+    }
 
     struct filex_instance *fx = object_allocate(&filex_inst_pool);
-    if (fx == NULL)
+    if (fx == NULL) {
+        pr_err("No more filex instance\n");
         return -ENOMEM;
+    }
 
     memset(&fx->media, 0, sizeof(fx->media));
     err = fx_media_open(&fx->media, (CHAR *)dev->name, filex_fs_driver, 
