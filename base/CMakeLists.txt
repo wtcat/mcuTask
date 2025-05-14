@@ -12,4 +12,8 @@ target_sources(base
     fsm.c
 )
 
+if (CONFIG_EXPORT_SYMBOL)
+    target_sources(base PRIVATE symbol.c)
+endif()
+
 add_kasan_trace(base)

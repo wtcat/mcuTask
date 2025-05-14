@@ -15,6 +15,7 @@
 #include <subsys/fs/fs.h>
 #include <base/log.h>
 #include <base/assert.h>
+#include <base/symbol.h>
 
 
 struct fs_manager {
@@ -738,3 +739,21 @@ static int fs_init(void) {
 }
 
 SYSINIT(fs_init, SI_PREDRIVER_LEVEL, 10);
+
+EXPORT_SYMBOL(fs_open);
+EXPORT_SYMBOL(fs_read);
+EXPORT_SYMBOL(fs_write);
+EXPORT_SYMBOL(fs_seek);
+EXPORT_SYMBOL(fs_close);
+EXPORT_SYMBOL(fs_flush);
+EXPORT_SYMBOL(fs_tell);
+EXPORT_SYMBOL(fs_truncate);
+EXPORT_SYMBOL(fs_sync);
+EXPORT_SYMBOL(fs_opendir);
+EXPORT_SYMBOL(fs_readdir);
+EXPORT_SYMBOL(fs_closedir);
+EXPORT_SYMBOL(fs_mkdir);
+EXPORT_SYMBOL(fs_unlink);
+EXPORT_SYMBOL(fs_rename);
+EXPORT_SYMBOL(fs_stat);
+EXPORT_SYMBOL(fs_statvfs);

@@ -40,6 +40,10 @@ if (NOT CONFIG_SIMULATOR)
     list(APPEND TARGET_SRCS cstub.c irq.c)
 endif()
 
+if (CONFIG_EXPORT_SYMBOL)
+    list(APPEND TARGET_SRCS shared_symbol.c)
+endif()
+
 target_sources(${board_shared}
     PRIVATE
     ${TARGET_SRCS}

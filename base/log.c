@@ -2,6 +2,7 @@
  * Copyright 2024 wtcat
  */
 
+#include "base/symbol.h"
 #ifdef CONFIG_HEADER_FILE
 #include CONFIG_HEADER_FILE
 #endif
@@ -16,6 +17,7 @@
 
 #define _ASSERT_SOURCE_CODE
 #include <base/assert.h>
+#include <base/log.h>
 
 #ifndef RTE_WRITE_ONCE
 #define RTE_WRITE_ONCE(x, val) (x) = (val)
@@ -40,6 +42,7 @@ void rte_syslog(int prio, const char *fmt, ...) {
     pr->format(pr->context, fmt, ap);
     va_end(ap);
 }
+EXPORT_SYMBOL(rte_syslog);
 
 int rte_syslog_set_level(int prio) {
     if ((unsigned int)prio > LOGLEVEL_DEBUG)
@@ -47,6 +50,7 @@ int rte_syslog_set_level(int prio) {
     log_prio = prio;
     return 0;
 }
+EXPORT_SYMBOL(rte_syslog_set_level);
 
 int rte_syslog_redirect(struct printer *printer) {
     if (printer == NULL)

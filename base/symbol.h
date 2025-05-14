@@ -142,10 +142,10 @@ struct llext_symtable {
 		.name = __llext_sym_name_ ## sym_name,				\
 		.addr = (const void *)&sym_ident,				\
 	}
-#elif defined(CONFIG_LLEXT)
+#elif defined(CONFIG_EXPORT_SYMBOL)
 /* LLEXT application: export symbols */
 #define Z_EXPORT_SYMBOL_NAMED(sym_ident, sym_name)				\
-	static const STRUCT_SECTION_ITERABLE(llext_const_symbol,		\
+	static /*const*/ STRUCT_SECTION_ITERABLE(llext_const_symbol,		\
 					     __llext_sym_ ## sym_name) = {	\
 		.name = STRINGIFY(sym_name), .addr = (const void *)&sym_ident,	\
 	}
@@ -184,11 +184,9 @@ struct llext_symtable {
 
 
 /*
- * Export symbol section address definition
+ * Search symbol handle by name
  */
-#ifdef _DEFINE_EXPORT_SYMBOL_SECTION
-LINKER_ROSET(llext_const_symbol, struct llext_const_symbol);
-#endif /* _DEFINE_EXPORT_SYM_SECTION */
+const struct llext_const_symbol* symbol_search(const char *name);
 
 /**
  * @}

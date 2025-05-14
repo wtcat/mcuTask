@@ -1,5 +1,9 @@
 menu "Base library"
 
+config EXPORT_SYMBOL
+    bool "Enable symbol export"
+    default n
+
 config ASSERT_DISABLE
     bool "Disable Assert"
     default n

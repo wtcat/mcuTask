@@ -6,6 +6,7 @@
 #ifndef BASE_LOG_H_
 #define BASE_LOG_H_
 
+#include "base/compiler_attributes.h"
 #include <base/printer.h>
 #ifdef __cplusplus
 extern "C"{
@@ -173,7 +174,7 @@ struct printer _log_printer;
  * @prio: log level
  * @fmt: format information
  */
-void rte_syslog(int prio, const char *fmt, ...);
+void rte_syslog(int prio, const char *fmt, ...) __rte_printf(2, 3);
 
 /*
  * rte_syslog_set_level - Update log output priority

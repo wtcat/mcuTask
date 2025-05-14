@@ -5,8 +5,6 @@
  */
 
 #include <string.h>
-
-#define _DEFINE_EXPORT_SYMBOL_SECTION
 #include <base/symbol.h>
 
 EXPORT_SYMBOL(strcpy);
