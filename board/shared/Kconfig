@@ -8,6 +8,10 @@ menu "Board Shared library"
 config CACHE_MANAGEMENT
     bool
 
+config ARM
+    bool "ARM archtecture"
+    default n
+
 config DCACHE
     bool "Enable cpu data cache"
     select CACHE_MANAGEMENT

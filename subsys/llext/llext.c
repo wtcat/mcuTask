@@ -130,11 +130,9 @@ const void *llext_find_sym(const struct llext_symtable *sym_table, const char *s
 			}
 		}
 #else
-		STRUCT_SECTION_FOREACH(llext_const_symbol, sym) {
-			if (strcmp(sym->name, sym_name) == 0) {
-				return sym->addr;
-			}
-		}
+		const struct llext_const_symbol *sym = symbol_search(sym_name);
+		if (sym)
+			return sym->addr;
 #endif
 	} else {
 		/* find symbols in module */

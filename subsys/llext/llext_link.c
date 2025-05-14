@@ -477,7 +477,7 @@ int llext_link(struct llext_loader *ldr, struct llext *ext,
 
 	/* Detached section caches should be synchronized in place */
 	if (ldr_parm->section_detached) {
-		for (i = 0; i < ext->sect_cnt; ++i) {
+		for (i = 0; i < (int)ext->sect_cnt; ++i) {
 			elf_shdr_t *shdr = ext->sect_hdrs + i;
 
 			if (ldr_parm->section_detached(shdr)) {

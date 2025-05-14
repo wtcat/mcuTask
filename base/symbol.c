@@ -9,8 +9,9 @@
 
 LINKER_ROSET(llext_const_symbol, struct llext_const_symbol);
 
-static int compare(const void *s1, const void *s2) {
-    return strcmp(s1, s2);
+static int compare(const void *a, const void *b) {
+    const struct llext_const_symbol *s = b;
+    return strcmp(a, s->name);
 }
 
 const struct llext_const_symbol* symbol_search(const char *name) {

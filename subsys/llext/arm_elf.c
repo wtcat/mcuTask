@@ -8,6 +8,7 @@
 #define pr_fmt(fmt) "[arm-elf]: " fmt
 
 #include <errno.h>
+#include <inttypes.h>
 
 #include <base/log.h>
 #include <base/sys/util.h>
@@ -107,7 +108,7 @@ static inline int prel31_decode(elf_word reloc_type, uint32_t loc, uint32_t sym_
 	*offset = sign_extend(*(int32_t *)loc, SHIFT_PREL31_SIGN);
 	*offset += sym_base_addr - loc;
 	if (*offset >= PREL31_UPPER_BOUNDARY || *offset < PREL31_LOWER_BOUNDARY) {
-		pr_err("sym '%s': relocation out of range (%#x -> %#x)\n", sym_name, loc,
+		pr_err("sym '%s': relocation out of range (%#"PRIx32" -> %#"PRIx32")\n", sym_name, loc,
 			   sym_base_addr);
 		ret = -ENOEXEC;
 	} else {
@@ -144,7 +145,7 @@ static inline int jumps_decode(elf_word reloc_type, uint32_t loc, uint32_t sym_b
 	*offset = sign_extend(*offset, SHIFT_JUMPS_SIGN);
 	*offset += sym_base_addr - loc;
 	if (*offset >= JUMP_LOWER_BOUNDARY || *offset <= JUMP_UPPER_BOUNDARY) {
-		pr_err("sym '%s': relocation out of range (%#x -> %#x)\n", sym_name, loc,
+		pr_err("sym '%s': relocation out of range (%#"PRIx32" -> %#"PRIx32")\n", sym_name, loc,
 			   sym_base_addr);
 		ret = -ENOEXEC;
 	} else {
@@ -220,7 +221,7 @@ static inline int thm_jumps_decode(elf_word reloc_type, uint32_t loc,
 	*offset += sym_base_addr - loc;
 
 	if (*offset >= THM_JUMP_LOWER_BOUNDARY || *offset <= THM_JUMP_UPPER_BOUNDARY) {
-		pr_err("sym '%s': relocation out of range (%#x -> %#x)\n", sym_name, loc,
+		pr_err("sym '%s': relocation out of range (%#"PRIx32" -> %#"PRIx32")\n", sym_name, loc,
 			   sym_base_addr);
 		ret = -ENOEXEC;
 	} else {
@@ -316,7 +317,7 @@ int arch_elf_relocate(elf_rela_t *rel, uintptr_t loc, uintptr_t sym_base_addr,
 	int ret = 0;
 	elf_word reloc_type = ELF32_R_TYPE(rel->r_info);
 
-	pr_dbg("%d %lx %lx %s", reloc_type, loc, sym_base_addr, sym_name);
+	pr_dbg("%"PRIu32" %p %p %s", reloc_type, (void *)loc, (void *)sym_base_addr, sym_name);
 
 	switch (reloc_type) {
 	case R_ARM_NONE:
@@ -377,7 +378,7 @@ int arch_elf_relocate(elf_rela_t *rel, uintptr_t loc, uintptr_t sym_base_addr,
 		break;
 
 	default:
-		pr_err("unknown relocation: %u\n", reloc_type);
+		pr_err("unknown relocation: %"PRIu32"\n", reloc_type);
 		ret = -ENOEXEC;
 	}
 

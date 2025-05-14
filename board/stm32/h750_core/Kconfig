@@ -1,0 +1,5 @@
+
+config STM32_H750_CORE
+    bool "STM32H750 core board"
+    select ARM
+    
