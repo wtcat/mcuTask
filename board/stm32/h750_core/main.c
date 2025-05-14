@@ -111,8 +111,6 @@ static void __rte_unused file_test(void) {
     fs_flush("/home");
 
 _unmount:
-    err = fs_unmount("/home");
-    pr_out("Unmount /home with error(%d)\n", err);
     return;
 }
 

@@ -4,6 +4,9 @@ if (CONFIG_ARM)
         -fno-pie
         -ffunction-sections
         -fdata-sections
+        -flto=auto
+        -fuse-linker-plugin
+        -specs=nano.specs
         -Os
     )
 
