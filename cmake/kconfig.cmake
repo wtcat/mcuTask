@@ -341,9 +341,9 @@ if (CONFIG_LTO)
 endif(CONFIG_LTO)
 
 separate_arguments(COMPILER_OPT_AS_LIST UNIX_COMMAND ${CONFIG_COMPILER_OPT})
-add_compile_options(
-    -imacros ${AUTOCONF_H}
-    ${COMPILER_OPT_AS_LIST}
+compile_options(
+  -imacros ${AUTOCONF_H}
+  ${COMPILER_OPT_AS_LIST}
 )
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_LINKER_SCRIPT}")

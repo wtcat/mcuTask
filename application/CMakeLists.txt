@@ -5,4 +5,4 @@ target_sources(app
     init.cc
 )
 
-add_subdirectory(module)
+add_subdirectory_ifdef(CONFIG_LLEXT module)
