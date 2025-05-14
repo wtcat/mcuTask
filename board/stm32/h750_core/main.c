@@ -79,11 +79,6 @@ static void __rte_unused file_test(void) {
     pr_out("file size: %d\n", fsize);
     fs_seek(&rfd, 0, FS_SEEK_SET);
 
-    struct fs_stat stat;
-    fs_stat("/home/hello.txt", &stat);
-    if ((size_t)stat.st_size != fsize)
-        pr_out("fs_stat failed to get file size\n");
-    
     fs_read(&rfd, buffer, fsize);
     fs_close(&rfd);
     if (strcmp(buffer, "hello world"))

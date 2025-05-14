@@ -5,6 +5,7 @@
 #define SUBSYS_FS_H_
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <base/container/list.h>
 #include <base/compiler.h>
 
@@ -363,10 +364,10 @@ struct fs_dirent {
 };
 
 struct fs_stat {
-	off_t st_size;
 	struct timespec st_atim; /* Time of last access */
 	struct timespec st_mtim; /* Time of last modification */
 	struct timespec st_ctim; /* Time of last status change */
+	mode_t st_mode;    /* File type, attributes, and access mode bits */
 	size_t st_blksize; /* Block size used for filesystem I/O */
 	size_t st_blocks;  /* Number of blocks allocated */
 };

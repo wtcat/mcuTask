@@ -411,15 +411,22 @@ static int filex_fs_rename(struct fs_class *fs, const char *from, const char *to
 
 static int filex_fs_stat(struct fs_class *fs, const char *abs_path, 
     struct fs_stat *stat) {
+    FX_MEDIA *media_ptr = fs->fs_data;
     ULONG size;
+    UINT attr;
     UINT err;
 
-    err = fx_directory_information_get(fs->fs_data, FX_PATH(abs_path), NULL, &size,
+    err = fx_directory_information_get(media_ptr, FX_PATH(abs_path), &attr, &size,
         NULL, NULL, NULL, NULL, NULL, NULL);
-    
     if (err == FX_SUCCESS) {
         *stat = (struct fs_stat){0};
-        stat->st_size = size;
+        stat->st_blksize = media_ptr->fx_media_sectors_per_cluster * 
+            media_ptr->fx_media_bytes_per_sector;
+        stat->st_blocks = (size + (stat->st_blksize - 1)) / stat->st_blksize;
+        if (attr & FX_DIRECTORY)
+            stat->st_mode |= S_IFDIR;
+        else
+            stat->st_mode |= S_IFREG;
         return 0;
     }
 

@@ -4,3 +4,5 @@ target_sources(app
     PRIVATE
     init.cc
 )
+
+add_subdirectory(module)

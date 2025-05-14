@@ -347,3 +347,8 @@ add_compile_options(
 )
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/${CONFIG_LINKER_SCRIPT}")
+
+#LLEXT options
+if (CONFIG_LLEXT)
+  include(${CMAKE_CURRENT_LIST_DIR}/llext_target.cmake)
+endif()

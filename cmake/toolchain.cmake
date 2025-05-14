@@ -10,6 +10,9 @@ set(CMAKE_OBJDUMP       ${CROSS_COMPILER}objdump)
 set(CMAKE_SIZE          ${CROSS_COMPILER}size)
 set(CMAKE_NM            ${CROSS_COMPILER}nm)
 set(CMAKE_RANLIB        ${CROSS_COMPILER}ranlib)
+set(CMAKE_STRIP         ${CROSS_COMPILER}strip)
+set(CMAKE_READELF       ${CROSS_COMPILER}readelf)
+
 
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
@@ -31,3 +34,5 @@ SET(CMAKE_ASM_FLAGS_DEBUG "-g -ggdb3" CACHE INTERNAL "asm debug compiler flags")
 SET(CMAKE_C_FLAGS_RELEASE "-O3" CACHE INTERNAL "c release compiler flags")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3" CACHE INTERNAL "cxx release compiler flags")
 SET(CMAKE_ASM_FLAGS_RELEASE "" CACHE INTERNAL "asm release compiler flags")
+
+include(${CMAKE_CURRENT_LIST_DIR}/target_bintools.cmake)

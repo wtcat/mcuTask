@@ -32,12 +32,12 @@
 	"Call extension function with prototype void fn(void). Syntax:\n"                    \
 	"<ext_name> <function_name>"
 
-#ifdef CONFIG_FILE_SYSTEM
+#ifdef CONFIG_SUBSYS_FS
 #define LLEXT_LOAD_FS_HELP                                                               \
 	"Load an elf file directly from filesystem. Syntax:\n"                               \
 	"<ext_name> <ext_llext_file_name>"
 
-#endif /* CONFIG_FILE_SYSTEM */
+#endif /* CONFIG_SUBSYS_FS */
 
 static int cmd_llext_list_symbols(const struct shell *sh, size_t argc, char *argv[]) {
 	struct llext *m = llext_by_name(argv[1]);
@@ -180,18 +180,18 @@ static int cmd_llext_call_fn(const struct shell *sh, size_t argc, char *argv[]) 
 	return 0;
 }
 
-#ifdef CONFIG_FILE_SYSTEM
+#ifdef CONFIG_SUBSYS_FS
 static int cmd_llext_load_fs(const struct shell *sh, size_t argc, char *argv[]) {
 	int res;
-	struct fs_dirent dirent;
+	struct fs_stat buf;
 
-	res = fs_stat(argv[2], &dirent);
+	res = fs_stat(argv[2], &buf);
 	if (res) {
 		shell_error(sh, "Failed to obtain file %s, return code %d\n", argv[2], res);
 		return res;
 	}
 
-	if (dirent.type != FS_DIR_ENTRY_FILE) {
+	if (!(buf.st_mode & S_IFREG)) {
 		shell_error(sh, "Not a file %s", argv[2]);
 		return -ENOEXEC;
 	}
@@ -214,7 +214,7 @@ static int cmd_llext_load_fs(const struct shell *sh, size_t argc, char *argv[]) 
 /* clang-format off */
 SHELL_STATIC_SUBCMD_SET_CREATE(sub_llext,
 	SHELL_CMD(list, NULL, LLEXT_LIST_HELP, cmd_llext_list),
-#ifdef CONFIG_FILE_SYSTEM
+#ifdef CONFIG_SUBSYS_FS
 	SHELL_CMD_ARG(load_llext, NULL, LLEXT_LOAD_FS_HELP, cmd_llext_load_fs, 3, 0),
 #endif
 	SHELL_CMD_ARG(load_hex, NULL, LLEXT_LOAD_HEX_HELP, cmd_llext_load_hex, 3, 0),

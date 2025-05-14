@@ -2,7 +2,7 @@
 # CMake Helper Function
 #=========================
 
-# Common interface library
+# Create cmake common target
 add_library(common_interface INTERFACE )
 
 function(include_dirs)
