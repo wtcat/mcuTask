@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.0.0...3.8.0 FATAL_ERROR)
 
-
 # Setup toolchain
 set(CROSS_COMPILER arm-none-eabi-)
 set(WKSAPCE_PATH   ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(BOARD          "stm32/h750_core")
-include(${WKSAPCE_PATH}/cmake/cortex_m7.cmake)
+set(THREADX_ARCH   "cortex_m7")
+
+include(${WKSAPCE_PATH}/cmake/cpu.cmake)
 include(${WKSAPCE_PATH}/cmake/utils.cmake)
 include(${WKSAPCE_PATH}/cmake/zephyr.cmake)
 
