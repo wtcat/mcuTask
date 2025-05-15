@@ -15,7 +15,7 @@
 #ifndef BASE_SYS_CRC_H_
 #define BASE_SYS_CRC_H_
 
-#include <sys/types.h>
+#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
 

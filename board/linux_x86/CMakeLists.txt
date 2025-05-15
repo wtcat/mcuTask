@@ -45,7 +45,6 @@ target_sources(${PROJECT_NAME}
 target_link_options(${PROJECT_NAME}
     PRIVATE
     -Wl,-Map=${CMAKE_BINARY_DIR}/mcutask.map
-    -Wl,-T ${CMAKE_CURRENT_SOURCE_DIR}/linker.ld
 )
 
 # Link target

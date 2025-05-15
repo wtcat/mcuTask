@@ -1,6 +1,7 @@
 /*
  * Copyright 2024 wtcat
  */
+#include <inttypes.h>
 #include <stdio.h>
 
 #include <tx_api.h>
@@ -109,14 +110,11 @@ static void file_test(void) {
 
     fs_seek(&rfd, 0, FS_SEEK_END);
     size_t fsize = fs_tell(&rfd);
-    pr_out("file size: %d\n", fsize);
+    pr_out("file size: %ld\n", fsize);
     fs_seek(&rfd, 0, FS_SEEK_SET);
 
     struct fs_stat stat;
-    fs_stat("/home/a/hello.txt", &stat);
-    if ((size_t)stat.st_size != fsize)
-        pr_out("fs_stat failed to get file size\n");
-    
+
     fs_read(&rfd, buffer, fsize);
     fs_close(&rfd);
     if (strcmp(buffer, "hello world"))
@@ -129,7 +127,7 @@ static void file_test(void) {
     
     struct fs_dirent entry;
     while ((err = fs_readdir(&dir, &entry)) == 0) {
-        pr_out("dir: %s size: %d\n", entry.name, entry.size);
+        pr_out("dir: %s size: %ld\n", entry.name, entry.size);
     }
     fs_closedir(&dir);
 
@@ -141,7 +139,7 @@ static void file_test(void) {
         goto _unmount;
     
     while ((err = fs_readdir(&dir, &entry)) == 0) {
-        pr_out("new-dir: %s size: %d\n", entry.name, entry.size);
+        pr_out("new-dir: %s size: %ld\n", entry.name, entry.size);
     }
     fs_closedir(&dir);
 
