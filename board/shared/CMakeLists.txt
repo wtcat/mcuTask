@@ -50,4 +50,4 @@ target_sources(${board_shared}
 )
 
 add_subdirectory(drivers)
-add_subdirectory(cortexm)
+add_subdirectory_ifdef(CONFIG_ARM cortexm)

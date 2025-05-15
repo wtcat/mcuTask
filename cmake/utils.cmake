@@ -68,8 +68,23 @@ function(add_subdirectory_ifndef feature_toggle source_dir)
   endif()
 endfunction()
 
+#Add sanitize compile option
 function(add_kasan_trace target)
   if (CONFIG_KASAN)
     target_link_libraries(${target} PRIVATE kasan_if)
   endif()
+endfunction()
+
+#Set cache variable
+macro(cmake_setvar name value)
+  set(${name} ${value} CACHE INTERNAL "${name}")
+endmacro()
+
+function(cmake_import_libarary library_name library_path)
+  add_library(${library_name} STATIC IMPORTED GLOBAL)
+  set_target_properties(${library_name}
+    PROPERTIES IMPORTED_LOCATION
+    ${library_path}
+  ) 
+  set_property(GLOBAL APPEND PROPERTY common_interface ${library_name})
 endfunction()

@@ -6,14 +6,13 @@ config MULTITHREADING
 
 choice
     prompt "CPU Endian"
-
 config LITTLE_ENDIAN
     bool "Little Endian"
 config BIG_ENDIAN
     bool "Big Endian"
 endchoice
 
-
+source "$BOARD_DIR/Kconfig"
 rsource "rtos/Kconfig"
 rsource "subsys/Kconfig"
 rsource "base/Kconfig"

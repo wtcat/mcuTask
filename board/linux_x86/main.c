@@ -2,11 +2,13 @@
  * Copyright 2024 wtcat
  */
 #include <stdio.h>
-#include "tx_api.h"
-#include "base/log.h"
 
-#include "fx_api.h"
-#include "subsys/fs/fs.h"
+#include <tx_api.h>
+#include <fx_api.h>
+#include <service/printk.h>
+#include <service/init.h>
+#include <base/log.h>
+#include <subsys/fs/fs.h>
 
 #define MAIN_THREAD_PRIO  11
 #define MAIN_THREAD_STACK 4096
@@ -40,11 +42,7 @@ static void stdio_puts(const char *s, size_t len) {
 }
 
 int main(int argc, char *argv[]) {
-	static struct printer console_printer = {
-		.format = printk_printer
-	};
-
-	pr_log_init(&console_printer);
+    pr_log_redirect(printk_printer, NULL);
     __console_puts = stdio_puts;
     /* Enter the ThreadX kernel.  */
     tx_kernel_enter();

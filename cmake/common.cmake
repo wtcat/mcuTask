@@ -1,8 +1,6 @@
 #############################
 # Set common compile options
 #############################
-set(CMAKE_EXPORT_COMPILE_COMMANDS True)
-
 set(C_FLAGS    "-std=gnu17")
 set(CPP_FLAGS  "-std=c++20")
 set(CC_FLAGS   "-Wall -Werror -Wextra")

@@ -5,8 +5,10 @@
 #define pr_fmt(fmt) "[ramblk]: "fmt
 #include <string.h>
 
-#include "tx_api.h"
-#include "drivers/blkdev.h"
+#include <tx_api.h>
+#include <service/init.h>
+#include <drivers/blkdev.h>
+#include <base/log.h>
 
 #define CONFIG_RAMBLK_SIZE 512
 #define CONFIG_RAMBLK_MEMORY_SIZE 0x100000

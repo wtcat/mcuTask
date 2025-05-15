@@ -8,9 +8,11 @@ menu "Board Shared library"
 config CACHE_MANAGEMENT
     bool
 
+config SIMULATOR
+    bool
+
 config ARM
-    bool "ARM archtecture"
-    default n
+    bool
 
 config DCACHE
     bool "Enable cpu data cache"

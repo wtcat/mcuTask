@@ -1,29 +1,9 @@
-cmake_minimum_required(VERSION 3.0.0...3.8.0 FATAL_ERROR)
-
-# Setup toolchain
-set(CROSS_COMPILER arm-none-eabi-)
-set(WKSAPCE_PATH   ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
-set(BOARD          "stm32/h750_core")
-set(THREADX_ARCH   "cortex_m7")
-
-include(${WKSAPCE_PATH}/cmake/cpu.cmake)
-include(${WKSAPCE_PATH}/cmake/utils.cmake)
-include(${WKSAPCE_PATH}/cmake/zephyr.cmake)
-
-# Declare project
-project(mcuTask
-    LANGUAGES C CXX ASM
-)
-
-include(${WKSAPCE_PATH}/cmake/kconfig.cmake)
-cmake_policy(SET CMP0076 NEW)
-cmake_policy(SET CMP0003 NEW)
 
 # Add configure files
-set(TX_USER_FILE        ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
-set(FILEX_CUSTOM_PORT   ${WKSAPCE_PATH}/board/shared/port)
-set(NETXDUO_CUSTOM_PORT ${WKSAPCE_PATH}/board/shared/port)
-set(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
+cmake_setvar(TX_USER_FILE        ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
+cmake_setvar(FILEX_CUSTOM_PORT   ${WKSAPCE_PATH}/board/shared/port)
+cmake_setvar(NETXDUO_CUSTOM_PORT ${WKSAPCE_PATH}/board/shared/port)
+cmake_setvar(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
 
 
 # Add compile options
@@ -31,7 +11,7 @@ include_dirs(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${WKSAPCE_PATH}/board/shared/port
 )
-add_compile_options(
+compile_options(
     -DSTM32H750xx=1
     -DUSE_HAL_DRIVER=1
     -DUSE_FULL_LL_DRIVER=1
@@ -70,16 +50,10 @@ if (CONFIG_USBX)
     )
 endif()
 
-add_executable(${PROJECT_NAME}
+target_sources(${PROJECT_NAME}
+    PRIVATE
     ${BOARD_SOURCES}
 )
 
-add_subdirectory(${WKSAPCE_PATH} wksapce)
 add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
 add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared/h7/Drivers drivers)
-
-# Link target
-build_link(${PROJECT_NAME})
-
-# Generate binary
-build_post(${PROJECT_NAME})

@@ -1,0 +1,6 @@
+
+config LINUX_X86
+    bool "Linux x86 simualtor"
+    select SIMULATOR
+    default y
+    

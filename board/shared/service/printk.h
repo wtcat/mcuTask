@@ -5,6 +5,7 @@
 #define SERVICE_PRINTK_H_
 
 #include <stdarg.h>
+#include <stddef.h>
 #include <base/compiler.h>
 
 #ifdef __cplusplus
@@ -20,7 +21,7 @@ int vprintk(const char *fmt, va_list ap);
 /*
  * Console interface
  */
-typedef void (*console_puts_t)(const char *, unsigned int);
+typedef void (*console_puts_t)(const char *, size_t);
 extern console_puts_t __console_puts;
 
 #ifdef __cplusplus

@@ -4,7 +4,7 @@
 #ifndef DRIVERS_BLKDEV_H_
 #define DRIVERS_BLKDEV_H_
 
-#include "drivers/device.h"
+#include <drivers/device.h>
 
 #ifdef __cplusplus
 extern "C"{
