@@ -3,7 +3,7 @@
 #############################
 set(C_FLAGS    "-std=gnu17")
 set(CPP_FLAGS  "-std=c++20")
-set(CC_FLAGS   "-Wall -Werror -Wextra")
+set(CC_FLAGS   )
 set(SPEC_FLAGS "-nostartfiles -specs=nosys.specs")
 set(LD_FLAGS   "-Wl,-Map=${CMAKE_BINARY_DIR}/mcutask.map ")
 

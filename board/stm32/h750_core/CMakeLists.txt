@@ -1,15 +1,15 @@
 
 # Add configure files
 cmake_setvar(TX_USER_FILE        ${CMAKE_CURRENT_SOURCE_DIR}/tx_user.h)
-cmake_setvar(FILEX_CUSTOM_PORT   ${WKSAPCE_PATH}/board/shared/port)
-cmake_setvar(NETXDUO_CUSTOM_PORT ${WKSAPCE_PATH}/board/shared/port)
-cmake_setvar(USBX_CUSTOM_PORT    ${WKSAPCE_PATH}/board/shared/port)
+cmake_setvar(FILEX_CUSTOM_PORT   ${WKSPACE_PATH}/board/shared/port)
+cmake_setvar(NETXDUO_CUSTOM_PORT ${WKSPACE_PATH}/board/shared/port)
+cmake_setvar(USBX_CUSTOM_PORT    ${WKSPACE_PATH}/board/shared/port)
 
 
 # Add compile options
 include_dirs(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${WKSAPCE_PATH}/board/shared/port
+    ${WKSPACE_PATH}/board/shared/port
 )
 compile_options(
     -DSTM32H750xx=1
@@ -55,5 +55,5 @@ target_sources(${PROJECT_NAME}
     ${BOARD_SOURCES}
 )
 
-add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared stm32_shared)
-add_subdirectory(${WKSAPCE_PATH}/board/stm32/shared/h7/Drivers drivers)
+add_subdirectory(${WKSPACE_PATH}/board/stm32/shared stm32_shared)
+add_subdirectory(${WKSPACE_PATH}/board/stm32/shared/h7/Drivers drivers)

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 set(PYTHON_EXECUTABLE      /usr/bin/python3)
-set(ZEPHYR_BASE            ${CMAKE_CURRENT_LIST_DIR}/..)
+set(ZEPHYR_BASE            ${WKSPACE_PATH})
 set(KCONFIG_ROOT           ${ZEPHYR_BASE}/Kconfig)
 set(APPLICATION_SOURCE_DIR ${ZEPHYR_BASE})
 set(BOARD_DIR              ${ZEPHYR_BASE}/board)
@@ -323,33 +323,3 @@ foreach (name ${cache_variable_names})
     endif()
   endif()
 endforeach()
-
-
-#Compiler Options
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-
-include_dirs(
-    ${WKSAPCE_PATH}
-)
-
-# Enable link time optimize
-if (CONFIG_LTO)
-  compile_options(-flto=auto)
-  set(CMAKE_AR      ${CMAKE_C_COMPILER}-ar)
-  set(CMAKE_RANLIB  ${CMAKE_C_COMPILER}-ranlib)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=auto -fuse-linker-plugin -specs=nano.specs")
-endif(CONFIG_LTO)
-
-separate_arguments(COMPILER_OPT_AS_LIST UNIX_COMMAND ${CONFIG_COMPILER_OPT})
-compile_options(
-  -imacros ${AUTOCONF_H}
-  ${COMPILER_OPT_AS_LIST}
-)
-
-set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/board/${BOARD}/${CONFIG_LINKER_SCRIPT}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T ${LINKER_SCRIPT}")
-
-#LLEXT options
-if (CONFIG_LLEXT)
-  include(${CMAKE_CURRENT_LIST_DIR}/llext_target.cmake)
-endif()

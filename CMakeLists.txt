@@ -13,15 +13,13 @@ if (NOT DEFINED BOARD OR NOT DEFINED THREADX_ARCH)
 endif()
 
 # Set workspace path
-set(WKSAPCE_PATH  ${CMAKE_CURRENT_SOURCE_DIR})
+set(WKSPACE_PATH  ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Import helper function
 include(cmake/cpu.cmake)
 include(cmake/utils.cmake)
 include(cmake/zephyr.cmake)
 
-# Generate compile database
-set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 
 # Declare project
 project(mcuTask
@@ -30,6 +28,45 @@ project(mcuTask
 
 #Import kconfig parser
 include(cmake/kconfig.cmake)
+
+# Set output path for library
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/libs)
+
+# Enable link time optimize
+if (CONFIG_LTO)
+  compile_options(-flto=auto)
+  set(CMAKE_AR      ${CMAKE_C_COMPILER}-ar)
+  set(CMAKE_RANLIB  ${CMAKE_C_COMPILER}-ranlib)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=auto -fuse-linker-plugin -specs=nano.specs")
+endif(CONFIG_LTO)
+
+# Parse optimize options
+separate_arguments(COMPILER_OPT_AS_LIST UNIX_COMMAND ${CONFIG_COMPILER_OPT})
+
+# Set common compile options
+include_dirs(
+    ${WKSPACE_PATH}
+)
+
+compile_options(
+  -imacros ${AUTOCONF_H}
+  -fdata-sections
+  -ffunction-sections
+  -Wall
+  -Wextra
+  -Werror 
+  ${COMPILER_OPT_AS_LIST}
+)
+
+# Set linker script file
+set(LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/board/${BOARD}/${CONFIG_LINKER_SCRIPT}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-T ${LINKER_SCRIPT}")
+
+#LLEXT options
+if (CONFIG_LLEXT)
+  include(cmake/llext_target.cmake)
+endif()
+
 
 cmake_policy(SET CMP0076 NEW)
 cmake_policy(SET CMP0003 NEW)
