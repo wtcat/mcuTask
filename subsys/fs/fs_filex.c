@@ -19,7 +19,6 @@
 #define __ELASTERROR (2000)
 #endif
 
-#define FX_PATH(_name) ((CHAR *)(_name) + fs->mountp_len)
 #define FX_ERR(_err)   ((_err)? _FX_ERR(_err): 0)
 #define _FX_ERR(_err) -(__ELASTERROR + (int)(_err))
 
@@ -142,6 +141,10 @@ static void filex_fs_driver(FX_MEDIA *media_ptr) {
 	}
 }
 
+static inline CHAR *filex_path(struct fs_class *fs, const char *abs_path) {
+    return (CHAR *)abs_path + fs->mountp_len;
+}
+
 static int filex_fs_open(struct fs_file *fp, const char *file_name, 
     fs_mode_t flags) {
     struct fs_class *fs = fp->vfs;
@@ -149,11 +152,12 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
     UINT err;
 
     if (flags & FS_O_CREATE) {
-        err = fx_file_create(fs->fs_data, FX_PATH(file_name));
+        err = fx_file_create(fs->fs_data, filex_path(fs, file_name));
         if (err == FX_SUCCESS)
             created = true;
         else if (err != FX_ALREADY_CREATED) {
-            pr_err("%s: failed(%d) to create file(%s) \n", __func__, err, FX_PATH(file_name));
+            pr_err("%s: failed(%d) to create file(%s) \n", __func__, err, 
+                filex_path(fs, file_name));
             return FX_ERR(err);
         }
     }
@@ -170,7 +174,7 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
 #else
         open_type = (rw_flags == FS_O_READ)? FX_OPEN_FOR_READ: FX_OPEN_FOR_WRITE;
 #endif
-        err = fx_file_open(fs->fs_data, fxp, FX_PATH(file_name), 
+        err = fx_file_open(fs->fs_data, fxp, filex_path(fs, file_name), 
             open_type);
         if (err == FX_SUCCESS) {
             if ((rw_flags & FS_O_TRUNC) || ((rw_flags & FS_O_WRITE) && !created))
@@ -180,7 +184,8 @@ static int filex_fs_open(struct fs_file *fp, const char *file_name,
             return 0;
         }
 
-        pr_dbg("%s: open file(%s) failed(%d)\n", __func__, FX_PATH(file_name), err);
+        pr_dbg("%s: open file(%s) failed(%d)\n", __func__, 
+            filex_path(fs, file_name), err);
         object_free(&filex_fds_pool, fxp);
         return _FX_ERR(err);
     }
@@ -208,6 +213,9 @@ static ssize_t filex_fs_read(struct fs_file *fp, void *ptr, size_t size) {
     err = fx_file_read(fxp, ptr, size, &rdbytes);
     if (err == FX_SUCCESS)
         return (ssize_t)rdbytes;
+    
+    if (err == FX_END_OF_FILE)
+        return -1;
 
     return _FX_ERR(err);
 }
@@ -273,8 +281,9 @@ static int filex_fs_opendir(struct fs_dir *dp, const char *abs_path) {
         return -ENOMEM;
 
     struct fs_class *fs = dp->vfs;
+    const char *fx_path = filex_path(fs, abs_path);
     err = fx_directory_local_path_set(fs->fs_data, &dir->path, 
-        FX_PATH(abs_path));
+        (CHAR *)(fx_path[0] != '\0'? fx_path: "/"));
     if (err == FX_SUCCESS) {
         dir->first = true;
         dp->dirp = dir;
@@ -311,6 +320,9 @@ static int filex_fs_readdir(struct fs_dir *dp, struct fs_dirent *entry) {
         }
         return 0;    
     }
+
+    if (err == FX_NO_MORE_ENTRIES)
+        return -1;
 
     return FX_ERR(err);
 }
@@ -381,7 +393,7 @@ static int filex_fs_unmount(struct fs_class *fs) {
 static int filex_fs_mkdir(struct fs_class *fs, const char *abs_path) {
     UINT err;
 
-    err = fx_directory_create(fs->fs_data, FX_PATH(abs_path));
+    err = fx_directory_create(fs->fs_data, filex_path(fs, abs_path));
     if (err == FX_ALREADY_CREATED)
         return 0;
     return FX_ERR(err);
@@ -390,22 +402,22 @@ static int filex_fs_mkdir(struct fs_class *fs, const char *abs_path) {
 static int filex_fs_unlink(struct fs_class *fs, const char *abs_path) {
     UINT attr, err;
 
-    err = fx_file_attributes_read(fs->fs_data, FX_PATH(abs_path), &attr);
+    err = fx_file_attributes_read(fs->fs_data, filex_path(fs, abs_path), &attr);
     if (err == FX_SUCCESS)
-        err = fx_file_delete(fs->fs_data, FX_PATH(abs_path));
+        err = fx_file_delete(fs->fs_data, filex_path(fs, abs_path));
     else if (err == FX_NOT_A_FILE)
-        err = fx_directory_delete(fs->fs_data, FX_PATH(abs_path));
+        err = fx_directory_delete(fs->fs_data, filex_path(fs, abs_path));
     return FX_ERR(err);
 }
 
 static int filex_fs_rename(struct fs_class *fs, const char *from, const char *to) {
     UINT attr, err;
 
-    err = fx_file_attributes_read(fs->fs_data, FX_PATH(from), &attr);
+    err = fx_file_attributes_read(fs->fs_data, filex_path(fs, from), &attr);
     if (err == FX_SUCCESS)
-        err = fx_file_rename(fs->fs_data, FX_PATH(from), FX_PATH(to));
+        err = fx_file_rename(fs->fs_data, filex_path(fs, from), filex_path(fs, to));
     else if (err == FX_NOT_A_FILE)
-        err = fx_directory_rename(fs->fs_data, FX_PATH(from), FX_PATH(to));
+        err = fx_directory_rename(fs->fs_data, filex_path(fs, from), filex_path(fs, to));
     return FX_ERR(err);
 }
 
@@ -416,7 +428,7 @@ static int filex_fs_stat(struct fs_class *fs, const char *abs_path,
     UINT attr;
     UINT err;
 
-    err = fx_directory_information_get(media_ptr, FX_PATH(abs_path), &attr, &size,
+    err = fx_directory_information_get(media_ptr, filex_path(fs, abs_path), &attr, &size,
         NULL, NULL, NULL, NULL, NULL, NULL);
     if (err == FX_SUCCESS) {
         *stat = (struct fs_stat){0};

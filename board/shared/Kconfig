@@ -42,6 +42,7 @@ config CFILE
 
 config FILE_DESC_MAX
     int "The maximum number of file descriptor"
+    depends on CFILE
     default 3
 
 config KMALLOC_POOL_SIZE

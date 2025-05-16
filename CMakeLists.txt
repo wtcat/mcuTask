@@ -15,6 +15,9 @@ endif()
 # Set workspace path
 set(WKSPACE_PATH  ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Generate compile database
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Import helper function
 include(cmake/cpu.cmake)
 include(cmake/utils.cmake)

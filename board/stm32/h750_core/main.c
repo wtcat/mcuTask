@@ -5,6 +5,8 @@
 #define TX_USE_BOARD_PRIVATE
 #define TX_USE_SECTION_INIT_API_EXTENSION 1
 
+#include <stdio.h>
+
 #include <tx_api.h>
 #include <fx_api.h>
 #include <service/init.h>
@@ -19,10 +21,13 @@
 #define MAIN_THREAD_PRIO  11
 #define MAIN_THREAD_STACK 4096
 
+#define MOUNT_POINT "/usr"
+#define ABS_PATH(path) MOUNT_POINT "/" path
+
 static TX_THREAD main_pid;
 static ULONG main_stack[MAIN_THREAD_STACK / sizeof(ULONG)] __rte_section(".dtcm");
 static struct fs_class main_fs = {
-    .mnt_point = "/home",
+    .mnt_point = MOUNT_POINT,
     .type = FS_EXFATFS,
     .storage_dev = "mmcblk0"
 };
@@ -50,19 +55,31 @@ static int file_dump(const char *filename) {
 }
 
 static void __rte_unused file_test(void) {
+    FILE *fp;
     int err;
-    char path[128] = {"/home/X"};
+    char path[128] = {ABS_PATH("X")};
 
-    err = fs_mkdir("/home/a");
+#ifdef CONFIG_CFILE
+    pr_out("stdio file i/o test\n");
+    fp = fopen(ABS_PATH("hello.txt"), "r");
+    if (fp) {
+        char buf[64] = {0};
+        if (fread(buf, 1, sizeof(buf), fp) > 0)
+            pr_out("file buf: %s\n", buf);
+        fclose(fp);
+    }
+#endif
+
+    err = fs_mkdir(ABS_PATH("a"));
     if (err)
         goto _unmount;
 
-    err = fs_mkdir("/home/b");
+    err = fs_mkdir(ABS_PATH("b"));
     if (err)
         goto _unmount;
 
     struct fs_file fd = {0};
-    err = fs_open(&fd, "/home/hello.txt", FS_O_CREATE | FS_O_WRITE);
+    err = fs_open(&fd, ABS_PATH("hello.txt"), FS_O_CREATE | FS_O_WRITE);
     if (err)
         goto _unmount;
     fs_write(&fd, "hello world", 11);
@@ -70,7 +87,7 @@ static void __rte_unused file_test(void) {
 
     struct fs_file rfd = {0};
     char buffer[12] = {0};
-    err = fs_open(&rfd, "/home/hello.txt", FS_O_READ);
+    err = fs_open(&rfd, ABS_PATH("hello.txt"), FS_O_READ);
     if (err)
         goto _unmount;
 
@@ -85,7 +102,7 @@ static void __rte_unused file_test(void) {
         pr_out("failed to read file\n");
 
     struct fs_dir dir = {0};
-    err = fs_opendir(&dir, "/home/");
+    err = fs_opendir(&dir, MOUNT_POINT);
     if (err)
         goto _unmount;
     
@@ -96,7 +113,7 @@ static void __rte_unused file_test(void) {
     fs_closedir(&dir);
 
 
-    err = fs_opendir(&dir, "/home/");
+    err = fs_opendir(&dir, MOUNT_POINT);
     if (err)
         goto _unmount;
     
@@ -108,7 +125,7 @@ static void __rte_unused file_test(void) {
         }
     }
     fs_closedir(&dir);
-    fs_flush("/home");
+    fs_flush(MOUNT_POINT);
 
 _unmount:
     return;

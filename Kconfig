@@ -6,18 +6,33 @@ config MULTITHREADING
 
 choice
     prompt "CPU Endian"
+
 config LITTLE_ENDIAN
     bool "Little Endian"
+
 config BIG_ENDIAN
     bool "Big Endian"
 endchoice
 
 source "$BOARD_DIR/Kconfig"
+rsource "board/shared/Kconfig"
 rsource "rtos/Kconfig"
 rsource "subsys/Kconfig"
 rsource "base/Kconfig"
-rsource "board/shared/Kconfig"
-rsource "Kconfig.compile"
+
+menu "Compile options"
+config COMPILER_OPT
+    string "Custom compile option"
+    default "-Os"
+
+config LTO
+    bool "Enable link-time optimize"
+    default n
+
+config LINKER_SCRIPT
+    string "Linker script file"
+    default "linker.ld"
+endmenu
 
 config MAIN_THREAD_PRIO
     int "The priority of main thread"
