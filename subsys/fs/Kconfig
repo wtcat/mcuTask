@@ -4,5 +4,9 @@ menuconfig SUBSYS_FS
 
 if SUBSYS_FS
 
+config FS_SHELL
+    bool "Enable filesystem shell commands"
+    depends on SHELL
+    default n
 
 endif #SUBSYS_FS
