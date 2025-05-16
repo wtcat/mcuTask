@@ -70,5 +70,9 @@ config TASK_RUNNER
     bool "Enable task runner queue"
     default y
 
+config DEVICE_CONTROL
+    bool "Enable device control interface"
+    default y
+
 rsource "cortexm/Kconfig"
 endmenu

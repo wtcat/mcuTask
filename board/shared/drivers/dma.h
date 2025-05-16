@@ -7,7 +7,7 @@
 #ifndef DRIVERS_DMA_H_
 #define DRIVERS_DMA_H_
 
-#include <sys/atomic.h>
+#include <base/sys/atomic.h>
 #include <drivers/device.h>
 
 #ifdef __cplusplus

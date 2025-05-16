@@ -19,6 +19,13 @@ extern "C"{
 
 struct device;
 
+#ifdef CONFIG_DEVICE_CONTROL
+# define _DEV_CONTROL_MEMBER(control) \
+    int (*control)(struct device *, unsigned int, void *);
+#else
+# define _DEV_CONTROL_MEMBER(...)
+#endif
+
 /*
  * Device class definition
  */
@@ -27,7 +34,7 @@ struct device;
         STAILQ_ENTRY(device) link; \
         const char *name; \
         void *private_data; \
-        int (*control)(struct device *, unsigned int, void *); \
+        _DEV_CONTROL_MEMBER(control) \
         __VA_ARGS__ \
     }
 
@@ -42,6 +49,9 @@ DEVICE_CLASS_DEFINE(device);
 #define dev_get_private(_dev) (_dev)->private_data
 #define dev_extension(_dev, _type) (_type *)((_dev) + 1)
 #define to_devclass(p) (struct device *)(p)
+
+#define DEV_REGISTER(_dev)   device_register((struct device *)(_dev))
+#define DEV_UNREGISTER(_dev) device_unregister((struct device *)(_dev))
 
 struct device *device_find(const char *name);
 int  device_register(struct device *dev);
