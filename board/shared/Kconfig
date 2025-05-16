@@ -57,8 +57,13 @@ config CPLUSPLUS
     bool "Enable C++ language support"
     default n
 
+config CPP_POOL_SIZE
+    int "C++ memory pool size"
+    default 0
+
 config HRTIMER
     bool "Enable high resolution timer"
+    depends on CPLUSPLUS
     default n
 
 config TASK_RUNNER
