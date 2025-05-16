@@ -1,9 +1,9 @@
 menu "RTOS Components"
 
-rsource "Kconfig.threadx"
-rsource "Kconfig.filex"
-rsource "Kconfig.netxduo"
-rsource "Kconfig.usbx"
-rsource "Kconfig.levelx"
+rsource "configs/Kconfig.threadx"
+rsource "configs/Kconfig.filex"
+rsource "configs/Kconfig.netxduo"
+rsource "configs/Kconfig.usbx"
+rsource "configs/Kconfig.levelx"
 
 endmenu

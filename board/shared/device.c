@@ -8,6 +8,7 @@
 #include <tx_api.h>
 #include <service/init.h>
 #include <drivers/device.h>
+#include <base/symbol.h>
 
 static STAILQ_HEAD(device_list, device) __device_head;	
 static TX_MUTEX dev_mutex;
@@ -29,6 +30,7 @@ struct device *device_find(const char *name) {
     guard(os_mutex)(&dev_mutex);
     return device_find_locked(name);
 }
+EXPORT_SYMBOL(device_find);
 
 int device_register(struct device *dev) {
     if (dev == NULL)
@@ -44,6 +46,7 @@ int device_register(struct device *dev) {
     STAILQ_INSERT_TAIL(&__device_head, dev, link);
     return 0;
 }
+EXPORT_SYMBOL(device_register);
 
 int device_unregister(struct device *dev) {
     if (dev == NULL)
@@ -60,6 +63,7 @@ int device_unregister(struct device *dev) {
 
     return -ENODEV;
 }
+EXPORT_SYMBOL(device_unregister);
 
 void device_foreach(bool (*iterator)(struct device *, void *), void *user) {
     struct device *dev;
@@ -73,6 +77,7 @@ void device_foreach(bool (*iterator)(struct device *, void *), void *user) {
             break;
     }
 }
+EXPORT_SYMBOL(device_foreach);
 
 static int device_init(void) {
     STAILQ_INIT(&__device_head);
