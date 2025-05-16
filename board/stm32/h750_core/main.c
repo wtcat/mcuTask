@@ -55,13 +55,12 @@ static int file_dump(const char *filename) {
 }
 
 static void __rte_unused file_test(void) {
-    FILE *fp;
     int err;
     char path[128] = {ABS_PATH("X")};
 
 #ifdef CONFIG_CFILE
     pr_out("stdio file i/o test\n");
-    fp = fopen(ABS_PATH("hello.txt"), "r");
+    FILE *fp = fopen(ABS_PATH("hello.txt"), "r");
     if (fp) {
         char buf[64] = {0};
         if (fread(buf, 1, sizeof(buf), fp) > 0)
